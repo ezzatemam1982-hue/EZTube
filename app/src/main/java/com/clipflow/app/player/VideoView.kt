@@ -57,11 +57,13 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AspectRatio
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ClosedCaption
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.FastForward
 import androidx.compose.material.icons.rounded.FastRewind
+import androidx.compose.material.icons.rounded.FitScreen
 import androidx.compose.material.icons.rounded.Fullscreen
 import androidx.compose.material.icons.rounded.FullscreenExit
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
@@ -122,6 +124,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
 import kotlinx.coroutines.CoroutineScope
@@ -229,19 +233,35 @@ fun VideoContent(
         burstSeconds += ((abs(moved) + 500) / 1000).toInt()
         burstTaps++
     }
-    // Zoom to fill, fullscreen only (FullscreenZoom): 0 = the whole picture, 1 = filling the screen.
-    // The picture's own motion is the feedback (Derek picked "Rubber band", 2026-11-02): a pinch drives it 1:1
-    // under the fingers, past either end it stretches on with resistance ([stretched]), and let go it springs
-    // to the side the pinch went with one bounce past it (below 0 = a moment smaller than the whole picture).
-    val zoomTarget = if (fullscreen && state.zoomedToFill) 1f else 0f
+    // Stretch to fill in fullscreen (RESIZE_MODE_FILL vs RESIZE_MODE_FIT): 0 = Original aspect ratio,
+    // 1 = Stretched to fill edge-to-edge without cropping top/bottom.
+    val resizeMode = fullscreenResizeMode(state.zoomedToFill)
+    val zoomTarget = if (fullscreen && resizeMode == AspectRatioFrameLayout.RESIZE_MODE_FILL) 1f else 0f
     val zoom = remember { Animatable(zoomTarget, visibilityThreshold = 0.0005f) }
     var pinching by remember { mutableStateOf(false) }
+    // Transient overlay pill showing "Stretched to fill" or "Original" on pinch or Fit/Fill tap.
+    var zoomPillFill by remember { mutableStateOf(false) }
+    var zoomPillSeq by remember { mutableIntStateOf(0) }
+    var zoomPillShown by remember { mutableStateOf(false) }
+    fun showZoomPill(fill: Boolean) {
+        zoomPillFill = fill
+        zoomPillSeq++
+        zoomPillShown = true
+    }
+    LaunchedEffect(zoomPillSeq) {
+        if (zoomPillSeq == 0) return@LaunchedEffect
+        delay(1_500)
+        zoomPillShown = false
+    }
+    LaunchedEffect(fullscreen) {
+        if (!fullscreen) zoomPillShown = false
+    }
     // How fast the pinch was moving the zoom as it let go, so the spring carries on from it.
     val zoomFling = remember { floatArrayOf(0f) }
     LaunchedEffect(zoomTarget, pinching) {
         if (pinching) return@LaunchedEffect
         val velocity = zoomFling[0].also { zoomFling[0] = 0f }
-        if (reduced) zoom.snapTo(zoomTarget)
+        if (reduced || !fullscreen) zoom.snapTo(zoomTarget)
         else zoom.animateTo(zoomTarget, spring(dampingRatio = 0.5f, stiffness = 380f, visibilityThreshold = 0.0005f), initialVelocity = velocity)
     }
     var stage by remember { mutableStateOf(IntSize.Zero) }
@@ -290,14 +310,17 @@ fun VideoContent(
                             event = awaitPointerEvent(PointerEventPass.Initial)
                         } while (event.changes.count { it.pressed } >= 2)
                         if (!started) return@awaitEachGesture
-                        // As YouTube: out = fill, in = the whole picture; a pinch that came back to where it began changes nothing.
+                        // Pinch out = stretch to fill (RESIZE_MODE_FILL), pinch in = Original (RESIZE_MODE_FIT).
                         val toFill = when {
                             total > 1f + ZoomDecide -> true
                             total < 1f - ZoomDecide -> false
                             else -> null
                         }
-                        if (toFill != null && toFill != state.zoomedToFill) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                        if (toFill != null) state.setZoomedToFill(toFill)
+                        if (toFill != null) {
+                            if (toFill != state.zoomedToFill) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                            state.setZoomedToFill(toFill)
+                            showZoomPill(toFill)
+                        }
                         if (fill > 1.005f) zoomFling[0] = tracker.calculateVelocity().coerceIn(-ZoomFlingMax, ZoomFlingMax)
                     } finally {
                         pinching = false
@@ -371,15 +394,22 @@ fun VideoContent(
                 .fillMaxSize()
                 .aspectFit(state.videoAspect),
         ) {
-            // Zoomed, the picture (and its clip) grows past this box to cover the stage; the captions
-            // and the burst line below stay on the unzoomed box.
+            // Stretch to fill (RESIZE_MODE_FILL): each axis stretches independently to fill the stage edge-to-edge
+            // without cropping top/bottom or sides; captions and the burst line below stay on the unstretched box.
             Box(
                 Modifier
                     .fillMaxSize()
                     .graphicsLayer {
-                        val s = 1f + (fillScale(stage.width.toFloat(), stage.height.toFloat(), state.videoAspect) - 1f) * zoom.value
-                        scaleX = s
-                        scaleY = s
+                        val scales = stretchScales(
+                            stageW = stage.width.toFloat(),
+                            stageH = stage.height.toFloat(),
+                            childW = size.width,
+                            childH = size.height,
+                            aspect = state.videoAspect,
+                            zoom = zoom.value,
+                        )
+                        scaleX = scales.scaleX
+                        scaleY = scales.scaleY
                     }
                     .clipToBounds(),
             ) {
@@ -599,6 +629,28 @@ fun VideoContent(
                                 Icon(Icons.Rounded.SkipNext, null, tint = ink, modifier = Modifier.size(20.dp))
                             }
                         }
+                        if (fullscreen) {
+                            val filled = resizeMode == AspectRatioFrameLayout.RESIZE_MODE_FILL
+                            OverlayTile(
+                                description = stringResource(if (filled) R.string.video_resize_fit else R.string.video_resize_fill),
+                                enabled = enabled,
+                                size = 34.dp,
+                                filled = filled,
+                                onClick = {
+                                    touched()
+                                    val next = !filled
+                                    state.setZoomedToFill(next)
+                                    showZoomPill(next)
+                                },
+                            ) { ink ->
+                                Icon(
+                                    imageVector = if (filled) Icons.Rounded.AspectRatio else Icons.Rounded.FitScreen,
+                                    contentDescription = null,
+                                    tint = ink,
+                                    modifier = Modifier.size(19.dp),
+                                )
+                            }
+                        }
                         OverlayTile(stringResource(if (fullscreen) R.string.video_exit_fullscreen else R.string.video_fullscreen), enabled, 34.dp, onClick = onToggleFullscreen) { ink ->
                             Icon(if (fullscreen) Icons.Rounded.FullscreenExit else Icons.Rounded.Fullscreen, null, tint = ink, modifier = Modifier.size(21.dp))
                         }
@@ -627,6 +679,21 @@ fun VideoContent(
                     CaptionsDrop(state, drop == DropKind.Captions, dropAnchor, dropRoom, onClose = { drop = null })
                 }
             }
+        }
+        if (fullscreen) {
+            val pillTop by animateDpAsState(
+                targetValue = if (overlay && controlsVisible) 68.dp else 20.dp,
+                animationSpec = if (reduced) tween(0) else spring(dampingRatio = 0.85f, stiffness = 420f),
+                label = "zoomPillTop",
+            )
+            ZoomModePill(
+                shown = zoomPillShown && !state.holdingFast,
+                fill = zoomPillFill,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .windowInsetsPadding(WindowInsets.displayCutout)
+                    .padding(top = pillTop),
+            )
         }
         if (edge != null) EdgeScrubPreview(state, edge)
     }
@@ -1620,15 +1687,62 @@ private fun SeekBurstPill(side: Int, seconds: Int, taps: Int, active: Boolean, f
     }
 }
 
-/**
- * "2× ▸▸" at the top of the video while a finger holds it at [PlaybackSpeed.HOLD]: the double-tap
- * pill's glass, springing in; the glyph keeps dashing forward while held. Reduced motion: fade only.
- */
-/** How much the picture grows to cover a [w]×[h] stage when it's laid out to fit it at [aspect]. */
+/** How much the picture grows to cover a [w]×[h] stage along the constrained axis when laid out to fit [aspect]. */
 private fun fillScale(w: Float, h: Float, aspect: Float): Float {
     if (w <= 0f || h <= 0f || aspect <= 0f) return 1f
     val stage = w / h
     return max(stage / aspect, aspect / stage)
+}
+
+internal data class VideoScale(val scaleX: Float, val scaleY: Float)
+
+/** Maps ClipFlow's fullscreen fill state to Media3 resize mode constants (`RESIZE_MODE_FILL` vs `RESIZE_MODE_FIT`). */
+@androidx.annotation.OptIn(UnstableApi::class)
+internal fun fullscreenResizeMode(fill: Boolean): Int =
+    if (fill) AspectRatioFrameLayout.RESIZE_MODE_FILL else AspectRatioFrameLayout.RESIZE_MODE_FIT
+
+internal fun fullscreenResizeLabelRes(fill: Boolean): Int =
+    if (fill) R.string.video_stretch_to_fill else R.string.video_resize_original
+
+/**
+ * Computes independent `scaleX` / `scaleY` factors from an aspect-fitted child (`childW`×`childH`)
+ * to fill `stageW`×`stageH` edge-to-edge (`RESIZE_MODE_FILL`) without cropping when `zoom == 1f`.
+ */
+internal fun stretchScales(
+    stageW: Float,
+    stageH: Float,
+    childW: Float,
+    childH: Float,
+    aspect: Float,
+    zoom: Float,
+): VideoScale {
+    if (stageW <= 0f || stageH <= 0f || aspect <= 0f) return VideoScale(1f, 1f)
+    val stageAspect = stageW / stageH
+    val targetX: Float
+    val targetY: Float
+    if (childW > 0f && childH > 0f) {
+        targetX = max(stageW / childW, 1f)
+        targetY = max(stageH / childH, 1f)
+    } else {
+        targetX = max(stageAspect / aspect, 1f)
+        targetY = max(aspect / stageAspect, 1f)
+    }
+    val maxFill = max(targetX, targetY)
+    if (maxFill <= 1.005f) return VideoScale(1f, 1f)
+    return when {
+        zoom < 0f -> {
+            val s = (1f + (maxFill - 1f) * zoom).coerceAtLeast(0.5f)
+            VideoScale(s, s)
+        }
+        zoom > 1f -> {
+            val over = 1f + ((maxFill - 1f) * (zoom - 1f)) / maxFill
+            VideoScale(targetX * over, targetY * over)
+        }
+        else -> VideoScale(
+            scaleX = 1f + (targetX - 1f) * zoom,
+            scaleY = 1f + (targetY - 1f) * zoom,
+        )
+    }
 }
 
 /** A pinch must change the span by this share to switch zoom (less springs back). */
@@ -1651,6 +1765,53 @@ private fun stretched(raw: Float, fill: Float): Float {
     }
 }
 
+/**
+ * Transient glass pill at the top center confirming `"Stretched to fill"` or `"Original"` in fullscreen.
+ */
+@Composable
+private fun ZoomModePill(shown: Boolean, fill: Boolean, modifier: Modifier = Modifier) {
+    val reduced = rememberReducedMotion()
+    val alpha by animateFloatAsState(
+        targetValue = if (shown) 1f else 0f,
+        animationSpec = tween(if (reduced) 0 else if (shown) 140 else 220, easing = Motion.Emphasized),
+        label = "zoomPillAlpha",
+    )
+    val scale by animateFloatAsState(
+        targetValue = if (shown || reduced) 1f else 0.88f,
+        animationSpec = if (shown) spring(dampingRatio = 0.7f, stiffness = 500f) else tween(200, easing = Motion.Emphasized),
+        label = "zoomPillScale",
+    )
+    if (alpha <= 0f) return
+    Row(
+        modifier
+            .graphicsLayer { this.alpha = alpha; scaleX = scale; scaleY = scale }
+            .height(38.dp)
+            .clip(CircleShape)
+            .background(Color.Black.copy(alpha = 0.62f))
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = if (fill) Icons.Rounded.FitScreen else Icons.Rounded.AspectRatio,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(7.dp))
+        Text(
+            text = stringResource(fullscreenResizeLabelRes(fill)),
+            color = Color.White,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 13.sp,
+            maxLines = 1,
+        )
+    }
+}
+
+/**
+ * "2× ▸▸" at the top of the video while a finger holds it at [PlaybackSpeed.HOLD]: the double-tap
+ * pill's glass, springing in; the glyph keeps dashing forward while held. Reduced motion: fade only.
+ */
 @Composable
 private fun FastHoldPill(shown: Boolean, fullscreen: Boolean, modifier: Modifier = Modifier) {
     val reduced = rememberReducedMotion()

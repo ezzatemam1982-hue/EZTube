@@ -280,13 +280,18 @@ object Account {
     }
 
     internal fun cookieHeader(): String {
-        val inMemory = synchronized(cookies) { AuthSessionManager.formatCookieHeader(cookies) }
-        if (inMemory.isNotBlank()) return inMemory
+        val hasInMemoryAuth = synchronized(cookies) { hasAuthCookiePair(cookies) }
+        if (hasInMemoryAuth) {
+            val inMemory = synchronized(cookies) { AuthSessionManager.formatCookieHeader(cookies) }
+            if (inMemory.isNotBlank()) return inMemory
+        }
         val persisted = AuthSessionManager.getRawCookieString().orEmpty()
         if (persisted.isNotBlank()) {
             synchronized(cookies) {
-                if (cookies.isEmpty()) parseCookieHeader(persisted, cookies)
+                if (!hasAuthCookiePair(cookies)) parseCookieHeader(persisted, cookies)
             }
+            val merged = synchronized(cookies) { AuthSessionManager.formatCookieHeader(cookies) }
+            if (merged.isNotBlank()) return merged
         }
         return persisted
     }
@@ -299,10 +304,10 @@ object Account {
             return "${ts}_" + digest.joinToString("") { "%02x".format(it) }
         }
         // Ensure in-memory map reflects persisted SharedPreferences if called before WebView/Account init completes
-        if (synchronized(cookies) { cookies.isEmpty() }) {
+        if (synchronized(cookies) { !hasAuthCookiePair(cookies) }) {
             AuthSessionManager.getRawCookieString()?.let { persisted ->
                 synchronized(cookies) {
-                    if (cookies.isEmpty()) parseCookieHeader(persisted, cookies)
+                    if (!hasAuthCookiePair(cookies)) parseCookieHeader(persisted, cookies)
                 }
             }
         }

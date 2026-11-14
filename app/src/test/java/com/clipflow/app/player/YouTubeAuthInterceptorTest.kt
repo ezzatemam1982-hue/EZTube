@@ -14,6 +14,9 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.net.Inet4Address
+import java.net.Inet6Address
+import java.net.InetAddress
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicReference
 
@@ -25,8 +28,10 @@ class YouTubeAuthInterceptorTest {
     }
 
     @Test
-    fun netClientRegistersYouTubeAuthInterceptor() {
+    fun netClientRegistersAuthInterceptorIpv4DnsAndRetryOnFailure() {
         assertTrue(youtubeAuthInterceptor in Net.client.interceptors)
+        assertTrue(Net.client.dns === ipv4PreferredDns)
+        assertTrue(Net.client.retryOnConnectionFailure)
     }
 
     @Test
@@ -77,54 +82,117 @@ class YouTubeAuthInterceptorTest {
     }
 
     @Test
-    fun injectsHeadersOnMobileYouTubeHostAndSkipsNonYouTubeOrNonWebClients() {
-        Account.setSessionCookiesForTest("SAPISID=s1; SID=sid1; HSID=hsid1; SSID=ssid1")
+    fun injectsAuthHeadersExclusivelyOnYouTubeBrowseWebAndMwebRequests() {
+        val sapisid = "s1_browse_secret"
+        Account.setSessionCookiesForTest("SAPISID=$sapisid; SID=sid1; HSID=hsid1; SSID=ssid1")
 
-        val mReq = executeThroughInterceptor(
-            Request.Builder().url("https://m.youtube.com/watch?v=dQw4w9WgXcQ").get().build(),
+        val webBrowseReq = executeThroughInterceptor(
+            Request.Builder()
+                .url("https://www.youtube.com/youtubei/v1/browse?prettyPrint=false")
+                .header("X-YouTube-Client-Name", "1")
+                .post("{\"browseId\":\"FEsubscriptions\"}".toRequestBody("application/json".toMediaType()))
+                .build(),
         )
-        assertNotNull(mReq.header("Cookie"))
-        assertNotNull(mReq.header("Authorization"))
-        assertEquals("https://www.youtube.com", mReq.header("X-Origin"))
-        assertEquals("0", mReq.header("X-Goog-AuthUser"))
+        assertTrue(webBrowseReq.header("Cookie").orEmpty().contains("SAPISID=$sapisid"))
+        assertTrue(webBrowseReq.header("Authorization").orEmpty().startsWith("SAPISIDHASH "))
+        assertEquals("https://www.youtube.com", webBrowseReq.header("Origin"))
+        assertEquals("https://www.youtube.com", webBrowseReq.header("X-Origin"))
+        assertEquals("0", webBrowseReq.header("X-Goog-AuthUser"))
 
-        val nonYtReq = executeThroughInterceptor(
-            Request.Builder().url("https://example.com/api").get().build(),
-        )
-        assertNull(nonYtReq.header("Cookie"))
-        assertNull(nonYtReq.header("Authorization"))
-        assertNull(nonYtReq.header("X-Origin"))
-        assertNull(nonYtReq.header("X-Goog-AuthUser"))
-
-        val mwebReq = executeThroughInterceptor(
+        val mwebBrowseReq = executeThroughInterceptor(
             Request.Builder()
                 .url("https://m.youtube.com/youtubei/v1/browse?prettyPrint=false")
                 .header("X-YouTube-Client-Name", "2")
                 .post("{\"browseId\":\"FEwhat_to_watch\"}".toRequestBody("application/json".toMediaType()))
                 .build(),
         )
-        assertNotNull(mwebReq.header("Cookie"))
-        assertNotNull(mwebReq.header("Authorization"))
+        assertNotNull(mwebBrowseReq.header("Cookie"))
+        assertNotNull(mwebBrowseReq.header("Authorization"))
+        assertEquals("https://www.youtube.com", mwebBrowseReq.header("Origin"))
+        assertEquals("https://www.youtube.com", mwebBrowseReq.header("X-Origin"))
+        assertEquals("0", mwebBrowseReq.header("X-Goog-AuthUser"))
 
-        val visionOsReq = executeThroughInterceptor(
-            Request.Builder()
-                .url("https://www.youtube.com/youtubei/v1/player?prettyPrint=false")
-                .header("X-YouTube-Client-Name", "101")
-                .post("{}".toRequestBody("application/json".toMediaType()))
-                .build(),
-        )
-        assertNull(visionOsReq.header("Cookie"))
-        assertNull(visionOsReq.header("Authorization"))
-
-        val androidReq = executeThroughInterceptor(
+        val androidBrowseReq = executeThroughInterceptor(
             Request.Builder()
                 .url("https://www.youtube.com/youtubei/v1/browse?prettyPrint=false")
                 .header("X-YouTube-Client-Name", "3")
+                .post("{\"browseId\":\"FEwhat_to_watch\"}".toRequestBody("application/json".toMediaType()))
+                .build(),
+        )
+        assertNull(androidBrowseReq.header("Cookie"))
+        assertNull(androidBrowseReq.header("Authorization"))
+        assertNull(androidBrowseReq.header("Origin"))
+        assertNull(androidBrowseReq.header("X-Origin"))
+        assertNull(androidBrowseReq.header("X-Goog-AuthUser"))
+    }
+
+    @Test
+    fun excludesAuthHeadersFromPlayerGoogleVideoWatchAndThirdPartyRequests() {
+        Account.setSessionCookiesForTest("SAPISID=s1; SID=sid1; HSID=hsid1; SSID=ssid1")
+
+        val excludedPosts = listOf(
+            Request.Builder()
+                .url("https://www.youtube.com/youtubei/v1/player?prettyPrint=false")
+                .header("X-YouTube-Client-Name", "1")
+                .post("{\"videoId\":\"dQw4w9WgXcQ\"}".toRequestBody("application/json".toMediaType()))
+                .build(),
+            Request.Builder()
+                .url("https://www.youtube.com/youtubei/v1/player?prettyPrint=false")
+                .header("X-YouTube-Client-Name", "101")
+                .post("{\"videoId\":\"dQw4w9WgXcQ\"}".toRequestBody("application/json".toMediaType()))
+                .build(),
+            Request.Builder()
+                .url("https://youtubei.googleapis.com/youtubei/v1/player?prettyPrint=false&id=dQw4w9WgXcQ")
+                .post("{\"videoId\":\"dQw4w9WgXcQ\"}".toRequestBody("application/json".toMediaType()))
+                .build(),
+            Request.Builder()
+                .url("https://youtubei.googleapis.com/youtubei/v1/reel/reel_item_watch?prettyPrint=false&id=dQw4w9WgXcQ")
+                .header("X-YouTube-Client-Name", "3")
+                .post("{}".toRequestBody("application/json".toMediaType()))
+                .build(),
+            Request.Builder()
+                .url("https://www.youtube.com/youtubei/v1/visitor_id?prettyPrint=false")
                 .post("{}".toRequestBody("application/json".toMediaType()))
                 .build(),
         )
-        assertNull(androidReq.header("Cookie"))
-        assertNull(androidReq.header("Authorization"))
+        val excludedGets = listOf(
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            "https://m.youtube.com/watch?v=dQw4w9WgXcQ",
+            "https://r1---sn-4g5e6nsz.googlevideo.com/videoplayback?expire=1800000000",
+            "https://googlevideo.com/generate_204",
+            "https://example.com/api",
+            "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+        ).map { Request.Builder().url(it).get().build() }
+
+        for (candidate in excludedPosts + excludedGets) {
+            val forwarded = executeThroughInterceptor(
+                candidate,
+                responseHeaders = listOf("Set-Cookie" to "IGNORED_NON_BROWSE=val; Path=/"),
+            )
+            assertNull("Expected no Cookie for ${candidate.url}", forwarded.header("Cookie"))
+            assertNull("Expected no Authorization for ${candidate.url}", forwarded.header("Authorization"))
+            assertNull("Expected no Origin for ${candidate.url}", forwarded.header("Origin"))
+            assertNull("Expected no X-Origin for ${candidate.url}", forwarded.header("X-Origin"))
+            assertNull("Expected no X-Goog-AuthUser for ${candidate.url}", forwarded.header("X-Goog-AuthUser"))
+        }
+        assertFalse(Account.cookieHeader().contains("IGNORED_NON_BROWSE"))
+    }
+
+    @Test
+    fun prioritizesIpv4AddressesWhilePreservingIpv6Fallback() {
+        val v6First = InetAddress.getByAddress(byteArrayOf(0x20, 0x01, 0x48, 0x60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x88.toByte(), 0x88.toByte()))
+        val v4First = InetAddress.getByAddress(byteArrayOf(142.toByte(), 250.toByte(), 185.toByte(), 78))
+        val v6Second = InetAddress.getByAddress(byteArrayOf(0x26, 0x07, 0xf8.toByte(), 0xb0.toByte(), 0x40, 0x05, 0x08, 0x0b, 0, 0, 0, 0, 0, 0, 0x20, 0x0e))
+        val v4Second = InetAddress.getByAddress(byteArrayOf(172.toByte(), 217.toByte(), 14, 206.toByte()))
+
+        val sorted = prioritizeIpv4(listOf(v6First, v4First, v6Second, v4Second))
+        assertEquals(listOf(v4First, v4Second, v6First, v6Second), sorted)
+        assertTrue(sorted[0] is Inet4Address && sorted[1] is Inet4Address)
+        assertTrue(sorted[2] is Inet6Address && sorted[3] is Inet6Address)
+
+        assertEquals(listOf(v6First, v6Second), prioritizeIpv4(listOf(v6First, v6Second)))
+        assertEquals(listOf(v4First, v4Second), prioritizeIpv4(listOf(v4First, v4Second)))
+        assertTrue(prioritizeIpv4(emptyList()).isEmpty())
     }
 
     @Test
@@ -161,16 +229,23 @@ class YouTubeAuthInterceptorTest {
         Account.setSessionCookiesForTest(null)
         assertFalse(Account.hasSessionCookies())
 
-        val req = executeThroughInterceptor(
-            Request.Builder()
-                .url("https://www.youtube.com/youtubei/v1/browse?prettyPrint=false")
-                .post("{\"browseId\":\"FEsubscriptions\"}".toRequestBody("application/json".toMediaType()))
-                .build(),
-        )
-        assertNull(req.header("Cookie"))
-        assertNull(req.header("Authorization"))
-        assertNull(req.header("X-Origin"))
-        assertNull(req.header("X-Goog-AuthUser"))
+        for (url in listOf(
+            "https://www.youtube.com/youtubei/v1/browse?prettyPrint=false",
+            "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+            "https://youtubei.googleapis.com/youtubei/v1/player?prettyPrint=false&id=abc",
+            "https://r1---sn-4g5e6nsz.googlevideo.com/videoplayback?expire=1800",
+        )) {
+            val builder = Request.Builder().url(url)
+            val req = executeThroughInterceptor(
+                if (url.contains("googlevideo")) builder.get().build()
+                else builder.post("{\"browseId\":\"FEsubscriptions\"}".toRequestBody("application/json".toMediaType())).build(),
+            )
+            assertNull(req.header("Cookie"))
+            assertNull(req.header("Authorization"))
+            assertNull(req.header("Origin"))
+            assertNull(req.header("X-Origin"))
+            assertNull(req.header("X-Goog-AuthUser"))
+        }
     }
 
     private fun executeThroughInterceptor(

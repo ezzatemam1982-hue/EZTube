@@ -50,12 +50,21 @@ object PlayerInitializer {
         ShortsBank.init(app)
         AppUpdate.init(app)
         shorts = ShortsState(app, MainScope())
-        // Stream URLs are bound to the network they were fetched on: forget them on a switch.
+        // Stream URLs and pooled sockets are bound to the network/tunnel they were fetched on.
         app.getSystemService(android.net.ConnectivityManager::class.java)?.registerDefaultNetworkCallback(
             object : android.net.ConnectivityManager.NetworkCallback() {
                 private var last: android.net.Network? = null
+                private var lost = false
+                override fun onLost(network: android.net.Network) {
+                    lost = true
+                    Net.onNetworkChanged()
+                }
                 override fun onAvailable(network: android.net.Network) {
-                    if (last != null && last != network) StreamCache.invalidateAll()
+                    if ((last != null && last != network) || lost) {
+                        StreamCache.invalidateAll()
+                        Net.onNetworkChanged()
+                    }
+                    lost = false
                     last = network
                 }
             },

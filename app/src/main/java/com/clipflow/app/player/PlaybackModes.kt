@@ -207,9 +207,9 @@ object AutoPip {
 }
 
 /**
- * Zoom to fill in fullscreen (2026-11-02, Derek; asked for by many users), as YouTube's app does it:
- * pinch out on the fullscreen video and it fills the screen (the edges past the screen are cropped),
- * pinch in and the whole picture is back with black bars. A pinch only changes that video
+ * Stretch to fill in fullscreen (2026-11-02, Derek; switched to RESIZE_MODE_FILL): pinch out or
+ * tap Fit/Fill on the fullscreen video and it stretches edge-to-edge without cropping top/bottom;
+ * pinch in and the original aspect ratio is back with black bars. A pinch only changes that video
  * ([PlayerState.zoomedToFill]); this setting (Settings › Playback) is where every video starts.
  */
 object FullscreenZoom {

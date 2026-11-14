@@ -3,6 +3,10 @@ package com.clipflow.app.player
 import com.deniscerri.ytdl.BuildConfig
 import com.deniscerri.ytdl.R
 
+import android.util.Log
+import okhttp3.ConnectionPool
+import okhttp3.Dns
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -11,20 +15,43 @@ import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
+import java.net.Inet4Address
+import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 
+internal fun isYouTubeWebHost(host: String): Boolean =
+    host.equals("youtube.com", ignoreCase = true) ||
+        host.endsWith(".youtube.com", ignoreCase = true)
+
+internal fun isAuthenticatedBrowseRequest(url: HttpUrl, clientId: String?): Boolean {
+    if (!isYouTubeWebHost(url.host)) return false
+    if (!url.encodedPath.equals("/youtubei/v1/browse", ignoreCase = true)) return false
+    return clientId == null || clientId == "1" || clientId == "2"
+}
+
+internal fun prioritizeIpv4(addresses: List<InetAddress>): List<InetAddress> {
+    if (addresses.size <= 1) return addresses
+    val (ipv4, other) = addresses.partition { it is Inet4Address }
+    return if (ipv4.isEmpty() || other.isEmpty()) addresses else ipv4 + other
+}
+
+internal val ipv4PreferredDns = Dns { hostname ->
+    prioritizeIpv4(Dns.SYSTEM.lookup(hostname))
+}
+
 /**
- * Injects persisted YouTube session cookies and SAPISIDHASH authorization headers onto
- * *.youtube.com web/InnerTube requests, while leaving non-WEB fallback clients untouched.
+ * Injects persisted YouTube session cookies and SAPISIDHASH authorization headers exclusively
+ * onto `youtubei/v1/browse` requests on `*.youtube.com` using WEB/MWEB clients (`Home` and
+ * `Subscriptions`), leaving `youtubei/v1/player`, `youtubei.googleapis.com`, and
+ * `googlevideo.com` requests unauthenticated.
  */
 internal val youtubeAuthInterceptor = Interceptor { chain ->
     val original = chain.request()
-    val host = original.url.host
-    val isYouTube = host.equals("youtube.com", ignoreCase = true) || host.endsWith(".youtube.com", ignoreCase = true)
-    // Preserve anonymous non-WEB fallback clients (e.g. PlayerFallback VISIONOS client id "101" or ANDROID "3").
-    val clientId = original.header("X-YouTube-Client-Name")
-    val isWebRequest = clientId == null || clientId == "1" || clientId == "2"
-    val request = if (isYouTube && isWebRequest && Account.hasSessionCookies()) {
+    val shouldAuthenticate = isAuthenticatedBrowseRequest(
+        original.url,
+        original.header("X-YouTube-Client-Name"),
+    ) && Account.hasSessionCookies()
+    val request = if (shouldAuthenticate) {
         val cookieHeader = Account.cookieHeader()
         val authHeader = Account.authorization(Account.ORIGIN)
         if (cookieHeader.isNotBlank()) {
@@ -49,7 +76,7 @@ internal val youtubeAuthInterceptor = Interceptor { chain ->
     }
 
     val response = chain.proceed(request)
-    if (isYouTube && isWebRequest && Account.hasSessionCookies()) {
+    if (shouldAuthenticate) {
         Account.absorbSetCookies(response.headers("Set-Cookie"))
     }
     response
@@ -64,9 +91,11 @@ object Net {
         OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
+            .dns(ipv4PreferredDns)
+            .retryOnConnectionFailure(true)
             .addInterceptor(youtubeAuthInterceptor)
             // Idle connections to the video servers stay warm between videos.
-            .connectionPool(okhttp3.ConnectionPool(8, 5, TimeUnit.MINUTES))
+            .connectionPool(ConnectionPool(8, 5, TimeUnit.MINUTES))
             .build()
     }
 
@@ -75,6 +104,13 @@ object Net {
 
     fun noteMediaHost(url: String?) {
         url?.toHttpUrlOrNull()?.host?.let { mediaHost = it }
+    }
+
+    /** Drops idle sockets and cached CDN edge hints after a VPN / network change so requests retry cleanly. */
+    fun onNetworkChanged() {
+        mediaHost = null
+        runCatching { client.connectionPool.evictAll() }
+        authLog(Log.INFO, "Net.onNetworkChanged: evicted connection pool")
     }
 
     /**
@@ -108,7 +144,7 @@ class NewPipeDownloader private constructor(private val client: OkHttpClient) : 
         client.newCall(builder.build()).execute().use { response ->
             // YouTube answers rate-limited clients with 429 + a captcha page.
             if (response.code == 429) throw ReCaptchaException("reCaptcha challenge requested", request.url())
-            val text = response.body?.string()
+            val text = response.body.string()
             return Response(
                 response.code,
                 response.message,
