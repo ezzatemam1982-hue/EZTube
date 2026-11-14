@@ -119,7 +119,8 @@ object ShortsBank {
      */
     fun tracks(info: StreamInfo): Pair<Track, Track>? {
         val durationSec = info.duration.takeIf { it > 0 } ?: return null
-        val side = minOf(BankShortSide, QualityPreference.height ?: BankShortSide)
+        val cappedHeight = (QualityPreference.defaultMode as? VideoQualityMode.Fixed)?.height ?: BankShortSide
+        val side = minOf(BankShortSide, cappedHeight)
         fun shortSide(w: Int, h: Int) = if (w > 0) minOf(w, h) else h
         val videos = info.videoOnlyStreams.filter { it.isUrl && it.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP && it.itagItem != null && it.height > 0 }
         val family = videos.filter { it.codec?.startsWith("avc") == true }.ifEmpty { videos.filter { it.format == MediaFormat.WEBM } }.ifEmpty { videos }

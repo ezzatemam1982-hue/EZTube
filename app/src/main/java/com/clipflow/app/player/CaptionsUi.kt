@@ -96,8 +96,10 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import java.util.Locale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
@@ -143,7 +145,9 @@ fun CaptionLayer(state: PlayerState, bottom: Dp, modifier: Modifier = Modifier, 
         ) {
             if (cues == null) CaptionStatus(cap, choice, px)
             else if (lines.isNotEmpty()) {
-                Box(Modifier.widthIn(max = this@BoxWithConstraints.maxWidth * 0.92f)) { CaptionText(lines, look, px) }
+                Box(Modifier.widthIn(max = this@BoxWithConstraints.maxWidth * 0.92f)) {
+                    CaptionText(lines, look, px, languageTag = choice.language)
+                }
             }
         }
     }
@@ -215,15 +219,53 @@ private fun rememberCaptionLook(): CaptionLook {
     }
 }
 
+private val RtlCaptionLanguages = setOf(
+    "ar", "arc", "ckb", "dv", "fa", "ha", "he", "iw", "khw", "ks", "ku", "ps", "sd", "syr", "ug", "ur", "yi",
+)
+
+/**
+ * Resolves explicit paragraph [TextDirection] for captions so RTL scripts (e.g. Arabic) and mixed
+ * RTL lines starting with a Latin word or brand name anchor trailing punctuation on the left edge.
+ */
+internal fun resolveCaptionTextDirection(lines: List<String>, languageTag: String?): TextDirection {
+    var hasRtl = false
+    var hasLtr = false
+    for (line in lines) {
+        var i = 0
+        while (i < line.length) {
+            val cp = Character.codePointAt(line, i)
+            when (Character.getDirectionality(cp)) {
+                Character.DIRECTIONALITY_RIGHT_TO_LEFT,
+                Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC,
+                Character.DIRECTIONALITY_RIGHT_TO_LEFT_EMBEDDING,
+                Character.DIRECTIONALITY_RIGHT_TO_LEFT_OVERRIDE -> hasRtl = true
+                Character.DIRECTIONALITY_LEFT_TO_RIGHT,
+                Character.DIRECTIONALITY_LEFT_TO_RIGHT_EMBEDDING,
+                Character.DIRECTIONALITY_LEFT_TO_RIGHT_OVERRIDE -> hasLtr = true
+            }
+            i += Character.charCount(cp)
+        }
+    }
+    if (hasRtl) return TextDirection.Rtl
+    val base = languageTag?.substringBefore('-')?.substringBefore('_')?.lowercase(Locale.ROOT)
+    if (!hasLtr && base in RtlCaptionLanguages) return TextDirection.Rtl
+    return TextDirection.Ltr
+}
+
 /**
  * The lines on screen as ONE block (Derek: the two lines connect, no gap between them): one text, a box behind
  * each visual line, the boxes touching. Corners are rounded only where a line sticks out past its neighbour, so
  * the boxes join into one shape (no notch at the seam), and they're one path, filled once (no darker seam).
  */
 @Composable
-private fun CaptionText(lines: List<CaptionLine>, look: CaptionLook, px: Float) {
+private fun CaptionText(lines: List<CaptionLine>, look: CaptionLook, px: Float, languageTag: String? = null) {
     val density = LocalDensity.current
     val size = with(density) { px.dp.toSp() }
+    val uniqueLines = remember(lines) { deduplicateCaptionLines(lines) }
+    if (uniqueLines.isEmpty()) return
+    val textDirection = remember(uniqueLines, languageTag) {
+        resolveCaptionTextDirection(uniqueLines.map { it.text }, languageTag)
+    }
     val style = TextStyle(
         color = look.ink,
         fontSize = size,
@@ -231,11 +273,12 @@ private fun CaptionText(lines: List<CaptionLine>, look: CaptionLook, px: Float) 
         fontWeight = look.weight,
         fontFamily = look.family,
         textAlign = TextAlign.Center,
+        textDirection = textDirection,
         shadow = look.shadow,
     )
-    val text = remember(lines) {
+    val text = remember(uniqueLines) {
         buildAnnotatedString {
-            lines.forEachIndexed { i, line ->
+            uniqueLines.forEachIndexed { i, line ->
                 if (i > 0) append('\n')
                 if (line.sound) withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(line.text) } else append(line.text)
             }

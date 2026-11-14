@@ -567,7 +567,7 @@ internal fun WhatsNewSheet(release: AppUpdate.Release, onDismiss: () -> Unit) {
         )
         Text(
             listOfNotNull(
-                "ClipFlow ${release.version}",
+                "EZTube ${release.version}",
                 release.size.takeIf { it > 0 }?.let { stringResource(R.string.app_update_size_mb, "%.1f".format(Locale.US, it / 1_048_576.0)) },
             ).joinDots(),
             color = c.onSurfaceVariant, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,

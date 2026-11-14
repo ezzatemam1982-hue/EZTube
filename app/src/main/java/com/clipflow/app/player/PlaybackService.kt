@@ -32,6 +32,8 @@ import androidx.media3.exoplayer.dash.manifest.AdaptationSet
 import androidx.media3.exoplayer.dash.manifest.DashManifest
 import androidx.media3.exoplayer.dash.manifest.DashManifestParser
 import androidx.media3.exoplayer.dash.manifest.Period
+import androidx.media3.exoplayer.dash.manifest.Representation
+import androidx.media3.exoplayer.dash.manifest.SegmentBase
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.analytics.PlayerId
@@ -86,8 +88,12 @@ class PlaybackService : MediaSessionService() {
                     // YouTube's 60 fps HD rungs can need a different decoder configuration
                     // than the 30 fps SD rungs; by default the player then drops them from
                     // the adaptive set and Auto is stuck at 480p. Allow switching across them.
+                    // Captions are rendered exclusively by Compose CaptionLayer (disable native text),
+                    // and multi-audio videos default to the ORIGINAL track until manually switched.
                     setParameters(
                         buildUponParameters()
+                            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true)
+                            .setPreferredAudioRoleFlags(C.ROLE_FLAG_MAIN)
                             .setAllowVideoMixedDecoderSupportAdaptiveness(true)
                             .setAllowVideoNonSeamlessAdaptiveness(true),
                     )
@@ -553,29 +559,39 @@ internal class YouTubeMediaSourceFactory(context: Context) : MediaSource.Factory
 
     override fun createMediaSource(mediaItem: MediaItem): MediaSource {
         val info = StreamCache.get(mediaItem.mediaId) ?: return fallback.createMediaSource(mediaItem)
-        val picked = StreamSelection.pick(info)
-        // Auto: every quality as one adaptive set. A chosen quality stays pinned below.
-        if (QualityPreference.height == null && picked.audio != null) {
+        val mode = QualityPreference.effectiveFor(mediaItem.mediaId)
+        val picked = StreamSelection.pick(info, mode)
+        val audioGroups = StreamSelection.audioTrackGroups(info)
+        val audioSource = if (audioGroups.size > 1) {
+            multiAudioSource(audioGroups, info.duration, mediaItem) ?: picked.audio?.let { source(it, info.duration, mediaItem) }
+        } else {
+            picked.audio?.let { source(it, info.duration, mediaItem) }
+        }
+        // Auto: every quality as one adaptive set. Highest or a chosen fixed height stays pinned below.
+        if (mode == VideoQualityMode.Auto && audioSource != null) {
             val adaptive = adaptiveVideo(info, mediaItem)
             if (adaptive != null) {
-                Log.i("ClipFlow", "media source ${mediaItem.mediaId}: adaptive video ${StreamSelection.autoLadder(info).joinToString("/") { "${it.height}" }}p + audio itag ${picked.audio.itag}")
-                return MergingMediaSource(true, true, adaptive, source(picked.audio, info.duration, mediaItem))
+                Log.i(
+                    "ClipFlow",
+                    "media source ${mediaItem.mediaId}: adaptive video ${StreamSelection.autoLadder(info).joinToString("/") { "${it.height}" }}p + " +
+                        "${audioGroups.size} audio track(s) (default=${audioGroups.firstOrNull()?.option?.id}, itag=${picked.audio?.itag})",
+                )
+                return MergingMediaSource(true, true, adaptive, audioSource)
             }
         }
         Log.i(
             "ClipFlow",
-            "media source ${mediaItem.mediaId}: " + if (picked.usesSeparate) "video itag ${picked.video?.itag} (${picked.video?.height}p) + audio itag ${picked.audio?.itag}"
+            "media source ${mediaItem.mediaId}: " + if (picked.usesSeparate) "video itag ${picked.video?.itag} (${picked.video?.height}p) + ${audioGroups.size} audio track(s) (itag=${picked.audio?.itag})"
             else "combined fallback itag ${picked.muxed?.itag} (${picked.muxed?.height}p); video=${picked.video != null} audio=${picked.audio != null}; " +
                 "audio offered: " + info.audioStreams.joinToString { "${it.itag}/${it.format}/${it.deliveryMethod}/url=${it.isUrl}/${it.audioTrackType}" },
         )
         val video = picked.video
-        val audio = picked.audio
         return when {
-            video != null && audio != null -> MergingMediaSource(
+            video != null && audioSource != null -> MergingMediaSource(
                 /* adjustPeriodTimeOffsets = */ true,
                 /* clipDurations = */ true,
                 source(video, info.duration, mediaItem),
-                source(audio, info.duration, mediaItem),
+                audioSource,
             )
             picked.muxed != null -> source(picked.muxed, info.duration, mediaItem)
             // Nothing playable: let the default factory fail on the watch URL so the
@@ -608,6 +624,80 @@ internal class YouTubeMediaSourceFactory(context: Context) : MediaSource.Factory
         return DashMediaSource.Factory(dataSourceFactory).createMediaSource(manifest, mediaItem)
     }
 
+    /**
+     * Builds a single DASH manifest exposing each distinct audio track as its own [AdaptationSet]
+     * so ExoPlayer creates one selectable `TrackGroup` per language/dub and switches audio tracks
+     * live at the current playback position without restarting video playback.
+     */
+    private fun multiAudioSource(
+        tracks: List<StreamSelection.AudioTrackGroup>,
+        durationSec: Long,
+        mediaItem: MediaItem,
+    ): MediaSource? {
+        if (durationSec <= 0L) return null
+        val parsed = tracks.mapNotNull { group ->
+            val itag = group.bestStream.itagItem ?: return@mapNotNull null
+            val manifest = runCatching {
+                val xml = YoutubeProgressiveDashManifestCreator.fromProgressiveStreamingUrl(group.bestStream.content, itag, durationSec)
+                DashManifestParser().parse(Uri.parse(group.bestStream.content), ByteArrayInputStream(xml.toByteArray()))
+            }.getOrNull() ?: return@mapNotNull null
+            group to manifest
+        }
+        if (parsed.size < 2) return null
+        val base = parsed.first().second
+        val adaptationSets = parsed.mapIndexed { index, (group, manifest) ->
+            val rep = manifest.getPeriod(0).adaptationSets[0].representations[0]
+            val updatedFormat = rep.format.buildUpon()
+                .setId(AUDIO_TRACK_ID_PREFIX + group.option.id)
+                .setLanguage(group.option.languageTag)
+                .setLabel(group.option.displayName)
+                .setRoleFlags(roleFlagsFor(group.option.kind))
+                .setSelectionFlags(if (group.option.isDefault) C.SELECTION_FLAG_DEFAULT else 0)
+                .build()
+            val indexUri = rep.indexUri
+            val singleRep = rep as? Representation.SingleSegmentRepresentation
+            val segmentBase = SegmentBase.SingleSegmentBase(
+                rep.initializationUri,
+                C.MICROS_PER_SECOND,
+                rep.presentationTimeOffsetUs,
+                indexUri?.start ?: 0L,
+                indexUri?.length ?: 0L,
+            )
+            val taggedRep = Representation.SingleSegmentRepresentation(
+                rep.revisionId,
+                updatedFormat,
+                rep.baseUrls,
+                segmentBase,
+                rep.inbandEventStreams,
+                rep.essentialProperties,
+                rep.supplementalProperties,
+                rep.cacheKey,
+                singleRep?.contentLength ?: C.LENGTH_UNSET.toLong(),
+            )
+            AdaptationSet(
+                (index + 1).toLong(),
+                C.TRACK_TYPE_AUDIO,
+                listOf(taggedRep),
+                emptyList(),
+                emptyList(),
+                emptyList(),
+            )
+        }
+        val manifest = DashManifest(
+            base.availabilityStartTimeMs, base.durationMs, base.minBufferTimeMs, false,
+            C.TIME_UNSET, C.TIME_UNSET, C.TIME_UNSET, C.TIME_UNSET, null, null, null, null,
+            listOf(Period("0", 0, adaptationSets)),
+        )
+        return DashMediaSource.Factory(dataSourceFactory).createMediaSource(manifest, mediaItem)
+    }
+
+    private fun roleFlagsFor(kind: AudioTrackKind): Int = when (kind) {
+        AudioTrackKind.Original -> C.ROLE_FLAG_MAIN
+        AudioTrackKind.Dubbed -> C.ROLE_FLAG_DUB
+        AudioTrackKind.Descriptive -> C.ROLE_FLAG_DESCRIBES_VIDEO
+        AudioTrackKind.Secondary -> C.ROLE_FLAG_ALTERNATE
+    }
+
     private fun source(stream: Stream, durationSec: Long, mediaItem: MediaItem): MediaSource {
         val url = stream.content
         val itag = stream.itagItem
@@ -624,3 +714,5 @@ internal class YouTubeMediaSourceFactory(context: Context) : MediaSource.Factory
             .createMediaSource(mediaItem.buildUpon().setUri(url).build())
     }
 }
+
+internal const val AUDIO_TRACK_ID_PREFIX = "clipflow-audio:"

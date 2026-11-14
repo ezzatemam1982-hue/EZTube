@@ -670,7 +670,7 @@
     <string name="temporary_configurations_summary">הגדרות פקודות, רשימות כתובות וקבצים קצרי מועד אחרים</string>
     <string name="write_ytdlp_terminal">כתיבה אוטומטית של yt-dlp במסוף</string>
     <string name="clear">פינוי</string>
-    <string name="welcome_title">ברוך בואך ל־ClipFlow</string>
+    <string name="welcome_title">ברוך בואך ל־EZTube</string>
     <string name="welcome_subtitle">הורדת סרטונים ושמע באמצעות yt-dlp. קודם כל צריך להגדיר כל מיני דברים.</string>
     <string name="welcome_get_started">מאיפה מתחילים</string>
     <string name="welcome_restore_backup">שחזור מגיבוי</string>
@@ -680,7 +680,7 @@
     <string name="welcome_guide_summary">המדריך מכסה כל נושא שקשור ביישומון, הורדה, תבניות פקודות ותיקון תקלות נפוצות. אפשר לפתוח אותו בכל עת ישירות מהאתר.</string>
     <string name="welcome_open_guide">פתיחת המדריך</string>
     <string name="welcome_permissions_title">הרשאות</string>
-    <string name="welcome_permissions_summary">ClipFlow עובד הכי טוב עם אלה. אפשר לשנות אותם בהמשך דרך ההגדרות.</string>
+    <string name="welcome_permissions_summary">EZTube עובד הכי טוב עם אלה. אפשר לשנות אותם בהמשך דרך ההגדרות.</string>
     <string name="welcome_perm_storage">גישה לאחסון</string>
     <string name="welcome_perm_storage_summary">נחוץ כדי לשמור את ההורדות במכשיר שלך.</string>
     <string name="welcome_perm_notifications">התראות</string>
@@ -695,7 +695,7 @@
     <string name="welcome_perm_folders_header">תיקיות ששוחזרו</string>
     <string name="welcome_perm_folders_summary">הגיבוי שלך משתמש בתיקיות האלה אבל היישומון איבד את הגישה אליהן. יש להרשות על אחת מהן מחדש או לבחור תיקייה אחרת לשימוש במקום.</string>
     <string name="welcome_updates_title">עדכונים</string>
-    <string name="welcome_updates_summary">נא לבחור איך ClipFlow נשאר עדכני.</string>
+    <string name="welcome_updates_summary">נא לבחור איך EZTube נשאר עדכני.</string>
     <string name="welcome_next">הבא</string>
     <string name="welcome_finish">סיום</string>
     <string name="lyrics">מילות שירים</string>

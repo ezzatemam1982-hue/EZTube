@@ -38,4 +38,33 @@
     <!-- %1$s is the language's own name ("Español"). -->
     <string name="language_phone_named">لغة الهاتف (%1$s)</string>
     <string name="language_line">كلمات التطبيق نفسه. تبقى الفيديوهات والعناوين والتعليقات كما كتبها أصحابها.</string>
+
+    <!-- Multi-audio and dubbed track strings -->
+    <string name="player_audio_dubbed_badge">مدبلج</string>
+    <string name="video_audio_track">المسار الصوتي</string>
+    <string name="video_drop_audio">الصوت</string>
+    <string name="video_audio_playing">يتم تشغيل %1$s</string>
+    <string name="video_audio_kind_original">أصلي</string>
+    <string name="video_audio_kind_dubbed">مدبلج</string>
+    <string name="video_audio_kind_descriptive">وصف صوتي</string>
+    <string name="video_audio_kind_secondary">ثانوي</string>
+    <string name="bar_tool_audio">الصوت</string>
+    <string name="bar_audio">المسار الصوتي</string>
+    <string name="bar_audio_playing">يتم تشغيل %1$s</string>
+
+    <!-- Downloads & Storage card + Default video quality -->
+    <string name="settings_downloader_title">التنزيلات والتخزين</string>
+    <string name="settings_downloader_line">موقع الحفظ والصيغ وقواعد التنزيل</string>
+    <string name="settings_default_quality_title">جودة الفيديو الافتراضية</string>
+    <string name="settings_default_quality_highest">الأعلى توفرًا</string>
+    <string name="settings_default_quality_auto_line">تلقائي متكيف حتى 1080p</string>
+    <string name="settings_default_quality_highest_line">أفضل دقة متاحة لكل فيديو</string>
+    <string name="settings_default_quality_words">الجودة، الدقة، 1080p، 720p، 480p، 360p، 240p، 144p، توفير البيانات، الأعلى</string>
+    <string name="video_quality_auto">تلقائي</string>
+    <string name="video_quality_data_saver">توفير البيانات</string>
+    <string name="video_quality_full_hd">دقة عالية كاملة</string>
+    <string name="ui_subscriptions_search_hint">ابحث في القنوات المشترك بها…</string>
+    <string name="ui_subscriptions_filter_empty_title">لا توجد قنوات مطابقة</string>
+    <string name="ui_subscriptions_filter_empty_body">لا توجد فيديوهات لقنوات تطابق \"%1$s\" حالياً.</string>
+    <string name="ui_clear_search">مسح</string>
 </resources>

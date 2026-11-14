@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ClosedCaption
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Headphones
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -237,7 +238,9 @@ private fun DeckButtons(player: PlayerState) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SpeedKey(player); QualityKey(player)
                 Transport(player)
-                CaptionsKey(player); AudioOnlyKey(player); NextKey(player)
+                CaptionsKey(player)
+                if (player.details?.audioTracks.orEmpty().size > 1) AudioKey(player)
+                AudioOnlyKey(player); NextKey(player)
             }
         } else {
             // A Flip: the transport alone and big, the tools under it with their words whole.
@@ -246,7 +249,9 @@ private fun DeckButtons(player: PlayerState) {
                 Spacer(Modifier.height(20.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     SpeedKey(player, tall = true); QualityKey(player, tall = true)
-                    CaptionsKey(player, tall = true); AudioOnlyKey(player, tall = true); NextKey(player, tall = true)
+                    CaptionsKey(player, tall = true)
+                    if (player.details?.audioTracks.orEmpty().size > 1) AudioKey(player, tall = true)
+                    AudioOnlyKey(player, tall = true); NextKey(player, tall = true)
                 }
             }
         }
@@ -278,10 +283,15 @@ private fun RowScope.SpeedKey(player: PlayerState, tall: Boolean = false) =
     }
 
 @Composable
-private fun RowScope.QualityKey(player: PlayerState, tall: Boolean = false) =
+private fun RowScope.QualityKey(player: PlayerState, tall: Boolean = false) {
+    val label = QualityPreference.selectedHeightForUi(player.current?.id, player.details?.qualities.orEmpty())
+        ?.let { "${it}p" }
+        ?: player.details?.quality?.takeIf { QualityPreference.effectiveFor(player.current?.id) != VideoQualityMode.Auto }
+        ?: stringResource(R.string.bar_quality_auto)
     DeckKeyButton(label = stringResource(R.string.bar_tool_quality), tall = tall, onClick = { player.sheet = PlayerSheet.Quality }) {
-        Text(QualityPreference.height?.let { h -> "${h}p" } ?: stringResource(R.string.bar_quality_auto), color = it, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+        Text(label, color = it, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
     }
+}
 
 @Composable
 private fun RowScope.CaptionsKey(player: PlayerState, tall: Boolean = false) =
@@ -289,6 +299,12 @@ private fun RowScope.CaptionsKey(player: PlayerState, tall: Boolean = false) =
         player.captions.turn(true)
         player.sheet = PlayerSheet.Captions
     }) { Icon(Icons.Rounded.ClosedCaption, null, tint = it, modifier = Modifier.size(24.dp)) }
+
+@Composable
+private fun RowScope.AudioKey(player: PlayerState, tall: Boolean = false) =
+    DeckKeyButton(label = stringResource(R.string.bar_tool_audio), on = player.activeAudioTrack?.isDefault == false, tall = tall, onClick = {
+        player.sheet = PlayerSheet.Audio
+    }) { Icon(Icons.Rounded.GraphicEq, null, tint = it, modifier = Modifier.size(24.dp)) }
 
 @Composable
 private fun RowScope.AudioOnlyKey(player: PlayerState, tall: Boolean = false) =

@@ -103,7 +103,7 @@
     <string name="captions_show_foreign">When it isn\'t in %1$s</string>
     <!-- Setting label: the style captions are drawn in. -->
     <string name="captions_look">Look</string>
-    <string name="captions_look_clipflow" translatable="false">ClipFlow</string>
+    <string name="captions_look_clipflow" translatable="false">EZTube</string>
     <!-- Caption style chips: a plain black box, white text with a black outline, and Android's own caption settings. -->
     <string name="captions_look_classic">Classic</string>
     <string name="captions_look_outline">Outline</string>

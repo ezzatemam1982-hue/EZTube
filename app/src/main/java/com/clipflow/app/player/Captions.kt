@@ -70,7 +70,79 @@ data class CaptionChoice(val track: CaptionTrack, val translateTo: String? = nul
 @Immutable
 data class CaptionLine(val text: String, val sound: Boolean)
 
-/** The creator's lines showing at [t]: every cue running then (three at most). [cues] sorted by start. */
+private val whitespaceRun = Regex("""\s+""")
+
+/** Normalized comparison key for detecting duplicate caption cues or stacked lines. */
+internal fun normalizeCaptionKey(text: String): String =
+    whitespaceRun.replace(text.trim(), " ")
+
+/** Drops blank and repeated lines within a single caption cue while preserving line order. */
+internal fun deduplicateCueLines(text: String): String {
+    val seen = HashSet<String>()
+    val kept = ArrayList<String>()
+    for (raw in text.lines()) {
+        val trimmed = raw.trim()
+        if (trimmed.isEmpty()) continue
+        if (seen.add(normalizeCaptionKey(trimmed))) kept += trimmed
+    }
+    return kept.joinToString("\n")
+}
+
+/** Deduplicates consecutive caption lines while preserving sound/speech attributes. */
+internal fun deduplicateCaptionLines(lines: List<CaptionLine>): List<CaptionLine> {
+    if (lines.isEmpty()) return emptyList()
+    val seen = HashSet<String>()
+    val out = ArrayList<CaptionLine>(lines.size)
+    for (entry in lines) {
+        for (raw in entry.text.lines()) {
+            val trimmed = raw.trim()
+            if (trimmed.isEmpty()) continue
+            if (seen.add(normalizeCaptionKey(trimmed))) {
+                out += CaptionLine(trimmed, entry.sound)
+            }
+        }
+    }
+    return out
+}
+
+/**
+ * Merges consecutive identical overlapping cues and clamps rolling-window cues whose text is a
+ * prefix of the immediately overlapping next cue so identical blocks never stack vertically.
+ */
+internal fun deduplicateCues(cues: List<CaptionCue>): List<CaptionCue> {
+    if (cues.isEmpty()) return emptyList()
+    val out = ArrayList<CaptionCue>(cues.size)
+    for (raw in cues.sortedBy { it.startMs }) {
+        val cleaned = deduplicateCueLines(raw.text)
+        if (cleaned.isBlank()) continue
+        val cur = if (cleaned == raw.text) raw else raw.copy(text = cleaned)
+        val prev = out.lastOrNull()
+        if (prev == null) {
+            out += cur
+            continue
+        }
+        val prevKey = normalizeCaptionKey(prev.text)
+        val curKey = normalizeCaptionKey(cur.text)
+        if (prevKey == curKey && cur.startMs <= prev.endMs + 150L) {
+            out[out.lastIndex] = prev.copy(
+                endMs = maxOf(prev.endMs, cur.endMs),
+                words = prev.words ?: cur.words,
+            )
+            continue
+        }
+        if (cur.startMs < prev.endMs && curKey.startsWith(prevKey)) {
+            if (cur.startMs <= prev.startMs) {
+                out[out.lastIndex] = cur.copy(startMs = prev.startMs, endMs = maxOf(prev.endMs, cur.endMs))
+                continue
+            }
+            out[out.lastIndex] = prev.copy(endMs = cur.startMs)
+        }
+        out += cur
+    }
+    return out
+}
+
+/** The creator's lines showing at [t]: every cue running then (three distinct lines at most). [cues] sorted by start. */
 fun captionLinesAt(cues: List<CaptionCue>, t: Long): List<CaptionLine> {
     val last = cueIndexAt(cues, t)
     if (last < 0) return emptyList()
@@ -82,7 +154,7 @@ fun captionLinesAt(cues: List<CaptionCue>, t: Long): List<CaptionLine> {
         if (cue.endMs > t) active.add(0, cue)
         i--
     }
-    return active.takeLast(3).map { CaptionLine(it.text, it.sound) }
+    return deduplicateCaptionLines(active.map { CaptionLine(it.text, it.sound) }).takeLast(3)
 }
 
 /** Lines of an auto-generated track shown together, from [startMs] to [endMs]. */
@@ -96,12 +168,24 @@ data class CaptionPage(val startMs: Long, val endMs: Long, val lines: List<Capti
  * ends a pair early. A page stays until the next one starts, or until its own lines are over. [cues] sorted by start.
  */
 fun captionPages(cues: List<CaptionCue>): List<CaptionPage> {
+    val uniqueCues = deduplicateCues(cues)
     val groups = ArrayList<List<CaptionCue>>()
     var i = 0
-    while (i < cues.size) {
-        val first = cues[i]
-        val next = cues.getOrNull(i + 1)
-        if (next != null && !first.sound && !next.sound && next.startMs - first.endMs <= PairGapMs) {
+    while (i < uniqueCues.size) {
+        val first = uniqueCues[i]
+        val next = uniqueCues.getOrNull(i + 1)
+        val canPair = if (next != null && !first.sound && !next.sound &&
+            next.startMs - first.endMs <= PairGapMs &&
+            '\n' !in first.text && '\n' !in next.text
+        ) {
+            val firstKey = normalizeCaptionKey(first.text)
+            val nextKey = normalizeCaptionKey(next.text)
+            firstKey.isNotEmpty() && nextKey.isNotEmpty() &&
+                nextKey != firstKey && !nextKey.startsWith("$firstKey ")
+        } else {
+            false
+        }
+        if (canPair && next != null) {
             groups += listOf(first, next)
             i += 2
         } else {
@@ -111,7 +195,8 @@ fun captionPages(cues: List<CaptionCue>): List<CaptionPage> {
     }
     return groups.mapIndexed { k, group ->
         val next = groups.getOrNull(k + 1)?.first()?.startMs ?: Long.MAX_VALUE
-        CaptionPage(group.first().startMs, minOf(group.maxOf { it.endMs }, next), group.map { CaptionLine(it.text, it.sound) })
+        val pageLines = deduplicateCaptionLines(group.map { CaptionLine(it.text, it.sound) })
+        CaptionPage(group.first().startMs, minOf(group.maxOf { it.endMs }, next), pageLines)
     }
 }
 
@@ -158,7 +243,7 @@ object Srv3 {
     /** [timedWords]: keep each `<s>`'s timing (auto-generated tracks); otherwise just the text. */
     fun parse(xml: String, timedWords: Boolean): List<CaptionCue> {
         val body = xml.substringAfter("<body>", "").substringBefore("</body>")
-        return paragraph.findAll(body).mapNotNull { m ->
+        val raw = paragraph.findAll(body).mapNotNull { m ->
             val attrs = attributes(m.groupValues[1])
             val start = attrs["t"]?.toLongOrNull() ?: return@mapNotNull null
             val duration = attrs["d"]?.toLongOrNull() ?: return@mapNotNull null
@@ -169,10 +254,12 @@ object Srv3 {
                     CaptionWord(attributes(s.groupValues[1])["t"]?.toLongOrNull() ?: 0L, unescape(tag.replace(s.groupValues[2], "")))
                 }.filter { it.text.isNotBlank() }.toList().takeIf { it.isNotEmpty() }
             } else null
-            val text = words?.joinToString("") { it.text }?.trim()
-                ?: unescape(tag.replace(lineBreak.replace(inner, "\n"), "")).lines().joinToString("\n") { it.trim() }.trim()
+            val rawText = words?.joinToString("") { it.text }?.trim()
+                ?: unescape(tag.replace(lineBreak.replace(inner, "\n"), ""))
+            val text = deduplicateCueLines(rawText)
             if (text.isBlank()) null else CaptionCue(start, start + duration, text, words)
-        }.sortedBy { it.startMs }.toList()
+        }.toList()
+        return deduplicateCues(raw)
     }
 
     private fun attributes(s: String): Map<String, String> = attribute.findAll(s).associate { it.groupValues[1] to it.groupValues[2] }
@@ -503,7 +590,11 @@ class CaptionsState(private val scope: CoroutineScope, private val positionMs: (
         val order = (first until sentences.size) + (0 until first)
         var since = 0
         fun publish() {
-            cues = source.indices.mapNotNull { i -> done[i]?.takeIf { it.isNotBlank() }?.let { source[i].copy(text = it, words = null) } }
+            cues = deduplicateCues(
+                source.indices.mapNotNull { i ->
+                    done[i]?.takeIf { it.isNotBlank() }?.let { source[i].copy(text = it, words = null) }
+                },
+            )
         }
         CaptionTranslator.translate(from, to, order.map { s -> s to sentences[s].joinToString(" ") { source[it].text } }) { s, text ->
             val lines = sentences[s]

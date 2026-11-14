@@ -30,7 +30,7 @@
     <!-- Notification channel name (Android Settings › Notifications). -->
     <string name="app_update_channel">App updates</string>
     <!-- Notification after the app updated itself, %1$s is the version ("0.5.79"). -->
-    <string name="app_updated_title">ClipFlow updated to %1$s</string>
+    <string name="app_updated_title">EZTube updated to %1$s</string>
     <string name="app_updated_text">Tap to open</string>
 
     <!-- The Subscribe button (player and channel page). Short: shares a row with the bell key. -->
@@ -47,9 +47,9 @@
     <string name="app_bell_off_message_unnamed">Notifications off for this channel</string>
     <string name="app_bell_failed">Couldn\'t change the bell.</string>
     <!-- Notifications were refused when asked (Android 13+). -->
-    <string name="app_bell_allow_notifications">Allow ClipFlow\'s notifications to use the bell.</string>
+    <string name="app_bell_allow_notifications">Allow EZTube\'s notifications to use the bell.</string>
     <!-- Notifications are off in Android's settings; the settings page opens next. -->
-    <string name="app_bell_turn_on_notifications">Turn on ClipFlow\'s notifications to use the bell.</string>
+    <string name="app_bell_turn_on_notifications">Turn on EZTube\'s notifications to use the bell.</string>
 
     <!-- Notification channel for new videos from channels with the bell on (Android Settings › Notifications). -->
     <string name="app_new_videos_channel">New videos</string>
@@ -64,7 +64,7 @@
     <string name="app_error_youtube_returned">YouTube returned %1$s</string>
     <!-- The live activity's notification channel, and its skip buttons. %1$s = seconds ("10"). -->
     <string name="app_live_channel">Playing in the background</string>
-    <string name="app_live_channel_description">Playback controls while ClipFlow is off screen</string>
+    <string name="app_live_channel_description">Playback controls while EZTube is off screen</string>
     <string name="app_live_back">−%1$s s</string>
     <string name="app_live_forward">+%1$s s</string>
 
@@ -101,7 +101,7 @@
     <string name="ui_downloads">Downloads</string>
     <string name="player_download">Download</string>
     <string name="shorts_download">Download</string>
-    <string name="settings_downloader_title">Downloader &amp; yt-dlp</string>
-    <string name="settings_downloader_line">Download folders, formats, command templates, cookies and yt-dlp updates</string>
+    <string name="settings_downloader_title">Downloads &amp; Storage</string>
+    <string name="settings_downloader_line">Save location, formats &amp; download rules</string>
     <string name="ui_back_to_stream">Stream</string>
 </resources>

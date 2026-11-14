@@ -49,6 +49,7 @@ import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.FolderOpen
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.Share
@@ -280,6 +281,32 @@ fun PlayerScreen(
                             modifier = if (hasDescription) Modifier.pressable(pressedScale = 0.98f) { descriptionOpen = !descriptionOpen } else Modifier,
                             color = c.onSurfaceVariant, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                         )
+                        if (details?.hasDubbedAudio == true) {
+                            Spacer(Modifier.height(8.dp))
+                            val hasMultipleAudio = details.audioTracks.size > 1
+                            Row(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(c.secondaryContainer)
+                                    .then(if (hasMultipleAudio) Modifier.pressable(pressedScale = 0.96f) { state.sheet = PlayerSheet.Audio } else Modifier)
+                                    .padding(horizontal = 10.dp, vertical = 5.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                            ) {
+                                Icon(
+                                    Icons.Rounded.GraphicEq,
+                                    contentDescription = null,
+                                    tint = c.onSecondaryContainer,
+                                    modifier = Modifier.size(14.dp),
+                                )
+                                Text(
+                                    stringResource(R.string.player_audio_dubbed_badge),
+                                    color = c.onSecondaryContainer,
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                )
+                            }
+                        }
                         if (descriptionOpen && details != null) {
                             Text(
                                 details.description,

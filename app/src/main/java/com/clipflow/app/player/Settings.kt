@@ -79,6 +79,7 @@ import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.FastForward
 import androidx.compose.material.icons.rounded.Headphones
+import androidx.compose.material.icons.rounded.HighQuality
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.MailOutline
@@ -99,13 +100,16 @@ import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.ZoomOutMap
 import androidx.compose.material.icons.rounded.BrightnessMedium
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -869,6 +873,7 @@ private fun android.content.Context.openOrSay(intent: Intent, onMessage: (String
 @Composable
 private fun summaryOf(page: SettingsPage): String = when (page) {
     SettingsPage.Playback -> listOfNotNull(
+        if (QualityPreference.defaultMode != VideoQualityMode.Auto) defaultQualityLabel(QualityPreference.defaultMode) else null,
         // A TV has neither (TvPlayer): its controls are the remote's.
         if (LocalWindowLayout.current.tv) null
         else stringResource(if (PlayerControls.inBar) R.string.ui_player_controls_pill else R.string.ui_player_controls_on_video),
@@ -903,6 +908,24 @@ private fun summaryOf(page: SettingsPage): String = when (page) {
         if (CrashLog.unshared) stringResource(R.string.settings_crash_tile) else null,
     ).joinDots()
     SettingsPage.Account -> Account.profile?.let { p -> listOfNotNull(p.name, p.email, p.handle?.takeIf { it != p.email }).joinDots() } ?: stringResource(R.string.ui_account_pitch_title)
+}
+
+@Composable
+private fun defaultQualityLabel(mode: VideoQualityMode): String = when (mode) {
+    VideoQualityMode.Auto -> stringResource(R.string.video_quality_auto)
+    VideoQualityMode.Highest -> stringResource(R.string.settings_default_quality_highest)
+    is VideoQualityMode.Fixed -> "${mode.height}p"
+}
+
+@Composable
+private fun defaultQualityNote(mode: VideoQualityMode): String? = when (mode) {
+    VideoQualityMode.Auto -> stringResource(R.string.settings_default_quality_auto_line)
+    VideoQualityMode.Highest -> stringResource(R.string.settings_default_quality_highest_line)
+    is VideoQualityMode.Fixed -> when {
+        mode.height >= 1080 -> stringResource(R.string.video_quality_full_hd)
+        mode.height <= 240 -> stringResource(R.string.video_quality_data_saver)
+        else -> null
+    }
 }
 
 @Composable
@@ -949,6 +972,7 @@ private fun entries(): List<Entry> = buildList {
     SettingsPage.entries.forEach { add(Entry(it, null, str(it.titleRes), emptyList())) }
     val pb = SettingsPage.Playback
     add(Entry(pb, "controls", str(R.string.ui_player_controls), listOf(str(R.string.ui_player_controls_pill), str(R.string.ui_player_controls_on_video))))
+    add(Entry(pb, "quality", str(R.string.settings_default_quality_title), listOf(str(R.string.video_quality_auto), str(R.string.settings_default_quality_highest), str(R.string.settings_default_quality_words))))
     add(Entry(pb, "speed", str(R.string.settings_speed_remember_title), listOf(str(R.string.settings_speed_keep), str(R.string.bar_speed_remember))))
     add(Entry(pb, "seek", str(R.string.settings_seek_step_title), listOf(str(R.string.settings_seek_step_line)) + SeekStep.choices.map { str(R.string.settings_seconds_short, it.toString()) }))
     add(Entry(pb, "chapters", str(R.string.settings_chapters_open_title), listOf(str(R.string.settings_chapters_open_line), str(R.string.bar_chapters))))
@@ -979,7 +1003,7 @@ private fun entries(): List<Entry> = buildList {
     add(Entry(SettingsPage.Account, "account", str(if (Account.signedIn) R.string.ui_sign_out else R.string.ui_sign_in), listOfNotNull(Account.profile?.name, "Google")))
     val ab = SettingsPage.About
     add(Entry(ab, "version", str(R.string.settings_version, BuildConfig.VERSION_NAME), listOf(str(R.string.settings_checking))))
-    add(Entry(ab, "developer", str(R.string.developer), listOf(str(R.string.developer_name), "Ezzat Emam", "ClipFlow")))
+    add(Entry(ab, "developer", str(R.string.developer), listOf(str(R.string.developer_name), "Ezzat Emam", "EZTube")))
     add(Entry(ab, "crash", str(R.string.settings_crash_title), listOf(str(R.string.settings_crash_none), str(R.string.settings_crash_saved))))
     add(Entry(ab, "source", str(R.string.settings_source), listOf(str(R.string.settings_source_line), "GitHub")))
 }
@@ -1234,12 +1258,13 @@ private fun PlaybackPage(player: PlayerState) {
     // A TV (TvPlayer) has no playback pill, chapter list, picture-in-picture, pinch or live activity: only what still
     // applies there is shown.
     val tv = LocalWindowLayout.current.tv
+    var showQualityPicker by remember { mutableStateOf(false) }
     val controls = when {
         tv -> listOf(1)
         pipSupported -> listOf(0, 1, 2, 3)
         else -> listOf(0, 1, 2)
     }
-    val picture = if (tv) listOf(0, 1, 3) else listOf(0, 1, 2, 3)
+    val picture = if (tv) listOf(0, 1, 2, 4) else listOf(0, 1, 2, 3, 4)
     Spacer(Modifier.height(14.dp))
     // The controls and how they behave.
     Joined(controls.size) { i, shape ->
@@ -1281,7 +1306,13 @@ private fun PlaybackPage(player: PlayerState) {
     // Speed, picture and sound.
     Joined(picture.size) { i, shape ->
         when (picture[i]) {
-            0 -> SwitchSetting(
+            0 -> LinkSetting(
+                "quality", shape,
+                Icons.Rounded.HighQuality,
+                stringResource(R.string.settings_default_quality_title),
+                defaultQualityLabel(QualityPreference.defaultMode),
+            ) { showQualityPicker = true }
+            1 -> SwitchSetting(
                 "speed", shape,
                 stringResource(R.string.settings_speed_remember_title),
                 if (PlaybackSpeed.remember) stringResource(R.string.settings_speed_remember_on, PlaybackSpeed.label(PlaybackSpeed.saved))
@@ -1289,14 +1320,14 @@ private fun PlaybackPage(player: PlayerState) {
                 PlaybackSpeed.remember,
                 icon = Icons.Rounded.Speed,
             ) { if (it != PlaybackSpeed.remember) player.toggleRememberSpeed() }
-            1 -> SwitchSetting(
+            2 -> SwitchSetting(
                 "music", shape,
                 stringResource(R.string.settings_music_normal_title),
                 stringResource(R.string.settings_music_normal_line),
                 PlaybackSpeed.musicAtNormal,
                 icon = Icons.Rounded.MusicNote,
             ) { PlaybackSpeed.chooseMusicAtNormal(it) }
-            2 -> SwitchSetting(
+            3 -> SwitchSetting(
                 "zoom", shape,
                 stringResource(R.string.settings_zoom_fill_title),
                 stringResource(if (FullscreenZoom.fill) R.string.settings_zoom_fill_on else R.string.settings_zoom_fill_off),
@@ -1335,6 +1366,73 @@ private fun PlaybackPage(player: PlayerState) {
     Spacer(Modifier.height(14.dp))
     // Off screen.
     if (!tv) LiveActivitySetting(player)
+    if (showQualityPicker) {
+        DefaultVideoQualitySheet(
+            selected = QualityPreference.defaultMode,
+            onPick = { mode ->
+                QualityPreference.setDefault(mode)
+                showQualityPicker = false
+            },
+            onDismiss = { showQualityPicker = false },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DefaultVideoQualitySheet(
+    selected: VideoQualityMode,
+    onPick: (VideoQualityMode) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val c = MaterialTheme.colorScheme
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = c.surfaceContainerLow,
+    ) {
+        Column(
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+        ) {
+            Text(
+                stringResource(R.string.settings_default_quality_title),
+                fontFamily = RoundedHeavy,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 21.sp,
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp),
+            )
+            Spacer(Modifier.height(6.dp))
+            val choices = VideoQualityMode.settingsChoices
+            Joined(choices.size) { i, shape ->
+                val option = choices[i]
+                val on = option == selected
+                SettingBox(null, shape, Modifier.pressable(pressedScale = 0.98f) { onPick(option) }) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                defaultQualityLabel(option),
+                                fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                fontSize = 15.sp,
+                            )
+                            defaultQualityNote(option)?.let { note ->
+                                Spacer(Modifier.height(2.dp))
+                                Text(note, color = c.onSurfaceVariant, fontSize = 12.5.sp)
+                            }
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Icon(
+                            if (on) Icons.Rounded.RadioButtonChecked else Icons.Rounded.RadioButtonUnchecked,
+                            if (on) stringResource(R.string.ui_selected) else null,
+                            tint = if (on) c.primary else c.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+        }
+    }
 }
 
 /**
@@ -1706,7 +1804,7 @@ private fun AboutPage(player: PlayerState) {
     Spacer(Modifier.height(14.dp))
     val scope = rememberCoroutineScope()
     val shareTitle = stringResource(R.string.settings_crash_share)
-    val developerCredit = "${stringResource(R.string.developer_name)} (ClipFlow)"
+    val developerCredit = "${stringResource(R.string.developer_name)} (EZTube)"
     Joined(4) { i, shape ->
         when (i) {
             0 -> LinkSetting("version", shape, Icons.Rounded.SystemUpdateAlt, stringResource(R.string.settings_version, BuildConfig.VERSION_NAME), updateStatus()) {
@@ -1725,7 +1823,7 @@ private fun AboutPage(player: PlayerState) {
                     scope.launch {
                         val text = withContext(Dispatchers.IO) { CrashLog.report(context) }
                         val send = Intent(Intent.ACTION_SEND).setType("text/plain")
-                            .putExtra(Intent.EXTRA_SUBJECT, "ClipFlow crash report")
+                            .putExtra(Intent.EXTRA_SUBJECT, "EZTube crash report")
                             .putExtra(Intent.EXTRA_TEXT, text)
                         context.openOrSay(Intent.createChooser(send, shareTitle)) { player.actionMessage = it }
                         CrashLog.markShared()

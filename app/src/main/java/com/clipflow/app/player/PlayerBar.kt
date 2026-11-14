@@ -65,6 +65,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Fullscreen
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Headphones
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PictureInPictureAlt
@@ -190,15 +191,16 @@ private const val QualityPickedMs = 420L
 /** Springs for the bar's values; a tiny visibility threshold so nothing snaps at the end (0.5.7). */
 private val BarSpring = spring(dampingRatio = 0.78f, stiffness = 420f, visibilityThreshold = 0.0005f)
 
-internal enum class BarTool { Speed, Quality, Captions, Downloads, Pip, Fullscreen, Next }
+internal enum class BarTool { Speed, Quality, Audio, Captions, Downloads, Pip, Fullscreen, Next }
 
 /** What the bar can turn into besides the card. */
-internal enum class BarPanel { Quality, Speed, Chapters, Captions }
+internal enum class BarPanel { Quality, Speed, Audio, Chapters, Captions }
 
-/** The card's tools, left to right: Captions only when the video has some, Next only when the queue really has something next. */
+/** The card's tools, left to right: Audio/Captions only when the video has them, Next only when the queue really has something next. */
 internal fun barTools(player: PlayerState, pip: PipController?): List<BarTool> = buildList {
     add(BarTool.Speed)
     add(BarTool.Quality)
+    if (player.details?.audioTracks.orEmpty().size > 1) add(BarTool.Audio)
     if (player.captions.tracks.isNotEmpty()) add(BarTool.Captions)
     add(BarTool.Downloads)
     if (pip?.supported == true) add(BarTool.Pip)
@@ -227,7 +229,7 @@ internal class PlayerBarState(private val scope: CoroutineScope) {
     var tools by mutableStateOf(listOf(BarTool.Speed, BarTool.Quality, BarTool.Fullscreen))
     /** The video has chapters (set by the bar): the card's bottom strip becomes the Chapters button. */
     var hasChapters by mutableStateOf(false)
-    /** The open panel's list (chapters, captions), so a pull down from its top closes the panel rather than scrolling. */
+    /** The open panel's list (chapters, captions, audio), so a pull down from its top closes the panel rather than scrolling. */
     var panelList: LazyListState? = null
     /** The captions panel lists every translation language, not just the likely ones. */
     var captionsAll by mutableStateOf(false)
@@ -283,12 +285,17 @@ private fun PlayerBarState.cardBelow(): Dp = if (hasChapters) CardBelowChapters 
 /** Quality rows shown: Auto + every height. */
 private fun qualityRows(player: PlayerState) = 1 + (player.details?.qualities?.size ?: 0)
 
+/** Audio rows height: every distinct track, scrollable past ListMaxRows. */
+private fun audioRowsHeight(player: PlayerState): Dp =
+    (ListRowHeight + ListRowGap) * (player.details?.audioTracks?.size ?: 0).coerceIn(1, ListMaxRows)
+
 private fun Density.panelSize(kind: BarPanel, player: PlayerState, captionsAll: Boolean): Size = when (kind) {
     BarPanel.Quality -> Size(
         QualityWidth.toPx(),
         (ListHeader + PlayerBarHeight + 6.dp).toPx() + qualityRows(player).coerceAtMost(ListMaxRows) * (ListRowHeight + ListRowGap).toPx(),
     )
     BarPanel.Speed -> Size(SpeedWidth.toPx(), (SpeedPanelHeight + PlayerBarHeight + 6.dp).toPx())
+    BarPanel.Audio -> Size(QualityWidth.toPx(), (ListHeader + PlayerBarHeight + 6.dp + audioRowsHeight(player)).toPx())
     BarPanel.Chapters -> Size(ChaptersWidth.toPx(), (ListHeader + PlayerBarHeight + 6.dp + chapterRowsHeight(player)).toPx())
     BarPanel.Captions -> Size(QualityWidth.toPx(), (ListHeader + PlayerBarHeight + 6.dp + captionRowsHeight(player, captionsAll)).toPx())
 }
@@ -306,7 +313,11 @@ private fun chapterRowsHeight(player: PlayerState): Dp =
 /** Where a scrolling panel's rows sit (the bar's own pixels, top to bottom). */
 private fun Density.panelListSpan(kind: BarPanel, barH: Float, player: PlayerState, captionsAll: Boolean): ClosedFloatingPointRange<Float> {
     val bottom = barH - (PlayerBarHeight + 6.dp).toPx()
-    val rows = if (kind == BarPanel.Captions) captionRowsHeight(player, captionsAll) else chapterRowsHeight(player)
+    val rows = when (kind) {
+        BarPanel.Captions -> captionRowsHeight(player, captionsAll)
+        BarPanel.Audio -> audioRowsHeight(player)
+        else -> chapterRowsHeight(player)
+    }
     return (bottom - rows.toPx())..bottom
 }
 
@@ -432,8 +443,8 @@ internal fun Modifier.playerBarGestures(
             val trackPx = TrackWidth.toPx()
             // The knob sits under the thumb: the track (centred in the bar) maps straight onto the video.
             fun landingAt(x: Float): Long = (((x - size.width / 2f) / trackPx + 0.5f).coerceIn(0f, 1f) * duration).toLong()
-            // The chapter and caption lists scroll under the finger; pulled down from the top they close like the panel.
-            val panelList = bar.panelList.takeIf { panelOpen && (bar.panelKind == BarPanel.Chapters || bar.panelKind == BarPanel.Captions) }
+            // The chapter, caption and audio lists scroll under the finger; pulled down from the top they close like the panel.
+            val panelList = bar.panelList.takeIf { panelOpen && (bar.panelKind == BarPanel.Chapters || bar.panelKind == BarPanel.Captions || bar.panelKind == BarPanel.Audio) }
             val inList = panelList != null && down.position.y in panelListSpan(bar.panelKind, size.height.toFloat(), player, bar.captionsAll)
             val tracker = VelocityTracker()
             var moved = Offset.Zero
@@ -689,7 +700,8 @@ internal fun BarCard(bar: PlayerBarState, player: PlayerState, gate: () -> Float
                 tools.forEach { tool ->
                     val hot = bar.hot == tool
                     val sticky = tool == BarTool.Speed && PlaybackSpeed.remember && !PlaybackSpeed.isNormal(player.speed) ||
-                        tool == BarTool.Captions && player.captions.on
+                        tool == BarTool.Captions && player.captions.on ||
+                        tool == BarTool.Audio && player.activeAudioTrack?.isDefault == false
                     val filled = hot || sticky
                     Column(
                         Modifier
@@ -702,10 +714,19 @@ internal fun BarCard(bar: PlayerBarState, player: PlayerState, gate: () -> Float
                     ) {
                         val ink = if (filled) c.onPrimary else c.onSurface
                         val sub = if (filled) c.onPrimary else c.onSurfaceVariant
-                        val glyph = Modifier.size(21.dp)
+                        val compactRow = tools.size >= 7
+                        val glyph = Modifier.size(if (compactRow) 18.dp else 21.dp)
                         when (tool) {
-                            BarTool.Speed -> Text(PlaybackSpeed.label(player.speed) + "×", color = ink, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.height(21.dp))
-                            BarTool.Quality -> Text(QualityPreference.height?.let { "${it}p" } ?: stringResource(R.string.bar_quality_auto), color = ink, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.height(21.dp))
+                            BarTool.Speed -> Text(PlaybackSpeed.label(player.speed) + "×", color = ink, fontSize = if (compactRow) 11.5.sp else 13.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.height(if (compactRow) 18.dp else 21.dp))
+                            BarTool.Quality -> {
+                                val chosen = QualityPreference.selectedHeightForUi(player.current?.id, player.details?.qualities.orEmpty())
+                                val qualityText = chosen?.let { "${it}p" }
+                                    ?: (QualityPreference.effectiveFor(player.current?.id) as? VideoQualityMode.Fixed)?.let { "${it.height}p" }
+                                    ?: player.details?.quality?.takeIf { QualityPreference.effectiveFor(player.current?.id) == VideoQualityMode.Highest }
+                                    ?: stringResource(R.string.bar_quality_auto)
+                                Text(qualityText, color = ink, fontSize = if (compactRow) 11.sp else 12.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.height(if (compactRow) 18.dp else 21.dp))
+                            }
+                            BarTool.Audio -> Icon(Icons.Rounded.GraphicEq, null, tint = ink, modifier = glyph)
                             BarTool.Captions -> Icon(Icons.Rounded.ClosedCaption, null, tint = ink, modifier = glyph)
                             BarTool.Downloads -> Icon(Icons.Rounded.FolderOpen, null, tint = ink, modifier = glyph)
                             BarTool.Pip -> Icon(Icons.Rounded.PictureInPictureAlt, null, tint = ink, modifier = glyph)
@@ -716,6 +737,7 @@ internal fun BarCard(bar: PlayerBarState, player: PlayerState, gate: () -> Float
                             when (tool) {
                                 BarTool.Speed -> stringResource(R.string.bar_tool_speed)
                                 BarTool.Quality -> stringResource(R.string.bar_tool_quality)
+                                BarTool.Audio -> stringResource(R.string.bar_tool_audio)
                                 BarTool.Downloads -> stringResource(R.string.ui_downloads)
                                 BarTool.Pip -> stringResource(R.string.bar_tool_pip)
                                 BarTool.Captions -> player.captions.choice?.takeIf { player.captions.on }?.label ?: stringResource(R.string.bar_tool_captions)
@@ -869,6 +891,7 @@ internal fun BarProgress(bar: PlayerBarState, player: PlayerState, played: Anima
 internal fun BarPanelContent(bar: PlayerBarState, player: PlayerState, gate: () -> Float, scope: CoroutineScope, sheets: StoryboardSheets) {
     when (bar.panelKind) {
         BarPanel.Quality -> BarQualityList(bar, player, gate, scope)
+        BarPanel.Audio -> BarAudioList(bar, player, gate, scope)
         BarPanel.Chapters -> BarChaptersList(bar, player, gate, scope, sheets)
         BarPanel.Captions -> BarCaptionsList(bar, player, gate, scope)
         BarPanel.Speed -> Box(Modifier.fillMaxSize()) {
@@ -891,6 +914,106 @@ internal fun BarPanelContent(bar: PlayerBarState, player: PlayerState, gate: () 
 }
 
 /**
+ * Available audio tracks (original & dubbed languages) inside the bar; tapping switches audio live
+ * without restarting video playback.
+ */
+@Composable
+private fun BarAudioList(bar: PlayerBarState, player: PlayerState, gate: () -> Float, scope: CoroutineScope) {
+    val c = MaterialTheme.colorScheme
+    val view = LocalView.current
+    val tracks = player.details?.audioTracks.orEmpty()
+    if (tracks.isEmpty()) return
+    val active = player.activeAudioTrack
+    val listState = rememberLazyListState()
+    DisposableEffect(listState) {
+        bar.panelList = listState
+        onDispose { if (bar.panelList === listState) bar.panelList = null }
+    }
+    val live = bar.panelLive
+    val rowsHeight = audioRowsHeight(player)
+    Box(Modifier.fillMaxSize()) {
+        Row(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = PlayerBarHeight + 6.dp + rowsHeight + 10.dp)
+                .width(QualityWidth - 36.dp)
+                .graphicsLayer {
+                    val l = (bar.panel.value * gate()).coerceIn(0f, 1f)
+                    alpha = ramp(l, 0.5f, 1f)
+                    translationY = 10.dp.toPx() * (1f - l)
+                },
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            Text(stringResource(R.string.bar_audio), color = c.onSurface, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
+            active?.let {
+                Text(
+                    stringResource(R.string.bar_audio_playing, it.displayName),
+                    color = c.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Bold,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = PlayerBarHeight + 6.dp)
+                .width(QualityWidth - 24.dp)
+                .height(rowsHeight),
+            verticalArrangement = Arrangement.spacedBy(ListRowGap),
+        ) {
+            itemsIndexed(tracks, key = { _, item -> item.id }) { index, option ->
+                val selected = option.id == active?.id
+                val fromBottom = (tracks.size - 1 - index).coerceAtMost(ListMaxRows)
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(ListRowHeight)
+                        .graphicsLayer {
+                            val k = ramp(bar.panel.value * gate(), 0.12f + fromBottom * 0.05f, 0.62f + fromBottom * 0.05f)
+                            alpha = k
+                            translationY = 18.dp.toPx() * (1f - Motion.Emphasized.transform(k))
+                        }
+                        .pressable(enabled = live, pressedScale = 0.97f) {
+                            haptic(view, HapticFeedbackConstants.CONTEXT_CLICK)
+                            player.selectAudioTrack(option.id)
+                            scope.launch { delay(QualityPickedMs); bar.closeAll() }
+                        }
+                        .clip(RoundedCornerShape(50))
+                        .background(if (selected) c.primary else c.primary.copy(alpha = 0f))
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val ink = if (selected) c.onPrimary else c.onSurface
+                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            option.displayName,
+                            color = ink,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        Text(
+                            " · " + stringResource(audioKindLabelRes(option.kind)),
+                            color = if (selected) c.onPrimary.copy(alpha = 0.8f) else c.onSurfaceVariant,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                        )
+                    }
+                    Icon(
+                        Icons.Rounded.Check, if (selected) stringResource(R.string.bar_selected) else null, tint = c.onPrimary,
+                        modifier = Modifier.size(20.dp).graphicsLayer { alpha = if (selected) 1f else 0f },
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
  * The quality list inside the bar: Auto (and what it's playing now) and every height, the
  * current one filled with a check. Rows rise in from the bottom as the list opens.
  */
@@ -900,7 +1023,8 @@ private fun BarQualityList(bar: PlayerBarState, player: PlayerState, gate: () ->
     val view = LocalView.current
     val details = player.details ?: return
     val rows = listOf<Int?>(null) + details.qualities
-    var picked by remember(details.item.id) { mutableStateOf(QualityPreference.height) }
+    val chosen = QualityPreference.selectedHeightForUi(details.item.id, details.qualities)
+    var picked by remember(details.item.id, chosen) { mutableStateOf(chosen) }
     val live = bar.panelLive
     val rowsHeight = (ListRowHeight + ListRowGap) * rows.size.coerceAtMost(ListMaxRows)
     Box(Modifier.fillMaxSize()) {
@@ -1194,6 +1318,7 @@ internal fun pickTool(tool: BarTool, bar: PlayerBarState, player: PlayerState, p
     when (tool) {
         BarTool.Speed -> bar.openPanel(BarPanel.Speed)
         BarTool.Quality -> bar.openPanel(BarPanel.Quality)
+        BarTool.Audio -> bar.openPanel(BarPanel.Audio)
         // Turns captions on at once (Derek: no second press), and opens the list to pick another language.
         BarTool.Captions -> { player.captions.turn(true); bar.openPanel(BarPanel.Captions) }
         BarTool.Downloads -> {

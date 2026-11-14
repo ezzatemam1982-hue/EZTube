@@ -84,7 +84,7 @@
     <string name="ui_sign_in_line">accounts.google.com · kept encrypted on this phone</string>
     <string name="ui_sign_in_error">Signed in, but YouTube didn\'t answer. Check your connection and try again.</string>
     <string name="ui_finishing_sign_in">Finishing sign-in…</string>
-    <string name="ui_signed_in_toast">Signed in to ClipFlow</string>
+    <string name="ui_signed_in_toast">Signed in to EZTube</string>
     <!-- Accessibility label of the account button when signed out. -->
     <string name="ui_sign_in">Sign in</string>
     <string name="ui_account_pitch_title">Your YouTube, without the ads</string>
@@ -100,6 +100,9 @@
     <string name="ui_subscriptions_title">Subscriptions</string>
     <string name="ui_subscriptions_signed_out_title">Your subscriptions</string>
     <string name="ui_subscriptions_signed_out_body">Sign in with Google to see new videos from the channels you follow.</string>
+    <string name="ui_subscriptions_search_hint">Search subscribed channels…</string>
+    <string name="ui_subscriptions_filter_empty_title">No matching channels</string>
+    <string name="ui_subscriptions_filter_empty_body">No videos from channels matching \"%1$s\" yet.</string>
     <!-- Page title (large header). -->
     <string name="ui_library_title">Library</string>
     <string name="ui_library_signed_out_title">Your library</string>

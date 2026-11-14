@@ -128,7 +128,7 @@ class BgUtilsPoTokenGeneratorService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("ClipFlow BgUtils POT Provider\n")
+            .setContentTitle("EZTube BgUtils POT Provider\n")
             .setContentText(description)
             .setSmallIcon(R.drawable.baseline_token_24)
             .setPriority(NotificationCompat.PRIORITY_LOW)

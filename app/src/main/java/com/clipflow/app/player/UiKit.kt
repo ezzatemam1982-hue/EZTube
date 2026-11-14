@@ -37,7 +37,8 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.PathNode
 import androidx.compose.ui.graphics.vector.VectorPath
-import androidx.compose.material.icons.rounded.FastForward
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -147,16 +148,14 @@ fun ScreenHeader(
 
 @Composable
 fun BrandMark() {
-    val c = MaterialTheme.colorScheme
-    Box(
+    Image(
+        painter = painterResource(R.drawable.ic_brand_mark),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
         modifier = Modifier
-            .size(width = 40.dp, height = 30.dp)
-            .clip(RoundedCornerShape(11.dp))
-            .background(Brush.linearGradient(listOf(c.primary, c.primary.copy(alpha = 0.82f)))),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(Icons.Rounded.FastForward, contentDescription = null, tint = c.onPrimary, modifier = Modifier.size(20.dp))
-    }
+            .size(34.dp)
+            .clip(RoundedCornerShape(10.dp)),
+    )
 }
 
 @Composable

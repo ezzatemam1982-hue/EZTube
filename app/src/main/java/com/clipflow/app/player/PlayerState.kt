@@ -20,10 +20,13 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -116,6 +119,18 @@ class PlayerState(private val scope: CoroutineScope) {
     var decodedHeight by mutableStateOf<Int?>(null)
         private set
 
+    /** Active audio track's id ([AudioTrackOption.id]); null until tracks or details resolve. */
+    var selectedAudioTrackId by mutableStateOf<String?>(null)
+        private set
+    /** Non-null once the user explicitly chooses an audio track for the current video. */
+    private var manualAudioTrackId: String? = null
+
+    val activeAudioTrack: AudioTrackOption?
+        get() {
+            val tracks = details?.audioTracks.orEmpty()
+            return tracks.firstOrNull { it.id == selectedAudioTrackId } ?: tracks.firstOrNull { it.isDefault } ?: tracks.firstOrNull()
+        }
+
     var expanded by mutableStateOf(false)
     /** Fullscreen: requested (button, swipe up; upright for a vertical video) or entered (rotation). */
     var fullscreen by mutableStateOf(false)
@@ -182,6 +197,10 @@ class PlayerState(private val scope: CoroutineScope) {
         aspectFromFrames = false
         decodedHeight = null
         playingFormat = null
+        manualAudioTrackId = null
+        selectedAudioTrackId = null
+        controller?.let(::clearAudioTrackOverride)
+        QualityPreference.clearVideoOverride()
         loading = true
         sheet = null
         comments.clearFor(item.id)
@@ -194,6 +213,7 @@ class PlayerState(private val scope: CoroutineScope) {
                 .onSuccess { d ->
                     Log.i("ClipFlowTime", "details +${android.os.SystemClock.elapsedRealtime() - openedAt}ms")
                     details = d
+                    selectedAudioTrackId = d.audioTracks.firstOrNull { it.isDefault }?.id ?: d.audioTracks.firstOrNull()?.id
                     // The player takes the video's shape before its first frame arrives.
                     if (!aspectFromFrames) d.aspect?.let { videoAspect = it }
                     // Comments wait for the stream data: their request duplicates the video
@@ -239,6 +259,9 @@ class PlayerState(private val scope: CoroutineScope) {
 
     private fun startPlayback(item: VideoItem) {
         val player = controller ?: run { pendingStart = item; return }
+        // Clear any per-video audio override so new videos start on the ORIGINAL audio track.
+        manualAudioTrackId = null
+        clearAudioTrackOverride(player)
         // Pick up where this video was left off (ResumeStore; written by the service).
         replaceCurrent(player, item, positionMs = ResumeStore.startPosition(item.id))
         player.play()
@@ -512,19 +535,76 @@ class PlayerState(private val scope: CoroutineScope) {
     }
 
     /**
-     * Switches quality (null = Auto). The media source is rebuilt from the cached stream
-     * info at the same position, keeping play/pause as it was.
+     * Switches quality (null = Auto) for the active video via a per-video override, leaving
+     * Settings' locked default quality intact for subsequent videos. The media source is
+     * rebuilt from the cached stream info at the same position.
      */
     fun setQuality(height: Int?) {
-        QualityPreference.set(height)
+        val item = details?.item ?: current
+        val mode = if (height == null) VideoQualityMode.Auto else VideoQualityMode.Fixed(height)
+        QualityPreference.setVideoOverride(item?.id, mode)
         val player = controller ?: return
-        val item = details?.item ?: current ?: return
+        item ?: return
         val position = player.currentPosition
         val playWhenReady = player.playWhenReady
         replaceCurrent(player, item, position)
         player.playWhenReady = playWhenReady
         val info = StreamCache.get(item.id) ?: return
-        details = details?.copy(quality = StreamSelection.pick(info).playedHeight?.let { "${it}p" })
+        details = details?.copy(quality = StreamSelection.pick(info, QualityPreference.effectiveFor(item.id)).playedHeight?.let { "${it}p" })
+    }
+
+    /**
+     * Switches the active audio track live without restarting video playback.
+     */
+    fun selectAudioTrack(trackId: String) {
+        val tracks = details?.audioTracks.orEmpty()
+        val option = tracks.firstOrNull { it.id == trackId } ?: return
+        manualAudioTrackId = option.id
+        selectedAudioTrackId = option.id
+        val player = controller ?: return
+        applyAudioTrackOverride(player, player.currentTracks, option.id)
+    }
+
+    private fun clearAudioTrackOverride(player: Player) {
+        val params = player.trackSelectionParameters
+        if (params.overrides.values.none { it.type == C.TRACK_TYPE_AUDIO }) return
+        player.trackSelectionParameters = params.buildUpon()
+            .clearOverridesOfType(C.TRACK_TYPE_AUDIO)
+            .build()
+    }
+
+    private fun applyAudioTrackOverride(player: Player, tracks: Tracks, trackId: String): Boolean {
+        val targetGroup = tracks.groups.firstOrNull { group ->
+            group.type == C.TRACK_TYPE_AUDIO &&
+                (0 until group.length).any { parseAudioTrackId(group.getTrackFormat(it).id) == trackId }
+        } ?: return false
+        if (targetGroup.isSelected) return true
+        val trackIndex = (0 until targetGroup.length)
+            .firstOrNull { parseAudioTrackId(targetGroup.getTrackFormat(it).id) == trackId }
+            ?: 0
+        player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
+            .clearOverridesOfType(C.TRACK_TYPE_AUDIO)
+            .setOverrideForType(TrackSelectionOverride(targetGroup.mediaTrackGroup, trackIndex))
+            .build()
+        return true
+    }
+
+    private fun syncAudioTrackFromPlayer(tracks: Tracks) {
+        val selectedId = selectedAudioTrackIdFromTracks(tracks)
+        val requestedId = manualAudioTrackId
+        val player = controller
+        if (requestedId != null && player != null && selectedId != requestedId) {
+            if (applyAudioTrackOverride(player, tracks, requestedId)) {
+                selectedAudioTrackId = requestedId
+                return
+            }
+        }
+        if (selectedId != null) {
+            selectedAudioTrackId = selectedId
+        } else if (selectedAudioTrackId == null) {
+            selectedAudioTrackId = details?.audioTracks?.firstOrNull { it.isDefault }?.id
+                ?: details?.audioTracks?.firstOrNull()?.id
+        }
     }
 
     private fun fail(t: Throwable) {
@@ -701,6 +781,10 @@ class PlayerState(private val scope: CoroutineScope) {
 
     fun close() {
         loadJob?.cancel()
+        manualAudioTrackId = null
+        selectedAudioTrackId = null
+        controller?.let(::clearAudioTrackOverride)
+        QualityPreference.clearVideoOverride()
         controller?.run { stop(); clearMediaItems() }
         queue = emptyList()
         expanded = false
@@ -747,7 +831,14 @@ class PlayerState(private val scope: CoroutineScope) {
         comments.clearFor(item.id)
         loadAccountState(item.id)
         loadJob = scope.launch {
-            runCatching { YouTube.details(item.id) }.onSuccess { details = it; current = it.item; captions.useTracks(it.captions) }
+            runCatching { YouTube.details(item.id) }.onSuccess {
+                details = it
+                current = it.item
+                captions.useTracks(it.captions)
+                selectedAudioTrackId = selectedAudioTrackIdFromTracks(player.currentTracks)
+                    ?: it.audioTracks.firstOrNull { track -> track.isDefault }?.id
+                    ?: it.audioTracks.firstOrNull()?.id
+            }
             comments.load(item.id)
         }
     }
@@ -793,7 +884,8 @@ class PlayerState(private val scope: CoroutineScope) {
 
         override fun onVideoSizeChanged(videoSize: VideoSize) = takeVideoSize(videoSize)
 
-        override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
+        override fun onTracksChanged(tracks: Tracks) {
+            syncAudioTrackFromPlayer(tracks)
             controller?.videoSize?.height?.takeIf { it > 0 }?.let(::describeFormat)
         }
 
@@ -848,6 +940,23 @@ class PlayerState(private val scope: CoroutineScope) {
     }
 }
 
+internal fun parseAudioTrackId(formatId: String?): String? {
+    if (formatId.isNullOrBlank()) return null
+    val index = formatId.indexOf(AUDIO_TRACK_ID_PREFIX)
+    if (index < 0) return null
+    return formatId.substring(index + AUDIO_TRACK_ID_PREFIX.length).takeIf { it.isNotEmpty() }
+}
+
+internal fun selectedAudioTrackIdFromTracks(tracks: Tracks): String? {
+    val audioGroup = tracks.groups.firstOrNull { it.type == C.TRACK_TYPE_AUDIO && it.isSelected } ?: return null
+    for (i in 0 until audioGroup.length) {
+        if (audioGroup.isTrackSelected(i)) {
+            parseAudioTrackId(audioGroup.getTrackFormat(i).id)?.let { return it }
+        }
+    }
+    return parseAudioTrackId(audioGroup.getTrackFormat(0).id)
+}
+
 @Composable
 fun rememberPlayerState(): PlayerState {
     val context = LocalContext.current
@@ -884,7 +993,7 @@ fun rememberPlayerState(): PlayerState {
     return state
 }
 
-enum class PlayerSheet { Quality, Speed, Comments, Queue, Captions, Transcript }
+enum class PlayerSheet { Quality, Speed, Audio, Comments, Queue, Captions, Transcript }
 
 /** Comments and the transcript open as a panel inside the player (PlayerScreen), not a sheet. */
 val PlayerSheet?.isPanel: Boolean get() = this == PlayerSheet.Comments || this == PlayerSheet.Transcript

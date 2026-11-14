@@ -8,6 +8,7 @@
   <string name="video_audio_only_on">Audio only is on</string>
   <string name="video_playback_speed">Playback speed</string>
   <string name="video_captions">Captions</string>
+  <string name="video_audio_track">Audio track</string>
   <string name="video_pip">Picture-in-picture</string>
   <string name="video_next">Next</string>
   <string name="video_fullscreen">Fullscreen</string>
@@ -21,7 +22,7 @@
   <!-- Accessibility label of the check mark on the chosen row of a picker. -->
   <string name="video_selected">Selected</string>
   <!-- Message shown when picture-in-picture can't start because the user turned it off in Android's settings. -->
-  <string name="video_pip_off">Picture-in-picture is turned off for ClipFlow in Settings.</string>
+  <string name="video_pip_off">Picture-in-picture is turned off for EZTube in Settings.</string>
   <!-- Quality: automatic. Also the start of the quality pill on the video ("Auto · 720p"): small pill, keep short. -->
   <string name="video_quality_auto">Auto</string>
   <!-- Subtitle of the Auto row in the quality sheet. -->
@@ -30,14 +31,22 @@
   <string name="video_quality_auto_playing">playing %1$s</string>
   <!-- Under the quality sheet's title; %1$s = the format being played, like "1080p60 H.264". -->
   <string name="video_quality_playing">Playing %1$s</string>
+  <!-- Under the audio sheet's title; %1$s = the active track's language name. -->
+  <string name="video_audio_playing">Playing %1$s</string>
   <!-- Quality tag for the lowest resolutions (240p and below). -->
   <string name="video_quality_data_saver">Data saver</string>
   <!-- Quality tag for 1080p. -->
   <string name="video_quality_full_hd">Full HD</string>
+  <!-- Audio track role tags in audio track pickers. -->
+  <string name="video_audio_kind_original">Original</string>
+  <string name="video_audio_kind_dubbed">Dubbed</string>
+  <string name="video_audio_kind_descriptive">Audio description</string>
+  <string name="video_audio_kind_secondary">Secondary</string>
   <!-- Title of the speed sheet. -->
   <string name="video_speed">Speed</string>
   <!-- Headers of the small fullscreen picker cards, shown in CAPITALS (write them in capitals where the script has them). -->
   <string name="video_drop_captions">CAPTIONS</string>
+  <string name="video_drop_audio">AUDIO</string>
   <string name="video_drop_quality">QUALITY</string>
   <string name="video_drop_speed">SPEED</string>
   <!-- Captions card: row that turns captions off. -->

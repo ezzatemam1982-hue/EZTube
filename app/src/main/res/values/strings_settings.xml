@@ -26,6 +26,11 @@
     <string name="settings_speed_kept_summary">speed kept at %1$s×</string>
     <string name="settings_speed_per_video">speed set per video</string>
     <string name="settings_audio_only_line">Sound without the picture, in every video. Also on the player bar.</string>
+    <string name="settings_default_quality_title">Default video quality</string>
+    <string name="settings_default_quality_highest">Highest available</string>
+    <string name="settings_default_quality_auto_line">Adaptive up to 1080p</string>
+    <string name="settings_default_quality_highest_line">Best resolution offered per video</string>
+    <string name="settings_default_quality_words">quality, resolution, 1080p, 720p, 480p, 360p, 240p, 144p, data saver, highest</string>
     <!-- SponsorBlock's summary: %1$s segment types skipped, %2$s asked about. -->
     <string name="settings_sb_summary">Skips %1$s, asks about %2$s</string>
     <string name="settings_mode">Mode</string>
@@ -40,7 +45,7 @@
         <item quantity="other">%1$s channels with the bell on</item>
     </plurals>
     <string name="settings_bells_none">No bells on yet</string>
-    <string name="settings_bells_empty">Ring the bell on a channel\'s Subscribe button and ClipFlow tells you about each of its new videos.</string>
+    <string name="settings_bells_empty">Ring the bell on a channel\'s Subscribe button and EZTube tells you about each of its new videos.</string>
     <string name="settings_bell_line">Every new video</string>
     <string name="settings_system_notifications">Android notification settings</string>
     <string name="settings_system_notifications_line">Sound, vibration, Do Not Disturb</string>
@@ -57,7 +62,7 @@
     <!-- Settings › About: the crash report (GitHub #55), shared to paste into an issue. -->
     <string name="settings_crash_title">Crash report</string>
     <string name="settings_crash_saved">Saved from the last crash. Share it and paste it into a GitHub issue</string>
-    <string name="settings_crash_none">No crash saved. Shares how Android last closed ClipFlow, for a GitHub issue</string>
+    <string name="settings_crash_none">No crash saved. Shares how Android last closed EZTube, for a GitHub issue</string>
     <string name="settings_crash_tile">Crash report saved</string>
     <string name="settings_crash_share">Share crash report</string>
     <string name="settings_no_app">No app on this phone can open that</string>
@@ -77,11 +82,11 @@
     <string name="settings_auto_pip_line">Going home while a video plays keeps it playing in a small window</string>
     <!-- Settings › Playback: playback controls as a live activity (Android's Live Updates) while the app is off screen. -->
     <string name="settings_live_title">Live activity</string>
-    <string name="settings_live_line">Leaving ClipFlow while a video plays puts its controls in the status bar and on the lock screen</string>
+    <string name="settings_live_line">Leaving EZTube while a video plays puts its controls in the status bar and on the lock screen</string>
     <string name="settings_live_needs">Needs Android 16 QPR1 or later</string>
     <string name="settings_live_refused">This phone shows it only as a normal notification, so the media controls stay on their own</string>
     <string name="settings_live_allow_title">Allow Live updates</string>
-    <string name="settings_live_allow_line">Live updates are off for ClipFlow in Android\'s settings</string>
+    <string name="settings_live_allow_line">Live updates are off for EZTube in Android\'s settings</string>
     <!-- Only for Settings' search: other words people use for it. -->
     <string name="settings_live_words">Live update, Now Bar, status bar chip, lock screen</string>
     <string name="settings_swipe_brightness_title">Swipe to adjust brightness</string>

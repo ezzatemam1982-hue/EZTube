@@ -3,6 +3,9 @@ package com.clipflow.app.player
 import com.deniscerri.ytdl.BuildConfig
 import com.deniscerri.ytdl.R
 
+import java.text.Normalizer
+import java.util.Locale
+
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -76,6 +79,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -95,6 +99,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.CoroutineScope
@@ -121,7 +126,7 @@ fun HomeScreen(
     LaunchedEffect(signedIn, lib.home.waiting) { if (signedIn && lib.home.waiting) lib.home.ensureLoaded() }
     CollapsingHeaderLayout(
         resetKey = scrollToTop to lib.home.generation,
-        header = { ScreenHeader(title = "ClipFlow", brandMark = true) { UpdateAction(); DownloadsAction(); AccountAction(onAccount) } },
+        header = { ScreenHeader(title = stringResource(R.string.app_name), brandMark = true) { UpdateAction(); DownloadsAction(); AccountAction(onAccount) } },
     ) { top ->
         if (signedIn) {
             val home = lib.home
@@ -171,28 +176,55 @@ fun SubscriptionsScreen(
     scrollToTop: Int = 0,
 ) {
     val signedIn = Account.signedIn
+    var channelQuery by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(signedIn, lib.subscriptions.waiting) {
         if (signedIn) lib.showSubscriptions()
     }
+    LaunchedEffect(signedIn) {
+        if (!signedIn && channelQuery.isNotEmpty()) channelQuery = ""
+    }
+    val hasFilter = channelQuery.isNotBlank()
     CollapsingHeaderLayout(
-        resetKey = scrollToTop to lib.subscriptions.generation,
-        header = { ScreenHeader(title = stringResource(R.string.ui_subscriptions_title)) { DownloadsAction(); AccountAction(onAccount) } },
+        resetKey = Triple(scrollToTop, lib.subscriptions.generation, hasFilter),
+        header = {
+            Column {
+                ScreenHeader(title = stringResource(R.string.ui_subscriptions_title)) { DownloadsAction(); AccountAction(onAccount) }
+                if (signedIn) {
+                    ChannelSearchBar(
+                        query = channelQuery,
+                        onQueryChange = { channelQuery = it },
+                    )
+                }
+            }
+        },
     ) { top ->
         if (signedIn) {
-            FeedList(
-                lib.subscriptions,
-                contentPadding.withTop(top),
-                onOpen,
-                header = {
-                    // Always present (empty until loaded) so its arrival never shifts the list; the
-                    // row kept from last time shows from the first frame (LibraryData).
-                    item(key = "channels") { if (lib.channels.isNotEmpty()) ChannelRail(lib.channels) }
-                },
-                scrollToTop = scrollToTop,
-                refreshing = lib.subscriptions.refreshing || lib.refreshingChannels,
-                onRefresh = { lib.subscriptions.refresh(); lib.refreshChannels() },
-                indicatorTop = top,
-            )
+            if (!hasFilter) {
+                FeedList(
+                    lib.subscriptions,
+                    contentPadding.withTop(top),
+                    onOpen,
+                    header = {
+                        // Always present (empty until loaded) so its arrival never shifts the list; the
+                        // row kept from last time shows from the first frame (LibraryData).
+                        item(key = "channels") { if (lib.channels.isNotEmpty()) ChannelRail(lib.channels) }
+                    },
+                    scrollToTop = scrollToTop,
+                    refreshing = lib.subscriptions.refreshing || lib.refreshingChannels,
+                    onRefresh = { lib.subscriptions.refresh(); lib.refreshChannels() },
+                    indicatorTop = top,
+                )
+            } else {
+                FilteredSubscriptionsContent(
+                    lib = lib,
+                    query = channelQuery,
+                    contentPadding = contentPadding.withTop(top),
+                    indicatorTop = top,
+                    scrollToTop = scrollToTop,
+                    onOpen = onOpen,
+                    onClearQuery = { channelQuery = "" },
+                )
+            }
         } else {
             LazyColumn(contentPadding = contentPadding.withTop(top)) {
                 item {
@@ -350,6 +382,186 @@ private fun ChannelRail(channels: List<ChannelRef>) {
                 ChannelAvatar(ch.avatar, ch.name, size = 56)
                 Spacer(Modifier.height(6.dp))
                 Text(ch.name, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = c.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
+private val CombiningMarks = Regex("\\p{Mn}+")
+private val CollapseWhitespace = Regex("\\s+")
+
+/** Normalizes English/Latin and Arabic channel names for case- and diacritic-insensitive matching. */
+internal fun normalizeChannelQuery(text: String): String {
+    val folded = Normalizer.normalize(text.trim(), Normalizer.Form.NFD)
+        .replace(CombiningMarks, "")
+        .replace("\u0640", "")
+        .replace('\u0623', '\u0627')
+        .replace('\u0625', '\u0627')
+        .replace('\u0622', '\u0627')
+        .replace('\u0671', '\u0627')
+        .replace('\u0649', '\u064A')
+        .replace('\u0629', '\u0647')
+        .replace(CollapseWhitespace, " ")
+    return folded.lowercase(Locale.ROOT)
+}
+
+private fun channelIdFromUrl(url: String?): String? =
+    url?.substringAfter("/channel/", missingDelimiterValue = "")
+        ?.substringBefore('?')
+        ?.substringBefore('#')
+        ?.substringBefore('/')
+        ?.takeIf { it.isNotEmpty() }
+
+internal fun filterSubscribedChannels(channels: List<ChannelRef>, query: String): List<ChannelRef> {
+    val nq = normalizeChannelQuery(query)
+    if (nq.isEmpty()) return channels
+    return channels.filter { normalizeChannelQuery(it.name).contains(nq) }
+}
+
+internal fun filterSubscriptionVideos(
+    videos: List<VideoItem>,
+    channels: List<ChannelRef>,
+    query: String,
+): List<VideoItem> {
+    val nq = normalizeChannelQuery(query)
+    if (nq.isEmpty()) return videos
+    val matchedChannelIds = filterSubscribedChannels(channels, nq).mapTo(HashSet()) { it.id }
+    return videos.filter { video ->
+        val matchesChannelId = matchedChannelIds.isNotEmpty() &&
+            channelIdFromUrl(video.channelUrl)?.let { it in matchedChannelIds } == true
+        matchesChannelId || normalizeChannelQuery(video.channel).contains(nq)
+    }
+}
+
+@Composable
+private fun ChannelSearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+) {
+    val c = MaterialTheme.colorScheme
+    val focus = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val hint = stringResource(R.string.ui_subscriptions_search_hint)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 8.dp)
+            .height(44.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .background(c.surfaceContainerHigh)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Search,
+            contentDescription = null,
+            tint = if (query.isNotEmpty()) c.primary else c.onSurfaceVariant,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(10.dp))
+        Box(
+            modifier = Modifier.weight(1f),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            if (query.isEmpty()) {
+                Text(
+                    text = hint,
+                    color = c.onSurfaceVariant.copy(alpha = 0.72f),
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                singleLine = true,
+                textStyle = TextStyle(color = c.onSurface, fontSize = 14.sp),
+                cursorBrush = SolidColor(c.primary),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = {
+                    focus.clearFocus()
+                    keyboard?.hide()
+                }),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        if (query.isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .pressable(onClick = { onQueryChange("") }),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Close,
+                    contentDescription = stringResource(R.string.ui_clear_search),
+                    tint = c.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilteredSubscriptionsContent(
+    lib: LibraryData,
+    query: String,
+    contentPadding: PaddingValues,
+    indicatorTop: Dp,
+    scrollToTop: Int,
+    onOpen: (VideoItem) -> Unit,
+    onClearQuery: () -> Unit,
+) {
+    val filteredChannels = remember(lib.channels, query) { filterSubscribedChannels(lib.channels, query) }
+    val filteredVideos = remember(lib.subscriptions.videos, lib.channels, query) {
+        filterSubscriptionVideos(lib.subscriptions.videos, lib.channels, query)
+    }
+    val visibleVideos = filteredVideos.filterNot(Dismissed::hides)
+    val columns = gridColumns()
+    val listState = rememberScrollToTop(scrollToTop)
+    val refreshing = lib.subscriptions.refreshing || lib.refreshingChannels
+
+    PullToRefresh(
+        enabled = true,
+        refreshing = refreshing,
+        onRefresh = { lib.subscriptions.refresh(); lib.refreshChannels() },
+        topPadding = indicatorTop,
+    ) {
+        LazyColumn(
+            state = listState,
+            contentPadding = contentPadding,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            if (filteredChannels.isNotEmpty()) {
+                item(key = "channels") { ChannelRail(filteredChannels) }
+            }
+            when {
+                visibleVideos.isNotEmpty() -> videoCards(filteredVideos, columns, onOpen)
+                lib.subscriptions.loading && lib.subscriptions.videos.isEmpty() -> {
+                    item(key = "filter-loading") {
+                        Box(
+                            modifier = Modifier.fillParentMaxWidth().padding(vertical = 36.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(strokeWidth = 2.5.dp, modifier = Modifier.size(28.dp))
+                        }
+                    }
+                }
+                else -> {
+                    item(key = "filter-empty") {
+                        EmptyState(
+                            icon = Icons.Rounded.Search,
+                            title = stringResource(R.string.ui_subscriptions_filter_empty_title),
+                            body = stringResource(R.string.ui_subscriptions_filter_empty_body, query.trim()),
+                            modifier = Modifier.fillParentMaxWidth(),
+                            action = { PillButton(stringResource(R.string.ui_clear_search), onClearQuery) },
+                        )
+                    }
+                }
             }
         }
     }

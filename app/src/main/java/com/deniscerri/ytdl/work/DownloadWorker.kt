@@ -312,7 +312,7 @@ class DownloadWorker(
                                 val tempCookieFile = com.clipflow.app.player.Account.writeTempNetscapeCookieFile(context)
                                     ?: throw firstErr
                                 try {
-                                    val retryNote = "[ClipFlow] Video requires authentication (age-restricted / private / members-only). Retrying once with signed-in account session..."
+                                    val retryNote = "[EZTube] Video requires authentication (age-restricted / private / members-only). Retrying once with signed-in account session..."
                                     logString.append("$retryNote\n")
                                     if (logDownloads) {
                                         CoroutineScope(Dispatchers.IO).launch {

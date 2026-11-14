@@ -23,6 +23,8 @@
     <string name="player_save_to_playlist">Save to playlist</string>
     <!-- Accessibility label of the mini-player's close (X) button. -->
     <string name="player_close">Close</string>
+    <!-- Pill badge under the video title when dubbed or multi-language audio tracks are offered. -->
+    <string name="player_audio_dubbed_badge">Dubbed</string>
 
     <!-- ── Short notes shown at the bottom of the player after an action (PlayerState.kt) ── -->
     <string name="player_playing_next">Playing next</string>
@@ -51,7 +53,7 @@
     <string name="player_error_bot_check">YouTube is asking to confirm you\'re not a bot.</string>
     <string name="player_error_bot_check_hint">Turning airplane mode on and back off usually fixes it.</string>
     <string name="player_error_private">This video is private.</string>
-    <string name="player_error_members_only">This is a members-only video. ClipFlow can\'t play members-only videos yet.</string>
+    <string name="player_error_members_only">This is a members-only video. EZTube can\'t play members-only videos yet.</string>
     <string name="player_error_unavailable">This video isn\'t available.</string>
     <string name="player_error_rate_limited">YouTube is rate-limiting requests right now. Try again in a minute.</string>
     <string name="player_error_offline">Couldn\'t reach YouTube. Check your connection.</string>

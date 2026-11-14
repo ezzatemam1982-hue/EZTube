@@ -18,6 +18,8 @@
     <!-- Picture-in-picture, abbreviated. -->
     <string name="bar_tool_pip">PiP</string>
     <string name="bar_tool_captions">Captions</string>
+    <!-- Audio track picker button label under the bar tool tile. Keep short. -->
+    <string name="bar_tool_audio">Audio</string>
     <string name="bar_tool_fullscreen">Fullscreen</string>
     <!-- Plays the next video. -->
     <string name="bar_tool_next">Next</string>
@@ -42,6 +44,10 @@
     <!-- Accessibility label of the check on the chosen row of a list. -->
     <string name="bar_selected">Selected</string>
 
+    <!-- Audio track list title and active track subtitle. -->
+    <string name="bar_audio">Audio track</string>
+    <string name="bar_audio_playing">Playing %1$s</string>
+
     <!-- Captions list title (next to an on/off switch). -->
     <string name="bar_captions">Captions</string>
     <!-- Section heading in the captions list, written in capitals: languages the phone translates the captions into. -->
@@ -52,7 +58,7 @@
     <string name="bar_transcript">Transcript</string>
 
     <!-- Message when the phone's settings don't allow picture-in-picture for the app. -->
-    <string name="bar_pip_off">Picture-in-picture is turned off for ClipFlow in Settings.</string>
+    <string name="bar_pip_off">Picture-in-picture is turned off for EZTube in Settings.</string>
 
     <!-- Pill above the scrub preview: let go here to not jump. Short. -->
     <string name="bar_cancel">Cancel</string>

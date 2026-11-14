@@ -66,6 +66,7 @@ import androidx.compose.material.icons.rounded.FastRewind
 import androidx.compose.material.icons.rounded.FitScreen
 import androidx.compose.material.icons.rounded.Fullscreen
 import androidx.compose.material.icons.rounded.FullscreenExit
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PictureInPictureAlt
@@ -507,7 +508,7 @@ fun VideoContent(
             val tool = if (fullscreen) 40.dp else 36.dp
             val inset = if (fullscreen) Modifier.windowInsetsPadding(WindowInsets.displayCutout).padding(horizontal = 12.dp, vertical = 8.dp) else Modifier
             // Fullscreen's quality and speed cards hang from their pills: both measured where the tap happens.
-            val dropAnchors = remember { arrayOfNulls<LayoutCoordinates>(4) }
+            val dropAnchors = remember { arrayOfNulls<LayoutCoordinates>(5) }
             var dropAnchor by remember { mutableStateOf(Rect.Zero) }
             var dropRoom by remember { mutableFloatStateOf(0f) }
             /** Opens (or closes) [kind]'s card under the pill at [slot]; false if there's no card here (portrait). */
@@ -521,7 +522,7 @@ fun VideoContent(
                 return true
             }
             Box(Modifier.fillMaxSize().then(inset).onGloballyPositioned { dropAnchors[0] = it }) {
-                // Top row: the title (fullscreen); audio only (portrait), speed, quality, picture-in-picture.
+                // Top row: the title (fullscreen); audio only (portrait), speed, audio, captions, quality, picture-in-picture.
                 Row(
                     Modifier.align(Alignment.TopStart).fillMaxWidth().padding(10.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -553,6 +554,16 @@ fun VideoContent(
                         touched()
                         if (!toggleDrop(DropKind.Speed, 2)) state.sheet = PlayerSheet.Speed
                     }
+                    if (state.details?.audioTracks.orEmpty().size > 1) {
+                        OverlayTile(
+                            stringResource(R.string.video_audio_track), enabled, tool, filled = state.activeAudioTrack?.isDefault == false,
+                            modifier = Modifier.onGloballyPositioned { dropAnchors[4] = it },
+                            onClick = {
+                                touched()
+                                if (!toggleDrop(DropKind.Audio, 4)) state.sheet = PlayerSheet.Audio
+                            },
+                        ) { ink -> Icon(Icons.Rounded.GraphicEq, null, tint = ink, modifier = Modifier.size(tool * 0.52f)) }
+                    }
                     // Captions (filled while on): fullscreen's card, or the sheet.
                     if (state.captions.tracks.isNotEmpty()) {
                         OverlayTile(
@@ -568,8 +579,9 @@ fun VideoContent(
                     }
                     // The label is the resolution actually decoded; the requested one until known.
                     (state.decodedHeight?.let { "${it}p" } ?: state.details?.quality)?.let { quality ->
+                        val chosen = QualityPreference.selectedHeightForUi(state.details?.item?.id, state.details?.qualities.orEmpty())
                         OverlayPill(
-                            if (QualityPreference.height == null) stringResource(R.string.video_quality_auto) + " · $quality" else quality, stringResource(R.string.video_quality), enabled, tool,
+                            if (chosen == null) stringResource(R.string.video_quality_auto) + " · $quality" else quality, stringResource(R.string.video_quality), enabled, tool,
                             modifier = Modifier.onGloballyPositioned { dropAnchors[1] = it },
                         ) {
                             touched()
@@ -676,6 +688,7 @@ fun VideoContent(
                 if (fullscreen) {
                     QualityDrop(state, drop == DropKind.Quality, dropAnchor, dropRoom, onClose = { drop = null })
                     SpeedDrop(state, drop == DropKind.Speed, dropAnchor, dropRoom, onClose = { drop = null })
+                    AudioDrop(state, drop == DropKind.Audio, dropAnchor, dropRoom, onClose = { drop = null })
                     CaptionsDrop(state, drop == DropKind.Captions, dropAnchor, dropRoom, onClose = { drop = null })
                 }
             }
@@ -1227,7 +1240,7 @@ internal fun SkippedNote(state: PlayerState, modifier: Modifier) {
 fun QualitySheet(state: PlayerState, onDismiss: () -> Unit) {
     val c = MaterialTheme.colorScheme
     val details = state.details ?: return
-    val chosen = QualityPreference.height
+    val chosen = QualityPreference.selectedHeightForUi(details.item.id, details.qualities)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -1259,8 +1272,85 @@ fun QualitySheet(state: PlayerState, onDismiss: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AudioSheet(state: PlayerState, onDismiss: () -> Unit) {
+    val c = MaterialTheme.colorScheme
+    val tracks = state.details?.audioTracks.orEmpty()
+    if (tracks.isEmpty()) return
+    val active = state.activeAudioTrack
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = c.surfaceContainerLow,
+    ) {
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+            Text(
+                stringResource(R.string.video_audio_track),
+                fontFamily = RoundedHeavy, fontWeight = FontWeight.ExtraBold, fontSize = 21.sp,
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
+            )
+            active?.let {
+                Text(
+                    stringResource(R.string.video_audio_playing, it.displayName),
+                    color = c.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
+                )
+            }
+            tracks.forEach { option ->
+                QualityRow(
+                    title = option.displayName,
+                    subtitle = stringResource(audioKindLabelRes(option.kind)),
+                    selected = option.id == active?.id,
+                ) {
+                    state.selectAudioTrack(option.id)
+                    onDismiss()
+                }
+            }
+            Spacer(Modifier.height(28.dp))
+        }
+    }
+}
+
+internal fun audioKindLabelRes(kind: AudioTrackKind): Int = when (kind) {
+    AudioTrackKind.Original -> R.string.video_audio_kind_original
+    AudioTrackKind.Dubbed -> R.string.video_audio_kind_dubbed
+    AudioTrackKind.Descriptive -> R.string.video_audio_kind_descriptive
+    AudioTrackKind.Secondary -> R.string.video_audio_kind_secondary
+}
+
 /** Which of fullscreen's overlay cards is open. */
-private enum class DropKind { Quality, Speed, Captions }
+private enum class DropKind { Quality, Speed, Audio, Captions }
+
+@Composable
+private fun BoxScope.AudioDrop(state: PlayerState, open: Boolean, anchor: Rect, boxHeight: Float, onClose: () -> Unit) {
+    val tracks = state.details?.audioTracks.orEmpty()
+    if (tracks.size <= 1) return
+    val shown = dropShown(open)
+    if (shown <= 0f || anchor == Rect.Zero) return
+    val currentClose by androidx.compose.runtime.rememberUpdatedState(onClose)
+    var picked by remember(state.current?.id) { mutableStateOf(state.activeAudioTrack?.id) }
+    LaunchedEffect(open, state.activeAudioTrack?.id) {
+        if (open) picked = state.activeAudioTrack?.id
+    }
+    OverlayDrop(
+        open, shown, anchor, boxHeight, stringResource(R.string.video_drop_audio),
+        openAt = { tracks.indexOfFirst { it.id == picked } }, onClose = onClose,
+    ) { scope ->
+        tracks.forEach { option ->
+            DropRow(
+                title = option.displayName,
+                tag = stringResource(audioKindLabelRes(option.kind)),
+                selected = option.id == picked,
+            ) {
+                if (!open) return@DropRow
+                picked = option.id
+                state.selectAudioTrack(option.id)
+                scope.launch { delay(420); currentClose() }
+            }
+        }
+    }
+}
 
 /**
  * Fullscreen's captions card (docs/design/captions.html), the quality card's twin hanging from the CC tile: Off, every
@@ -1312,7 +1402,8 @@ private fun BoxScope.QualityDrop(state: PlayerState, open: Boolean, anchor: Rect
     if (shown <= 0f || anchor == Rect.Zero) return
     val currentClose by androidx.compose.runtime.rememberUpdatedState(onClose)
     val rows = remember(details) { listOf<Int?>(null) + details.qualities }
-    var picked by remember { mutableStateOf(QualityPreference.height) }
+    val chosen = QualityPreference.selectedHeightForUi(details.item.id, details.qualities)
+    var picked by remember(details.item.id, chosen) { mutableStateOf(chosen) }
     OverlayDrop(open, shown, anchor, boxHeight, stringResource(R.string.video_drop_quality), openAt = { rows.indexOf(picked) }, onClose = onClose) { scope ->
         val playing = state.decodedHeight?.let { "${it}p" } ?: details.quality
         rows.forEach { h ->
@@ -1323,7 +1414,7 @@ private fun BoxScope.QualityDrop(state: PlayerState, open: Boolean, anchor: Rect
             ) {
                 if (!open) return@DropRow
                 picked = h
-                if (h != QualityPreference.height) state.setQuality(h)
+                if (h != chosen) state.setQuality(h)
                 scope.launch { delay(420); currentClose() }
             }
         }
@@ -1481,14 +1572,29 @@ private fun DropRow(title: String, tag: String?, selected: Boolean, onClick: () 
             .padding(start = 12.dp, end = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
-        Spacer(Modifier.width(8.dp))
-        Text(
-            tag.orEmpty(),
-            color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp, fontWeight = FontWeight.Bold,
-            maxLines = 1, overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
+        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                title,
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            if (!tag.isNullOrEmpty()) {
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    tag,
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        Spacer(Modifier.width(4.dp))
         Icon(
             Icons.Rounded.Check, if (selected) stringResource(R.string.video_selected) else null, tint = Color.White,
             modifier = Modifier.size(18.dp).graphicsLayer {
