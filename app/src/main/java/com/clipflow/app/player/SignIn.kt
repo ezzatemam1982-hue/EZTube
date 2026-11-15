@@ -58,11 +58,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import android.graphics.Bitmap
 import android.net.Uri
-import android.os.SystemClock
 import android.util.Log
 import android.webkit.WebResourceRequest
 import android.widget.Toast
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -71,37 +71,28 @@ private fun signInUrl() =
     "https://accounts.google.com/ServiceLogin?service=youtube&uilel=3&passive=true&hl=${AppLanguage.webTag}" +
         "&continue=https%3A%2F%2Fwww.youtube.com%2Fsignin%3Faction_handle_signin%3Dtrue%26app%3Dm%26hl%3Den%26next%3D%252F"
 
-private fun isYouTubeLandingHost(host: String): Boolean {
-    if (host == "accounts.youtube.com" || host == "consent.youtube.com") return false
-    return host == "youtube.com" || host.endsWith(".youtube.com")
+private fun isYouTubeRedirectUrl(url: String?): Boolean {
+    if (url.isNullOrBlank()) return false
+    val parsed = runCatching { Uri.parse(url) }.getOrNull() ?: return false
+    val scheme = parsed.scheme?.lowercase() ?: return false
+    if (scheme != "http" && scheme != "https") return false
+    val host = parsed.host?.lowercase()?.trimEnd('.') ?: return false
+    return host.contains("youtube.com") &&
+        host != "accounts.google.com" &&
+        host != "accounts.youtube.com" &&
+        host != "consent.youtube.com"
 }
 
-private fun isPendingAuthHandoff(url: String?, allowSigninPath: Boolean): Boolean {
-    if (url.isNullOrBlank()) return true
-    val parsed = runCatching { Uri.parse(url) }.getOrNull() ?: return true
-    val host = parsed.host?.lowercase() ?: return true
-    if (!isYouTubeLandingHost(host)) {
-        return true
-    }
-    if (!allowSigninPath && parsed.path.orEmpty().startsWith("/signin")) {
-        return true
-    }
-    return false
-}
-
-private fun collectYouTubeCookies(cookies: CookieManager, currentUrl: String? = null): String {
+private fun mergeCookiesFromUrls(
+    cookies: CookieManager,
+    urls: List<String>,
+): Pair<String, LinkedHashMap<String, String>> {
     runCatching { cookies.flush() }
     val merged = linkedMapOf<String, String>()
-    val domains = buildList {
-        add("https://www.youtube.com")
-        add("https://m.youtube.com")
-        add("https://youtube.com")
-        if (!currentUrl.isNullOrBlank() && !isPendingAuthHandoff(currentUrl, allowSigninPath = true)) {
-            add(currentUrl)
-        }
-    }
-    for (domain in domains) {
-        val raw = runCatching { cookies.getCookie(domain) }.getOrNull().orEmpty()
+    for (url in urls) {
+        if (url.isBlank()) continue
+        val raw = runCatching { cookies.getCookie(url) }.getOrNull().orEmpty()
+        if (raw.isBlank()) continue
         raw.split(';').forEach { part ->
             val idx = part.indexOf('=')
             if (idx <= 0) return@forEach
@@ -112,12 +103,22 @@ private fun collectYouTubeCookies(cookies: CookieManager, currentUrl: String? = 
             }
         }
     }
-    return merged.entries.joinToString("; ") { "${it.key}=${it.value}" }
+    val header = merged.entries.joinToString("; ") { "${it.key}=${it.value}" }
+    return header to merged
 }
+
+private fun hasAuthCookieToken(cookieMap: Map<String, String>): Boolean =
+    cookieMap.containsKey("SID") ||
+        cookieMap.containsKey("SAPISID") ||
+        cookieMap.containsKey("LOGIN_INFO") ||
+        cookieMap.containsKey("__Secure-1PSID") ||
+        cookieMap.containsKey("__Secure-3PSID") ||
+        cookieMap.containsKey("__Secure-1PAPISID") ||
+        cookieMap.containsKey("__Secure-3PAPISID")
 
 /**
  * Google's own sign-in page. ClipFlow never sees the password; once the page lands back on
- * YouTube signed in, the youtube.com cookies are persisted synchronously into [AuthSessionManager]
+ * YouTube signed in, cookies are persisted synchronously into [AuthSessionManager]
  * and kept synced with Android's [CookieManager] across app restarts.
  */
 @SuppressLint("SetJavaScriptEnabled")
@@ -129,38 +130,20 @@ fun SignInScreen(onDone: () -> Unit, onCancel: () -> Unit) {
     var finishing by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var currentWebUrl by remember { mutableStateOf<String?>(null) }
-    var currentPageFinished by remember { mutableStateOf(false) }
-    var pageCommitted by remember { mutableStateOf(false) }
-    var landedOnYouTubeAtMs by remember { mutableStateOf(0L) }
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
 
-    fun markUrlNavigation(url: String?, committed: Boolean, finished: Boolean = false) {
-        currentWebUrl = url
-        pageCommitted = committed
-        currentPageFinished = finished
-        landedOnYouTubeAtMs = if (!isPendingAuthHandoff(url, allowSigninPath = finished)) {
-            landedOnYouTubeAtMs.takeIf { it != 0L } ?: SystemClock.elapsedRealtime()
-        } else {
-            0L
-        }
-    }
-
-    fun tryCompleteSignIn(candidateUrl: String?, allowSigninPath: Boolean, requireCommit: Boolean = true): Boolean {
-        if (finishing) return true
-        val activeUrl = candidateUrl ?: webViewRef?.url ?: currentWebUrl
-        if (isPendingAuthHandoff(activeUrl, allowSigninPath = allowSigninPath)) return false
-        val timedFallback = landedOnYouTubeAtMs != 0L && (SystemClock.elapsedRealtime() - landedOnYouTubeAtMs) >= 1_500L
-        if (requireCommit && !pageCommitted && !currentPageFinished && !timedFallback) {
-            return false
-        }
-        val cookieManager = CookieManager.getInstance()
-        val header = collectYouTubeCookies(cookieManager, activeUrl)
-        if (!Account.looksSignedIn(header)) return false
+    fun saveSessionAndClose(
+        header: String,
+        sourceUrl: String?,
+        unconditional: Boolean,
+    ) {
+        if (finishing) return
+        error = null
         finishing = true
         val parsedCount = AuthSessionManager.parseCookieHeader(header).size
         authLog(
             Log.INFO,
-            "SignInScreen: captured YouTube session on ${runCatching { Uri.parse(activeUrl).path }.getOrNull()} (cookies=$parsedCount)",
+            "SignInScreen: saving session on ${runCatching { Uri.parse(sourceUrl).host }.getOrNull()} (cookies=$parsedCount, unconditional=$unconditional)",
         )
         AuthSessionManager.saveSession(header)
         runCatching {
@@ -168,6 +151,10 @@ fun SignInScreen(onDone: () -> Unit, onCancel: () -> Unit) {
             webViewRef?.loadUrl("about:blank")
         }
         scope.launch {
+            if (header.isBlank()) {
+                if (unconditional) onDone() else onCancel()
+                return@launch
+            }
             runCatching { Account.completeSignIn(header) }
                 .onSuccess {
                     // Keep cookies persisted and synced in CookieManager for cold restarts
@@ -181,23 +168,59 @@ fun SignInScreen(onDone: () -> Unit, onCancel: () -> Unit) {
                 }
                 .onFailure { err ->
                     authLog(Log.ERROR, "SignInScreen: completeSignIn failed", err)
-                    finishing = false
-                    error = str(R.string.ui_sign_in_error)
+                    if (unconditional) {
+                        AuthSessionManager.saveSession(header)
+                        AuthSessionManager.restoreCookiesToCookieManager()
+                        onDone()
+                    } else {
+                        finishing = false
+                        error = str(R.string.ui_sign_in_error)
+                    }
                 }
         }
+    }
+
+    fun tryAutoCompleteSignIn(candidateUrl: String?): Boolean {
+        if (finishing) return true
+        val activeUrl = candidateUrl?.takeIf { it.isNotBlank() } ?: webViewRef?.url ?: currentWebUrl
+        if (!isYouTubeRedirectUrl(activeUrl)) return false
+        val cookieManager = CookieManager.getInstance()
+        val (header, map) = mergeCookiesFromUrls(
+            cookieManager,
+            listOf(
+                "https://accounts.google.com",
+                "https://m.youtube.com",
+                "https://www.youtube.com",
+            ),
+        )
+        if (header.isBlank() || !hasAuthCookieToken(map)) return false
+        saveSessionAndClose(header = header, sourceUrl = activeUrl, unconditional = false)
         return true
     }
 
-    // Reliable 500ms cookie-polling observer while the Sign-In WebView is visible
+    fun completeUnconditionally() {
+        if (finishing) return
+        val activeUrl = webViewRef?.url?.takeIf { it.isNotBlank() } ?: currentWebUrl
+        val cookieManager = CookieManager.getInstance()
+        val urls = buildList {
+            add("https://accounts.google.com")
+            add("https://www.google.com")
+            add("https://google.com")
+            add("https://youtube.com")
+            add("https://m.youtube.com")
+            add("https://www.youtube.com")
+            if (!activeUrl.isNullOrBlank()) add(activeUrl)
+        }
+        val (header, _) = mergeCookiesFromUrls(cookieManager, urls)
+        saveSessionAndClose(header = header, sourceUrl = activeUrl, unconditional = true)
+    }
+
+    // Fallback cookie-polling observer while the Sign-In WebView is visible
     LaunchedEffect(Unit) {
         while (!finishing && error == null) {
             delay(500L)
             if (!finishing && error == null) {
-                tryCompleteSignIn(
-                    candidateUrl = webViewRef?.url ?: currentWebUrl,
-                    allowSigninPath = currentPageFinished,
-                    requireCommit = true,
-                )
+                tryAutoCompleteSignIn(webViewRef?.url ?: currentWebUrl)
             }
         }
     }
@@ -205,22 +228,60 @@ fun SignInScreen(onDone: () -> Unit, onCancel: () -> Unit) {
     DisposableEffect(Unit) {
         onDispose {
             runCatching { CookieManager.getInstance().flush() }
+            runCatching {
+                webViewRef?.stopLoading()
+                webViewRef?.destroy()
+            }
+            webViewRef = null
         }
     }
 
     Column(Modifier.fillMaxSize().background(c.surface).statusBarsPadding().navigationBarsPadding()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Box(Modifier.size(44.dp).pressable(onClick = onCancel), contentAlignment = Alignment.Center) {
                 Icon(Icons.Rounded.Close, stringResource(R.string.ui_cancel))
             }
             Spacer(Modifier.width(6.dp))
             Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.ui_sign_in_title), fontFamily = RoundedHeavy, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+                Text(
+                    stringResource(R.string.ui_sign_in_title),
+                    fontFamily = RoundedHeavy,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 18.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Rounded.Lock, null, tint = c.onSurfaceVariant, modifier = Modifier.size(12.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text(stringResource(R.string.ui_sign_in_line), color = c.onSurfaceVariant, fontSize = 12.sp)
+                    Text(
+                        stringResource(R.string.ui_sign_in_line),
+                        color = c.onSurfaceVariant,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
+            }
+            Spacer(Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .pressable(enabled = !finishing, onClick = { completeUnconditionally() })
+                    .height(36.dp)
+                    .clip(CircleShape)
+                    .background(if (finishing) c.primary.copy(alpha = 0.5f) else c.primary)
+                    .padding(horizontal = 16.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "Done",
+                    color = c.onPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                )
             }
         }
         Box(Modifier.weight(1f)) {
@@ -228,9 +289,12 @@ fun SignInScreen(onDone: () -> Unit, onCancel: () -> Unit) {
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
                     val cookies = CookieManager.getInstance()
+                    cookies.removeAllCookies(null)
+                    cookies.flush()
                     cookies.setAcceptCookie(true)
                     WebView(ctx).apply {
                         webViewRef = this
+                        cookies.setAcceptCookie(true)
                         cookies.setAcceptThirdPartyCookies(this, true)
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
@@ -240,43 +304,37 @@ fun SignInScreen(onDone: () -> Unit, onCancel: () -> Unit) {
                         settings.userAgentString = WebSettings.getDefaultUserAgent(ctx).replace("; wv", "")
                         webViewClient = object : WebViewClient() {
                             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                                markUrlNavigation(request.url?.toString(), committed = false, finished = false)
+                                if (request.isForMainFrame) {
+                                    currentWebUrl = request.url?.toString()
+                                }
                                 // Always let Chromium follow redirects so final Set-Cookie headers commit.
                                 return false
                             }
 
                             @Deprecated("Deprecated in Java")
                             override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
-                                markUrlNavigation(url, committed = false, finished = false)
+                                currentWebUrl = url
                                 return false
                             }
 
                             override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
-                                markUrlNavigation(url, committed = false, finished = false)
-                            }
-
-                            override fun onPageCommitVisible(view: WebView, url: String?) {
-                                markUrlNavigation(url, committed = true, finished = currentPageFinished)
-                                tryCompleteSignIn(url, allowSigninPath = false, requireCommit = false)
+                                val activeUrl = url?.takeIf { it.isNotBlank() } ?: view.url
+                                if (!activeUrl.isNullOrBlank()) currentWebUrl = activeUrl
                             }
 
                             override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
-                                markUrlNavigation(url, committed = true, finished = currentPageFinished)
-                                tryCompleteSignIn(url, allowSigninPath = false, requireCommit = false)
+                                val activeUrl = url?.takeIf { it.isNotBlank() } ?: view.url
+                                if (!activeUrl.isNullOrBlank()) currentWebUrl = activeUrl
+                                tryAutoCompleteSignIn(activeUrl)
                             }
 
                             override fun onPageFinished(view: WebView, url: String) {
-                                markUrlNavigation(url, committed = true, finished = true)
-                                tryCompleteSignIn(url, allowSigninPath = true, requireCommit = false)
+                                val activeUrl = url.takeIf { it.isNotBlank() } ?: view.url
+                                if (!activeUrl.isNullOrBlank()) currentWebUrl = activeUrl
+                                tryAutoCompleteSignIn(activeUrl)
                             }
                         }
-                        // Start clean when signed out so a half-finished earlier attempt doesn't linger,
-                        // and start loading only after the async clear finishes.
-                        if (!Account.signedIn) {
-                            cookies.removeAllCookies { post { if (!finishing) loadUrl(signInUrl()) } }
-                        } else {
-                            loadUrl(signInUrl())
-                        }
+                        loadUrl(signInUrl())
                     }
                 },
             )
