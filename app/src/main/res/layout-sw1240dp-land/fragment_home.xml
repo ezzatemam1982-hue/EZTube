@@ -125,13 +125,25 @@
                 android:gravity="center_horizontal"
                 android:hint="@string/search_hint"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:menu="@menu/main_menu">
 
             </com.google.android.material.search.SearchBar>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/open_browser_btn"
+                style="?attr/materialIconButtonFilledTonalStyle"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="16dp"
+                android:contentDescription="@string/browser_open"
+                app:icon="@drawable/ic_browser_globe"
+                app:iconSize="22dp"
+                app:layout_constraintBottom_toBottomOf="@+id/search_bar"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/search_bar"
+                app:layout_constraintTop_toTopOf="@+id/search_bar" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -194,6 +206,12 @@
             app:spanCount="3"
             app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
             />
+
+        <include
+            layout="@layout/include_browser_saved_sites"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/playlist_selection_chips_scrollview" />
 
         <com.facebook.shimmer.ShimmerFrameLayout
             android:layout_width="match_parent"

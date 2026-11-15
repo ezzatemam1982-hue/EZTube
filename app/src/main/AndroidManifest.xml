@@ -633,6 +633,12 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".ui.browser.InAppBrowserActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|uiMode|locale"
+            android:exported="false"
+            android:launchMode="standard"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".ui.more.cookies.WebViewActivityIncognito"
             android:process=":incognito_process" />
         <activity

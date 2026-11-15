@@ -95,6 +95,11 @@
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             />
 
+        <include
+            layout="@layout/include_browser_saved_sites"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
         <com.facebook.shimmer.ShimmerFrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -169,12 +174,29 @@
 
             <com.google.android.material.search.SearchBar
                 android:id="@+id/search_bar"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
                 android:hint="@string/search_hint"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/open_browser_btn"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
                 app:menu="@menu/main_menu" >
 
             </com.google.android.material.search.SearchBar>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/open_browser_btn"
+                style="?attr/materialIconButtonFilledTonalStyle"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="16dp"
+                android:contentDescription="@string/browser_open"
+                app:icon="@drawable/ic_browser_globe"
+                app:iconSize="22dp"
+                app:layout_constraintBottom_toBottomOf="@+id/search_bar"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/search_bar" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -61,6 +61,9 @@ import com.deniscerri.ytdl.database.viewmodel.HistoryViewModel
 import com.deniscerri.ytdl.database.viewmodel.ResultViewModel
 import com.deniscerri.ytdl.ui.adapter.HomeAdapter
 import com.deniscerri.ytdl.ui.adapter.SearchSuggestionsAdapter
+import com.deniscerri.ytdl.ui.browser.BrowserSitesAdapter
+import com.deniscerri.ytdl.ui.browser.BrowserSitesStore
+import com.deniscerri.ytdl.ui.browser.InAppBrowserActivity
 import com.deniscerri.ytdl.ui.more.cookies.WebViewActivity
 import com.deniscerri.ytdl.util.DragSelectTouchListener
 import com.deniscerri.ytdl.util.Extensions.enableFastScroll
@@ -145,6 +148,12 @@ class HomeFragment : Fragment(), HomeAdapter.OnItemClickListener, SearchSuggesti
 
     private var showDownloadAllFab: Boolean = false
     private var showClipboardFab: Boolean = false
+    private var openBrowserBtn: MaterialButton? = null
+    private var savedSitesSection: View? = null
+    private var clearRecentSitesBtn: MaterialButton? = null
+    private var savedSitesEmptyCard: View? = null
+    private var savedSitesRecyclerView: RecyclerView? = null
+    private var browserSitesAdapter: BrowserSitesAdapter? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -201,6 +210,7 @@ class HomeFragment : Fragment(), HomeAdapter.OnItemClickListener, SearchSuggesti
         recyclerView?.enableFastScroll()
 
         shimmerCards = view.findViewById(R.id.shimmer_results_framelayout)
+        setupBrowserEntryAndSites(view)
 
 
 
@@ -257,6 +267,7 @@ class HomeFragment : Fragment(), HomeAdapter.OnItemClickListener, SearchSuggesti
             resultViewModel.totalCount.collectLatest {
                 totalCount = it
                 searchBar?.menu?.findItem(R.id.select_range)?.isVisible = it >= 3
+                refreshBrowserSites()
             }
         }
 
@@ -354,6 +365,7 @@ class HomeFragment : Fragment(), HomeAdapter.OnItemClickListener, SearchSuggesti
                         showDownloadAllFab = totalCount > 1 && firstResult?.playlistTitle.orEmpty().isNotEmpty()
                         downloadAllFab!!.isVisible = showDownloadAllFab
                     }
+                    refreshBrowserSites()
                 }
             }
         }
@@ -404,6 +416,7 @@ class HomeFragment : Fragment(), HomeAdapter.OnItemClickListener, SearchSuggesti
     override fun onResume() {
         super.onResume()
         updateToolbarTitle()
+        refreshBrowserSites()
 
         if(arguments?.getString("url") == null){
             if (!resultViewModel.uiState.value.processing){
@@ -1241,5 +1254,73 @@ class HomeFragment : Fragment(), HomeAdapter.OnItemClickListener, SearchSuggesti
         }
 
         playlistNameFilterScrollView.isVisible = true
+    }
+
+    private fun setupBrowserEntryAndSites(view: View) {
+        openBrowserBtn = view.findViewById(R.id.open_browser_btn)
+        savedSitesSection = view.findViewById(R.id.saved_sites_section)
+        clearRecentSitesBtn = view.findViewById(R.id.clear_recent_sites_btn)
+        savedSitesEmptyCard = view.findViewById(R.id.saved_sites_empty_card)
+        savedSitesRecyclerView = view.findViewById(R.id.saved_sites_recycler)
+
+        browserSitesAdapter = BrowserSitesAdapter(
+            onSiteClick = { site -> openInAppBrowser(site.url) },
+            onRemoveClick = { site ->
+                context?.let {
+                    BrowserSitesStore.removeSite(it, site)
+                    refreshBrowserSites()
+                }
+            }
+        )
+        savedSitesRecyclerView?.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = browserSitesAdapter
+            isNestedScrollingEnabled = true
+        }
+
+        openBrowserBtn?.setOnClickListener {
+            val candidate = searchBar?.text?.toString()?.trim()?.takeIf {
+                it.isNotEmpty() && !it.contains('\n') && (it.isURL() || it.contains('.'))
+            }
+            openInAppBrowser(candidate)
+        }
+
+        savedSitesEmptyCard?.setOnClickListener {
+            openInAppBrowser(null)
+        }
+
+        clearRecentSitesBtn?.setOnClickListener {
+            context?.let {
+                BrowserSitesStore.clearRecent(it)
+                refreshBrowserSites()
+            }
+        }
+
+        refreshBrowserSites()
+    }
+
+    private fun openInAppBrowser(url: String?) {
+        val ctx = context ?: return
+        val intent = Intent(ctx, InAppBrowserActivity::class.java).apply {
+            if (!url.isNullOrBlank()) {
+                putExtra(InAppBrowserActivity.EXTRA_URL, url)
+            }
+        }
+        startActivity(intent)
+    }
+
+    private fun refreshBrowserSites() {
+        val ctx = context ?: return
+        val showSavedSites = totalCount == 0 && !loadingItems
+        savedSitesSection?.isVisible = showSavedSites
+        recyclerView?.isVisible = !showSavedSites
+
+        if (!showSavedSites) return
+
+        val sites = BrowserSitesStore.getSavedAndRecentSites(ctx)
+        browserSitesAdapter?.submitList(sites)
+        savedSitesEmptyCard?.isVisible = sites.isEmpty()
+        savedSitesRecyclerView?.isVisible = sites.isNotEmpty()
+        clearRecentSitesBtn?.isVisible = BrowserSitesStore.hasRecentSites(ctx)
     }
 }
