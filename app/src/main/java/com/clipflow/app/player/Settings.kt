@@ -198,7 +198,7 @@ private val FoldDistance = 70.dp
 private val OuterCorner = 21.dp
 private val InnerCorner = 7.dp
 private val JoinGap = 3.dp
-private const val SourceUrl = "https://github.com/clipflow/ClipFlow"
+private const val SourceUrl = "https://github.com/ezzatemam1982-hue/EZTube"
 
 /**
  * The whole page. [active] is false while it slides away (its Back stops catching). Back goes up one

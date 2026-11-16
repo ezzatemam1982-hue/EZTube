@@ -90,7 +90,7 @@ import java.util.Locale
 object AppUpdate {
     private const val TAG = "ClipFlow"
     /** Newest first; enough to cover the notes of every release a phone may have skipped. */
-    private const val RELEASES_URL = "https://api.github.com/repos/clipflow/ClipFlow/releases?per_page=30"
+    internal const val RELEASES_URL = "https://api.github.com/repos/ezzatemam1982-hue/EZTube/releases?per_page=30"
     private const val APK_ASSET = "ClipFlow.apk"
     private const val CHECK_EVERY_MS = 24 * 60 * 60 * 1000L
     /** A check that failed (offline, rate limit) tries again after this, not a day later. */
@@ -277,16 +277,16 @@ object AppUpdate {
     private fun fetchLatest(): Release? {
         val request = Request.Builder().url(RELEASES_URL)
             .header("Accept", "application/vnd.github+json")
-            .header("User-Agent", "ClipFlow/${BuildConfig.VERSION_NAME}")
+            .header("User-Agent", "EZTube/${BuildConfig.VERSION_NAME}")
             .build()
         Net.client.newCall(request).execute().use { response ->
             check(response.isSuccessful) { "HTTP ${response.code}" }
-            return parseReleases(JSONArray(response.body?.string().orEmpty()), BuildConfig.VERSION_NAME)
+            return parseReleases(JSONArray(response.body.string()), BuildConfig.VERSION_NAME)
         }
     }
 
     /**
-     * The releases list → the newest published release with a ClipFlow.apk, carrying the notes of every
+     * The releases list → the newest published release with an installable APK, carrying the notes of every
      * release newer than [current] up to it (a phone that skipped versions sees all of their changes).
      */
     internal fun parseReleases(json: JSONArray, current: String): Release? {
@@ -302,12 +302,31 @@ object AppUpdate {
         return latest.copy(notes = notes)
     }
 
-    /** The latest-release JSON → its ClipFlow.apk, or null when it has none. */
-    internal fun parseRelease(json: JSONObject): Release? {
+    internal fun selectApkAssetName(assetNames: List<String>, abi: String? = null): String? {
+        val apks = assetNames.filter {
+            it.endsWith(".apk", ignoreCase = true) &&
+                !it.contains("foss", ignoreCase = true) &&
+                !it.contains("izzy", ignoreCase = true)
+        }
+        return apks.firstOrNull {
+            it.equals("EZTube.apk", ignoreCase = true) || it.equals(APK_ASSET, ignoreCase = true)
+        } ?: abi?.takeIf { it.isNotBlank() }?.let { targetAbi ->
+            apks.firstOrNull { it.contains(targetAbi, ignoreCase = true) }
+        } ?: apks.firstOrNull { it.contains("universal", ignoreCase = true) }
+            ?: apks.firstOrNull()
+    }
+
+    internal fun selectApkAsset(assets: List<JSONObject>, abi: String? = Build.SUPPORTED_ABIS.firstOrNull()): JSONObject? {
+        val chosen = selectApkAssetName(assets.map { it.optString("name") }, abi) ?: return null
+        return assets.firstOrNull { it.optString("name") == chosen }
+    }
+
+    /** The latest-release JSON → its installable APK, or null when it has none. */
+    internal fun parseRelease(json: JSONObject, abi: String? = Build.SUPPORTED_ABIS.firstOrNull()): Release? {
         val version = json.optString("tag_name").removePrefix("v").ifBlank { return null }
         val assets = json.optJSONArray("assets") ?: return null
-        val apk = (0 until assets.length()).map { assets.getJSONObject(it) }
-            .firstOrNull { it.optString("name") == APK_ASSET } ?: return null
+        val assetList = (0 until assets.length()).map { assets.getJSONObject(it) }
+        val apk = selectApkAsset(assetList, abi) ?: return null
         return Release(
             version = version,
             apkUrl = apk.optString("browser_download_url").ifBlank { return null },
@@ -350,8 +369,12 @@ object AppUpdate {
 
     /** "0.5.55" vs "0.5.54" → positive; missing parts count as 0. */
     internal fun compareVersions(a: String, b: String): Int {
-        val x = a.split('.').map { it.toIntOrNull() ?: 0 }
-        val y = b.split('.').map { it.toIntOrNull() ?: 0 }
+        fun parts(v: String) = v.trim().removePrefix("v").removePrefix("V")
+            .substringBefore('-')
+            .split('.')
+            .map { it.takeWhile(Char::isDigit).toIntOrNull() ?: 0 }
+        val x = parts(a)
+        val y = parts(b)
         for (i in 0 until maxOf(x.size, y.size)) {
             val d = x.getOrElse(i) { 0 }.compareTo(y.getOrElse(i) { 0 })
             if (d != 0) return d
@@ -382,7 +405,7 @@ object AppUpdate {
         }
         progress = 0f
         val part = File(dir(), file.name + ".part")
-        val request = Request.Builder().url(release.apkUrl).header("User-Agent", "ClipFlow/${BuildConfig.VERSION_NAME}").build()
+        val request = Request.Builder().url(release.apkUrl).header("User-Agent", "EZTube/${BuildConfig.VERSION_NAME}").build()
         Net.client.newCall(request).execute().use { response ->
             check(response.isSuccessful) { "HTTP ${response.code}" }
             val body = checkNotNull(response.body) { "no body" }

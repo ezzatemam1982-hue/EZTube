@@ -11,6 +11,7 @@ import com.deniscerri.ytdl.core.RuntimeManager
 import com.deniscerri.ytdl.core.models.YTDLRequest
 import com.deniscerri.ytdl.core.packages.PackageBase.Companion.sharedClient
 import com.deniscerri.ytdl.database.models.GithubRelease
+import com.deniscerri.ytdl.database.models.GithubReleaseAsset
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
@@ -34,10 +35,6 @@ class UpdateUtil(var context: Context) {
         Pair<String, RuntimeManager.UpdateChannel>("master", RuntimeManager.UpdateChannel.MASTER)
     )
 
-    private fun String.tagNameToVersionNumber() : Int {
-        return this.replace("-beta", "").replace(".", "").padEnd(10,'0').toInt()
-    }
-
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     fun tryGetNewVersion() : Result<GithubRelease> {
         try {
@@ -51,42 +48,38 @@ class UpdateUtil(var context: Context) {
             sharedPreferences.edit().putLong(APP_LAST_CHECK_KEY, System.currentTimeMillis()).apply()
 
             val currentVersion = BuildConfig.VERSION_NAME
-            val currentVerNumber = currentVersion.tagNameToVersionNumber()
-
             val useBeta = sharedPreferences.getBoolean("update_beta", false)
-            var isInLatest = true
+            var isInLatest: Boolean
 
             var v: GithubRelease
             if (useBeta) {
-                v = res.firstOrNull { it.tag_name.contains("beta", true) } ?: res.first()
-                val stableV = res.first { !it.tag_name.contains("beta", true) }
+                v = res.firstOrNull { it.tag_name.contains("beta", true) } ?: res.firstOrNull()
+                    ?: return Result.failure(Error(context.getString(R.string.you_are_in_latest_version)))
+                val stableV = res.firstOrNull { !it.tag_name.contains("beta", true) }
 
-                val incomingVerNumber = v.tag_name.removePrefix("v").tagNameToVersionNumber()
-                val incomingStableVerNumber = stableV.tag_name.removePrefix("v").tagNameToVersionNumber()
-
-                //if in beta but latest stable higher
-                if (currentVerNumber < incomingStableVerNumber) {
+                // If in beta but latest stable is higher, promote to stable.
+                if (stableV != null && compareVersionTags(currentVersion, stableV.tag_name) < 0) {
                     isInLatest = false
                     v = stableV
-                }else{
-                    isInLatest = currentVerNumber >= incomingVerNumber
+                } else {
+                    isInLatest = compareVersionTags(currentVersion, v.tag_name) >= 0
                 }
-            }else {
-                v = res.first { !it.tag_name.contains("beta", true) }
-                val incomingVerNumber = v.tag_name.removePrefix("v").tagNameToVersionNumber()
+            } else {
+                v = res.firstOrNull { !it.tag_name.contains("beta", true) }
+                    ?: return Result.failure(Error(context.getString(R.string.you_are_in_latest_version)))
 
-                //if current version is beta but wants to downgrade to stable, allow it
+                // If current version is beta and user switches to stable, allow updating to latest stable.
                 isInLatest = if (currentVersion.contains("beta", true)) {
                     false
-                }else {
-                    currentVerNumber >= incomingVerNumber
+                } else {
+                    compareVersionTags(currentVersion, v.tag_name) >= 0
                 }
             }
 
             if (skippedVersions.contains(v.tag_name)) isInLatest = true
             if (isInLatest) return Result.failure(Error(context.getString(R.string.you_are_in_latest_version)))
             return Result.success(v)
-        }catch (e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
             return Result.failure(e)
         }
@@ -115,11 +108,13 @@ class UpdateUtil(var context: Context) {
         try {
             conn = URL(RELEASES_URL).openConnection() as HttpURLConnection
             conn.requestMethod = "GET"
+            conn.setRequestProperty("Accept", "application/vnd.github+json")
+            conn.setRequestProperty("User-Agent", "EZTube/${BuildConfig.VERSION_NAME}")
             conn.connectTimeout = 10000
             conn.readTimeout = 5000
             if (conn.responseCode < 300) {
                 val myType = object : TypeToken<List<GithubRelease>>() {}.type
-                json = Gson().fromJson(InputStreamReader(conn.inputStream), myType)
+                json = Gson().fromJson(InputStreamReader(conn.inputStream), myType) ?: emptyList()
             }
             conn.disconnect()
         } catch (e: Exception) {
@@ -187,11 +182,8 @@ class UpdateUtil(var context: Context) {
     suspend fun downloadReleaseApk(release: GithubRelease, onProgress: (Long) -> Unit) : Result<File> {
         return withContext(Dispatchers.IO) {
             try {
-                val releaseVersion = release.assets.firstOrNull {
-                    it.name.contains(Build.SUPPORTED_ABIS[0])
-                    && !it.name.contains("foss")
-                    && !it.name.contains("izzy")
-                }!!
+                val releaseVersion = selectApkAsset(release.assets)
+                    ?: return@withContext Result.failure(Error(context.getString(R.string.errored)))
                 File(FileUtil.getDefaultApksPath()).mkdirs()
                 val tempApk = File(FileUtil.getDefaultApksPath(), "${releaseVersion.browser_download_url.split("/").last()}")
 
@@ -221,7 +213,7 @@ class UpdateUtil(var context: Context) {
                             bytesDownloaded += bytesRead
 
                             // Calculate percentage
-                            val progress = ((bytesDownloaded * 100) / totalBytes)
+                            val progress = if (totalBytes > 0L) (bytesDownloaded * 100) / totalBytes else 0L
                             onProgress(progress)
                         }
                     }
@@ -235,10 +227,42 @@ class UpdateUtil(var context: Context) {
     }
 
     companion object {
-        const val RELEASES_URL = "https://api.github.com/repos/deniscerri/ytdlnis/releases"
+        const val RELEASES_URL = "https://api.github.com/repos/ezzatemam1982-hue/EZTube/releases"
         const val APP_LAST_CHECK_KEY = "app_last_update_check"
         const val YTDLP_LAST_CHECK_KEY = "ytdlp_last_update_check"
         var updatingYTDL = false
         var updatingApp = false
+
+        internal fun compareVersionTags(a: String, b: String): Int {
+            fun parts(tag: String) = tag.trim().removePrefix("v").removePrefix("V")
+                .substringBefore('-')
+                .split('.')
+                .map { it.takeWhile(Char::isDigit).toIntOrNull() ?: 0 }
+            val x = parts(a)
+            val y = parts(b)
+            for (i in 0 until maxOf(x.size, y.size)) {
+                val cmp = x.getOrElse(i) { 0 }.compareTo(y.getOrElse(i) { 0 })
+                if (cmp != 0) return cmp
+            }
+            return 0
+        }
+
+        internal fun selectApkAsset(
+            assets: List<GithubReleaseAsset>,
+            abi: String? = Build.SUPPORTED_ABIS.firstOrNull(),
+        ): GithubReleaseAsset? {
+            val apks = assets.filter {
+                it.name.endsWith(".apk", ignoreCase = true) &&
+                    !it.name.contains("foss", ignoreCase = true) &&
+                    !it.name.contains("izzy", ignoreCase = true)
+            }
+            return abi?.takeIf { it.isNotBlank() }?.let { targetAbi ->
+                apks.firstOrNull { it.name.contains(targetAbi, ignoreCase = true) }
+            } ?: apks.firstOrNull {
+                it.name.contains("universal", ignoreCase = true) ||
+                    it.name.equals("EZTube.apk", ignoreCase = true) ||
+                    it.name.equals("ClipFlow.apk", ignoreCase = true)
+            } ?: apks.firstOrNull()
+        }
     }
 }
