@@ -3,6 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/open_downloads_folder"
+        android:icon="@drawable/ic_folder"
+        android:title="@string/open_downloads_folder"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/clear_queue"
         android:icon="@drawable/ic_delete_all"
         android:title="@string/remove_downloading"

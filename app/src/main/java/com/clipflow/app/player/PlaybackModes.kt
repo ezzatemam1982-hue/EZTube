@@ -83,9 +83,27 @@ object PlaybackSpeed {
     fun snap(speed: Float) = atStep(step(speed))
     fun isNormal(speed: Float) = abs(speed - 1f) < STEP / 2
 
+    val QUICK_SPEEDS = listOf(1.0f, 1.25f, 1.5f, 2.0f)
+
     /** "1", "1.5", "1.75" (the × is drawn separately where it's styled). */
     fun label(speed: Float): String =
         String.format(Locale.US, "%.2f", snap(speed)).trimEnd('0').trimEnd('.')
+
+    /** Formats quick-toggle speed presets cleanly as "1.0x", "1.25x", "1.5x", "2.0x". */
+    fun quickLabel(speed: Float): String {
+        val snapped = snap(speed)
+        return when {
+            abs(snapped - 1.0f) < STEP / 2 -> "1.0x"
+            abs(snapped - 2.0f) < STEP / 2 -> "2.0x"
+            else -> label(snapped) + "x"
+        }
+    }
+
+    /** Cycles through 1.0f -> 1.25f -> 1.5f -> 2.0f -> 1.0f. */
+    fun nextQuickSpeed(current: Float): Float {
+        val index = QUICK_SPEEDS.indexOfFirst { abs(it - current) < STEP / 2 }
+        return if (index >= 0) QUICK_SPEEDS[(index + 1) % QUICK_SPEEDS.size] else QUICK_SPEEDS.first()
+    }
 }
 
 /**

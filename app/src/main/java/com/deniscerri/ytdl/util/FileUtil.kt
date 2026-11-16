@@ -547,6 +547,28 @@ object FileUtil {
         }
     }
 
+    fun openDownloadsFolder(context: Context) {
+        val defaultFolder = File(getDefaultApplicationPath()).apply { runCatching { mkdirs() } }
+        val documentId = "primary:${Environment.DIRECTORY_DOWNLOADS}/${defaultFolder.name}"
+        val folderDocUri = DocumentsContract.buildDocumentUri("com.android.externalstorage.documents", documentId)
+        val candidates = listOf(
+            Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(folderDocUri, DocumentsContract.Document.MIME_TYPE_DIR)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            },
+            Intent(android.app.DownloadManager.ACTION_VIEW_DOWNLOADS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            },
+        )
+        val pm = context.packageManager
+        for (intent in candidates) {
+            if (intent.resolveActivity(pm) != null && runCatching { context.startActivity(intent) }.isSuccess) {
+                return
+            }
+        }
+        Toast.makeText(context, context.getString(R.string.no_file_manager_found), Toast.LENGTH_SHORT).show()
+    }
+
     fun hasAllFilesAccess() : Boolean {
         if (Build.VERSION.SDK_INT < 30) return true
         return Environment.isExternalStorageManager()

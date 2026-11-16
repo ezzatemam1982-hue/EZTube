@@ -194,6 +194,12 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
             btn.setOnClickListener {
                 onItemClickListener.onButtonClick(item.id, finalFilePresent)
             }
+            card.findViewById<View>(R.id.history_copy_link_button)?.apply {
+                isVisible = item.url.isNotBlank()
+                setOnClickListener {
+                    com.deniscerri.ytdl.util.UiUtil.copyLinkToast(activity, item.url)
+                }
+            }
         } else {
             val thumbnail = card.findViewById<ImageView>(R.id.downloads_image_view)
 

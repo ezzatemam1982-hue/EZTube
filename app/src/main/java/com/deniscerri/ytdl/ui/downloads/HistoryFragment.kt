@@ -292,6 +292,9 @@ class HistoryFragment : Fragment(), HistoryPaginatedAdapter.OnItemClickListener{
                         deleteDialog.show()
                     }
                 }
+                R.id.open_downloads_folder -> {
+                    FileUtil.openDownloadsFolder(requireContext())
+                }
                 R.id.download_queue -> {
                     findNavController().navigate(R.id.downloadQueueMainFragment)
                 }

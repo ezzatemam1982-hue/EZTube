@@ -678,10 +678,10 @@ class PlayerState(private val scope: CoroutineScope) {
 
     /** The ruler is moving: play at [value] now (remembering waits for [commitSpeed]). */
     fun previewSpeed(value: Float) {
-        val player = controller ?: return
         val s = PlaybackSpeed.snap(value)
-        if (player.playbackParameters.speed != s) player.setPlaybackSpeed(s)
         speed = s
+        val player = controller ?: return
+        if (player.playbackParameters.speed != s) player.setPlaybackSpeed(s)
     }
 
     /**
@@ -695,6 +695,13 @@ class PlayerState(private val scope: CoroutineScope) {
         if (!PlaybackSpeed.remember) return
         if (PlaybackSpeed.isNormal(s) && !PlaybackSpeed.isNormal(PlaybackSpeed.saved)) PlaybackSpeed.setRemember(false, 1f)
         else PlaybackSpeed.save(s)
+    }
+
+    /** Cycles quick speed presets (1.0x -> 1.25x -> 1.5x -> 2.0x -> 1.0x) on active playback. */
+    fun cycleQuickSpeed(): Float {
+        val next = PlaybackSpeed.nextQuickSpeed(speed)
+        commitSpeed(next)
+        return next
     }
 
     fun toggleRememberSpeed() = PlaybackSpeed.setRemember(!PlaybackSpeed.remember, speed)

@@ -202,6 +202,9 @@ class DownloadQueueMainFragment : Fragment(){
         topAppBar.setOnMenuItemClickListener { m: MenuItem ->
             try{
                 when(m.itemId){
+                    R.id.open_downloads_folder -> {
+                        com.deniscerri.ytdl.util.FileUtil.openDownloadsFolder(requireContext())
+                    }
                     R.id.clear_all -> {
                         UiUtil.showGenericDeleteAllDialog(requireContext()) {
                             downloadViewModel.deleteAll()

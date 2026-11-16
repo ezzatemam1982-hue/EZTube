@@ -494,6 +494,14 @@ object UiUtil {
             .show()
     }
 
+    fun copyLinkToast(context: Context, url: String) {
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText(context.getString(R.string.url), url)
+        clipboard.setPrimaryClip(clip)
+        Toast.makeText(context, context.getString(R.string.link_copied), Toast.LENGTH_SHORT)
+            .show()
+    }
+
     fun openLinkIntent(context: Context, url: String) {
         val i = Intent(Intent.ACTION_VIEW)
         i.data = Uri.parse(url)
@@ -929,6 +937,11 @@ object UiUtil {
             bottomSheet.dismiss()
             copyLinkToClipBoard(context, item.url)
             true
+        }
+        val copyLink = bottomSheet.findViewById<Button>(R.id.bottomsheet_copy_link_button)
+        copyLink?.isVisible = url.isNotBlank()
+        copyLink?.setOnClickListener {
+            copyLinkToast(context, url)
         }
         val remove = bottomSheet.findViewById<Button>(R.id.bottomsheet_remove_button)
         remove!!.tag = item.id

@@ -65,7 +65,7 @@
                         android:dividerPadding="5dp"
                         android:orientation="vertical"
                         app:layout_constraintBottom_toTopOf="@+id/downloads_info_time"
-                        app:layout_constraintEnd_toStartOf="@+id/downloads_download_button_type"
+                        app:layout_constraintEnd_toStartOf="@+id/history_copy_link_button"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent">
 
@@ -148,6 +148,22 @@
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/downloads_download_button_type"
                         app:layout_constraintVertical_bias="1.0" />
+
+                    <androidx.appcompat.widget.AppCompatImageButton
+                        android:id="@+id/history_copy_link_button"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/rounded_corner"
+                        android:backgroundTint="#80000000"
+                        android:contentDescription="@string/copy_link"
+                        android:padding="8dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_copy"
+                        app:tint="#FFFFFF"
+                        app:layout_constraintBottom_toBottomOf="@+id/downloads_download_button_type"
+                        app:layout_constraintEnd_toStartOf="@+id/downloads_download_button_type"
+                        app:layout_constraintTop_toTopOf="@+id/downloads_download_button_type" />
 
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
                         android:id="@+id/downloads_download_button_type"

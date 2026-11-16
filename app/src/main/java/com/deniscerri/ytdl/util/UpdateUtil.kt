@@ -40,45 +40,17 @@ class UpdateUtil(var context: Context) {
         try {
             val skippedVersions = sharedPreferences.getString("skip_updates", "")?.split(",")?.distinct()?.toMutableList() ?: mutableListOf()
             if (sharedPreferences.getBoolean("update_nightly", false)) return tryGetNewNightly(skippedVersions)
-            val res = getGithubReleases()
-
-            if (res.isEmpty()){
+            val fetched = fetchReleasesResult()
+            if (fetched.isFailure) {
                 return Result.failure(Error(context.getString(R.string.network_error)))
             }
             sharedPreferences.edit().putLong(APP_LAST_CHECK_KEY, System.currentTimeMillis()).apply()
 
-            val currentVersion = BuildConfig.VERSION_NAME
+            val releases = fetched.getOrNull().orEmpty().filter { !it.tag_name.startsWith("nightly-") }
             val useBeta = sharedPreferences.getBoolean("update_beta", false)
-            var isInLatest: Boolean
-
-            var v: GithubRelease
-            if (useBeta) {
-                v = res.firstOrNull { it.tag_name.contains("beta", true) } ?: res.firstOrNull()
-                    ?: return Result.failure(Error(context.getString(R.string.you_are_in_latest_version)))
-                val stableV = res.firstOrNull { !it.tag_name.contains("beta", true) }
-
-                // If in beta but latest stable is higher, promote to stable.
-                if (stableV != null && compareVersionTags(currentVersion, stableV.tag_name) < 0) {
-                    isInLatest = false
-                    v = stableV
-                } else {
-                    isInLatest = compareVersionTags(currentVersion, v.tag_name) >= 0
-                }
-            } else {
-                v = res.firstOrNull { !it.tag_name.contains("beta", true) }
-                    ?: return Result.failure(Error(context.getString(R.string.you_are_in_latest_version)))
-
-                // If current version is beta and user switches to stable, allow updating to latest stable.
-                isInLatest = if (currentVersion.contains("beta", true)) {
-                    false
-                } else {
-                    compareVersionTags(currentVersion, v.tag_name) >= 0
-                }
-            }
-
-            if (skippedVersions.contains(v.tag_name)) isInLatest = true
-            if (isInLatest) return Result.failure(Error(context.getString(R.string.you_are_in_latest_version)))
-            return Result.success(v)
+            val candidate = selectNewRelease(releases, BuildConfig.VERSION_NAME, useBeta, skippedVersions)
+                ?: return Result.failure(Error(context.getString(R.string.you_are_in_latest_version)))
+            return Result.success(candidate)
         } catch (e: Exception) {
             e.printStackTrace()
             return Result.failure(e)
@@ -86,10 +58,11 @@ class UpdateUtil(var context: Context) {
     }
 
     private fun tryGetNewNightly(skippedVersions: List<String>) : Result<GithubRelease> {
-        val res = fetchReleases()
-        if (res.isEmpty()) return Result.failure(Error(context.getString(R.string.network_error)))
+        val fetched = fetchReleasesResult()
+        if (fetched.isFailure) return Result.failure(Error(context.getString(R.string.network_error)))
         sharedPreferences.edit().putLong(APP_LAST_CHECK_KEY, System.currentTimeMillis()).apply()
 
+        val res = fetched.getOrNull().orEmpty()
         // nightlies share the stable version name, so a nightly is new if it was published after this app was installed/updated
         val installedAt = context.packageManager.getPackageInfo(context.packageName, 0).lastUpdateTime
         val nightly = res.firstOrNull { it.tag_name.startsWith("nightly-") }
@@ -100,27 +73,32 @@ class UpdateUtil(var context: Context) {
     }
 
     // the nightly pre-release isn't versioned, keep it out of the stable/beta checks and the changelog
-    fun getGithubReleases(): List<GithubRelease> = fetchReleases().filter { !it.tag_name.startsWith("nightly-") }
+    fun getGithubReleases(): List<GithubRelease> =
+        fetchReleasesResult().getOrDefault(emptyList()).filter { !it.tag_name.startsWith("nightly-") }
 
-    private fun fetchReleases(): List<GithubRelease> {
-        val conn: HttpURLConnection
-        var json = listOf<GithubRelease>()
-        try {
+    private fun fetchReleasesResult(): Result<List<GithubRelease>> {
+        var conn: HttpURLConnection? = null
+        return try {
             conn = URL(RELEASES_URL).openConnection() as HttpURLConnection
             conn.requestMethod = "GET"
             conn.setRequestProperty("Accept", "application/vnd.github+json")
-            conn.setRequestProperty("User-Agent", "EZTube/${BuildConfig.VERSION_NAME}")
+            conn.setRequestProperty("User-Agent", USER_AGENT)
             conn.connectTimeout = 10000
             conn.readTimeout = 5000
-            if (conn.responseCode < 300) {
+            val code = conn.responseCode
+            if (code in 200..299) {
                 val myType = object : TypeToken<List<GithubRelease>>() {}.type
-                json = Gson().fromJson(InputStreamReader(conn.inputStream), myType) ?: emptyList()
+                val json: List<GithubRelease> = Gson().fromJson(InputStreamReader(conn.inputStream), myType) ?: emptyList()
+                Result.success(json)
+            } else {
+                Result.failure(IllegalStateException("HTTP $code"))
             }
-            conn.disconnect()
         } catch (e: Exception) {
             Log.e(tag, e.toString())
+            Result.failure(e)
+        } finally {
+            conn?.disconnect()
         }
-        return json
     }
 
     data class YTDLPUpdateResponse (
@@ -228,10 +206,47 @@ class UpdateUtil(var context: Context) {
 
     companion object {
         const val RELEASES_URL = "https://api.github.com/repos/ezzatemam1982-hue/EZTube/releases"
+        const val USER_AGENT = "EZTube-App"
         const val APP_LAST_CHECK_KEY = "app_last_update_check"
         const val YTDLP_LAST_CHECK_KEY = "ytdlp_last_update_check"
         var updatingYTDL = false
         var updatingApp = false
+
+        internal fun selectNewRelease(
+            releases: List<GithubRelease>,
+            currentVersion: String,
+            useBeta: Boolean,
+            skippedVersions: List<String>,
+        ): GithubRelease? {
+            if (releases.isEmpty()) return null
+            var candidate: GithubRelease
+            val isInLatest: Boolean
+            if (useBeta) {
+                candidate = releases.filter { it.tag_name.contains("beta", true) }
+                    .maxWithOrNull { a, b -> compareVersionTags(a.tag_name, b.tag_name) }
+                    ?: releases.maxWithOrNull { a, b -> compareVersionTags(a.tag_name, b.tag_name) }
+                    ?: return null
+                val stable = releases.filter { !it.tag_name.contains("beta", true) }
+                    .maxWithOrNull { a, b -> compareVersionTags(a.tag_name, b.tag_name) }
+                if (stable != null && compareVersionTags(currentVersion, stable.tag_name) < 0) {
+                    isInLatest = false
+                    candidate = stable
+                } else {
+                    isInLatest = compareVersionTags(currentVersion, candidate.tag_name) >= 0
+                }
+            } else {
+                candidate = releases.filter { !it.tag_name.contains("beta", true) }
+                    .maxWithOrNull { a, b -> compareVersionTags(a.tag_name, b.tag_name) }
+                    ?: return null
+                isInLatest = if (currentVersion.contains("beta", true)) {
+                    false
+                } else {
+                    compareVersionTags(currentVersion, candidate.tag_name) >= 0
+                }
+            }
+            if (isInLatest || skippedVersions.contains(candidate.tag_name)) return null
+            return candidate
+        }
 
         internal fun compareVersionTags(a: String, b: String): Int {
             fun parts(tag: String) = tag.trim().removePrefix("v").removePrefix("V")

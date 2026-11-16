@@ -17,6 +17,12 @@
         app:showAsAction="always"/>
 
     <item
+        android:id="@+id/open_downloads_folder"
+        android:title="@string/open_downloads_folder"
+        android:icon="@drawable/ic_folder"
+        app:showAsAction="ifRoom"/>
+
+    <item
         android:id="@+id/download_queue"
         android:title="@string/download_queue"
         android:icon="@drawable/baseline_downloading_24"

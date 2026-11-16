@@ -568,13 +568,21 @@ fun VideoContent(
                             Icon(Icons.Outlined.Headphones, null, tint = ink, modifier = Modifier.size(tool * 0.5f))
                         }
                     }
-                    val stickySpeed = PlaybackSpeed.remember && !PlaybackSpeed.isNormal(state.speed)
+                    val speedActive = !PlaybackSpeed.isNormal(state.speed)
                     OverlayPill(
-                        PlaybackSpeed.label(state.speed) + "×", stringResource(R.string.video_playback_speed), enabled, tool, filled = stickySpeed,
+                        label = PlaybackSpeed.quickLabel(state.speed),
+                        description = stringResource(R.string.video_playback_speed),
+                        enabled = enabled,
+                        height = tool,
+                        filled = speedActive,
                         modifier = Modifier.onGloballyPositioned { dropAnchors[2] = it },
+                        onLongClick = {
+                            touched()
+                            if (!toggleDrop(DropKind.Speed, 2)) state.sheet = PlayerSheet.Speed
+                        },
                     ) {
                         touched()
-                        if (!toggleDrop(DropKind.Speed, 2)) state.sheet = PlayerSheet.Speed
+                        state.cycleQuickSpeed()
                     }
                     if (state.details?.audioTracks.orEmpty().size > 1) {
                         OverlayTile(
@@ -739,18 +747,35 @@ fun VideoContent(
         }
         if (edge != null && !state.screenLocked) EdgeScrubPreview(state, edge)
         if (!overlay && !state.screenLocked && interactive && !state.holdingFast && state.error == null && !AudioOnly.enabled) {
-            OverlayTile(
-                description = stringResource(R.string.video_lock_screen),
-                enabled = interactive && controlsAlpha() > 0.5f,
-                size = 36.dp,
-                tile = Color.Black.copy(alpha = 0.50f),
+            val pillEnabled = interactive && controlsAlpha() > 0.5f
+            val speedActive = !PlaybackSpeed.isNormal(state.speed)
+            Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(10.dp)
                     .graphicsLayer { alpha = controlsAlpha() * (1f - scrubFade) },
-                onClick = { state.lockScreen() },
-            ) { _ ->
-                Icon(Icons.Rounded.LockOpen, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                OverlayPill(
+                    label = PlaybackSpeed.quickLabel(state.speed),
+                    description = stringResource(R.string.video_playback_speed),
+                    enabled = pillEnabled,
+                    height = 36.dp,
+                    filled = speedActive,
+                    tile = Color.Black.copy(alpha = 0.50f),
+                    contentColor = if (speedActive) MaterialTheme.colorScheme.onPrimary else Color.White,
+                    onClick = { state.cycleQuickSpeed() },
+                )
+                OverlayTile(
+                    description = stringResource(R.string.video_lock_screen),
+                    enabled = pillEnabled,
+                    size = 36.dp,
+                    tile = Color.Black.copy(alpha = 0.50f),
+                    onClick = { state.lockScreen() },
+                ) { _ ->
+                    Icon(Icons.Rounded.LockOpen, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                }
             }
         }
     }
@@ -924,7 +949,9 @@ private fun OverlayPill(
     height: Dp,
     filled: Boolean = false,
     tile: Color = MaterialTheme.colorScheme.surfaceVariant,
+    contentColor: Color? = null,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     val c = MaterialTheme.colorScheme
@@ -934,14 +961,14 @@ private fun OverlayPill(
             .squishOn(filled)
             .height(height)
             .widthIn(min = height)
-            .pressable(enabled = enabled) { view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK); onClick() }
+            .pressable(enabled = enabled, onLongClick = onLongClick) { view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK); onClick() }
             .clip(CircleShape)
             .background(if (filled) c.primary else tile)
             .padding(horizontal = 11.dp)
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, color = if (filled) c.onPrimary else c.onSurface, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+        Text(label, color = contentColor ?: if (filled) c.onPrimary else c.onSurface, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
     }
 }
 

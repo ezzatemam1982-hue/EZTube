@@ -759,4 +759,8 @@
     <string name="browser_ads_blocked">%1$d ads blocked</string>
     <string name="browser_site_remove">Remove site</string>
     <string name="browser_already_in_queue">Already queued or downloaded in EZTube</string>
+    <string name="copy_link">Copy Link</string>
+    <string name="link_copied">Link copied</string>
+    <string name="open_downloads_folder">Open downloads folder</string>
+    <string name="no_file_manager_found">No file manager app found</string>
 </resources>
