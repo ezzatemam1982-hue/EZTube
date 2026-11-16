@@ -82,9 +82,13 @@ class OrientationController(private val activity: ComponentActivity) {
     private var squareScreen by mutableStateOf(activity.onSquareScreen())
     /** Fullscreen in portrait, for a vertical video or a square screen; dropped once the window turns landscape. */
     private var portraitFullscreen by mutableStateOf(false)
+    /** While true, orientation changes and forced-side clears are frozen at the current orientation. */
+    var screenLocked by mutableStateOf(false)
+        private set
 
     private val listener = object : OrientationEventListener(activity) {
         override fun onOrientationChanged(degrees: Int) {
+            if (screenLocked) return
             if (degrees == ORIENTATION_UNKNOWN) return
             val physicallyLandscape = degrees in 60..120 || degrees in 240..300
             val physicallyPortrait = degrees <= 30 || degrees >= 330
@@ -111,6 +115,7 @@ class OrientationController(private val activity: ComponentActivity) {
 
     /** [vertical]: the video is taller than wide, so fullscreen stays portrait (as on a square screen). */
     fun enterFullscreen(vertical: Boolean) {
+        if (screenLocked) return
         when {
             free -> paneFullscreen = true
             vertical || squareScreen -> portraitFullscreen = true
@@ -119,6 +124,7 @@ class OrientationController(private val activity: ComponentActivity) {
     }
 
     fun exitFullscreen() {
+        if (screenLocked) return
         when {
             free -> paneFullscreen = false
             portraitFullscreen -> portraitFullscreen = false
@@ -128,7 +134,7 @@ class OrientationController(private val activity: ComponentActivity) {
 
     fun setPlayerOpen(open: Boolean) {
         playerOpen = open
-        if (!open) { forced = null; paneFullscreen = null; portraitFullscreen = false }
+        if (!open) { forced = null; paneFullscreen = null; portraitFullscreen = false; screenLocked = false }
         apply()
     }
 
@@ -136,6 +142,7 @@ class OrientationController(private val activity: ComponentActivity) {
         activity.requestedOrientation = when {
             free -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             !playerOpen -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            screenLocked -> ActivityInfo.SCREEN_ORIENTATION_LOCKED
             forced == Forced.Landscape -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             forced == Forced.Portrait -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             else -> ActivityInfo.SCREEN_ORIENTATION_USER
@@ -143,7 +150,8 @@ class OrientationController(private val activity: ComponentActivity) {
     }
 
     @Composable
-    fun Bind(playerOpen: Boolean, landscape: Boolean) {
+    fun Bind(playerOpen: Boolean, landscape: Boolean, locked: Boolean = false) {
+        SideEffect { screenLocked = locked }
         DisposableEffect(Unit) {
             if (listener.canDetectOrientation()) listener.enable()
             val windowListener = Consumer<MultiWindowModeChangedInfo> { info ->
@@ -159,6 +167,7 @@ class OrientationController(private val activity: ComponentActivity) {
         // A pane that changes shape (the divider dragged) starts over from its new shape. A large
         // screen just turned keeps what was chosen.
         LaunchedEffect(landscape, multiWindow) {
+            if (screenLocked) return@LaunchedEffect
             if (multiWindow || !largeScreen) paneFullscreen = null
             // Turned sideways: from here it's landscape fullscreen, which turning back exits.
             if (landscape || multiWindow) portraitFullscreen = false
@@ -177,7 +186,7 @@ class OrientationController(private val activity: ComponentActivity) {
             squareScreen = activity.onSquareScreen()
         }
         SideEffect { wasFullscreen[0] = showsFullscreen(playerOpen, landscape) }
-        LaunchedEffect(playerOpen, forced, multiWindow, largeScreen) { setPlayerOpen(playerOpen) }
+        LaunchedEffect(playerOpen, forced, multiWindow, largeScreen, locked) { setPlayerOpen(playerOpen) }
     }
 }
 

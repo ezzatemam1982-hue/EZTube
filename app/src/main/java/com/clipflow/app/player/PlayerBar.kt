@@ -67,6 +67,7 @@ import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Fullscreen
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Headphones
+import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PictureInPictureAlt
 import androidx.compose.material.icons.rounded.SkipNext
@@ -191,7 +192,7 @@ private const val QualityPickedMs = 420L
 /** Springs for the bar's values; a tiny visibility threshold so nothing snaps at the end (0.5.7). */
 private val BarSpring = spring(dampingRatio = 0.78f, stiffness = 420f, visibilityThreshold = 0.0005f)
 
-internal enum class BarTool { Speed, Quality, Audio, Captions, Downloads, Pip, Fullscreen, Next }
+internal enum class BarTool { Speed, Quality, Audio, Captions, Downloads, Pip, Lock, Fullscreen, Next }
 
 /** What the bar can turn into besides the card. */
 internal enum class BarPanel { Quality, Speed, Audio, Chapters, Captions }
@@ -204,6 +205,7 @@ internal fun barTools(player: PlayerState, pip: PipController?): List<BarTool> =
     if (player.captions.tracks.isNotEmpty()) add(BarTool.Captions)
     add(BarTool.Downloads)
     if (pip?.supported == true) add(BarTool.Pip)
+    add(BarTool.Lock)
     add(BarTool.Fullscreen)
     if (player.queue.isNotEmpty()) add(BarTool.Next)
 }
@@ -730,6 +732,7 @@ internal fun BarCard(bar: PlayerBarState, player: PlayerState, gate: () -> Float
                             BarTool.Captions -> Icon(Icons.Rounded.ClosedCaption, null, tint = ink, modifier = glyph)
                             BarTool.Downloads -> Icon(Icons.Rounded.FolderOpen, null, tint = ink, modifier = glyph)
                             BarTool.Pip -> Icon(Icons.Rounded.PictureInPictureAlt, null, tint = ink, modifier = glyph)
+                            BarTool.Lock -> Icon(Icons.Rounded.LockOpen, null, tint = ink, modifier = glyph)
                             BarTool.Fullscreen -> Icon(Icons.Rounded.Fullscreen, null, tint = ink, modifier = glyph)
                             BarTool.Next -> Icon(Icons.Rounded.SkipNext, null, tint = ink, modifier = glyph)
                         }
@@ -740,6 +743,7 @@ internal fun BarCard(bar: PlayerBarState, player: PlayerState, gate: () -> Float
                                 BarTool.Audio -> stringResource(R.string.bar_tool_audio)
                                 BarTool.Downloads -> stringResource(R.string.ui_downloads)
                                 BarTool.Pip -> stringResource(R.string.bar_tool_pip)
+                                BarTool.Lock -> stringResource(R.string.bar_tool_lock)
                                 BarTool.Captions -> player.captions.choice?.takeIf { player.captions.on }?.label ?: stringResource(R.string.bar_tool_captions)
                                 BarTool.Fullscreen -> stringResource(R.string.bar_tool_fullscreen)
                                 BarTool.Next -> stringResource(R.string.bar_tool_next)
@@ -1329,6 +1333,7 @@ internal fun pickTool(tool: BarTool, bar: PlayerBarState, player: PlayerState, p
             bar.closeAll()
             if (pip?.enter(player.videoAspect) != true) player.actionMessage = str(R.string.bar_pip_off)
         }
+        BarTool.Lock -> { bar.closeAll(); player.lockScreen() }
         BarTool.Fullscreen -> { bar.closeAll(); onFullscreen() }
         BarTool.Next -> { bar.closeAll(); player.playNextUp() }
     }

@@ -21,6 +21,8 @@
     <!-- Audio track picker button label under the bar tool tile. Keep short. -->
     <string name="bar_tool_audio">Audio</string>
     <string name="bar_tool_fullscreen">Fullscreen</string>
+    <!-- Freezes all touch input until the user taps the floating Unlock pill. -->
+    <string name="bar_tool_lock">Lock</string>
     <!-- Plays the next video. -->
     <string name="bar_tool_next">Next</string>
 

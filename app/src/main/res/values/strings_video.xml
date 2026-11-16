@@ -71,4 +71,8 @@
   <!-- Button on the playback error panel. -->
   <string name="video_try_again">Try again</string>
   <string name="video_open_in_youtube">Open in YouTube</string>
+  <!-- Universal screen lock overlay & floating unlock pill. -->
+  <string name="video_lock_screen">Lock screen</string>
+  <string name="video_unlock">Unlock</string>
+  <string name="video_screen_unlocked">Screen unlocked</string>
 </resources>

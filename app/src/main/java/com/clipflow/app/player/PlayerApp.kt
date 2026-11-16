@@ -327,11 +327,13 @@ fun ClipFlowPlayerApp() {
     val landscape = remember(windowLandscape, config.screenWidthDp, config.screenHeightDp, config.densityDpi, orientation.multiWindow) {
         if (!orientation.multiWindow && activity.onSquareScreen()) activity.turnedSideways() else windowLandscape
     }
-    // Audio only has no picture to go fullscreen with: the open player stays portrait.
-    orientation.Bind(!inHub && playerOpen && !AudioOnly.enabled, landscape)
     val pip = remember(activity) { PipController(activity) }
     // Closing the picture-in-picture window pauses (expanding it just comes back).
     pip.Bind(onClosed = { player.controller?.pause() })
+    LaunchedEffect(pip.active) { if (pip.active) player.unlockScreen() }
+    val lockActive = !inHub && playerOpen && player.screenLocked && !pip.active && !tv
+    // Audio only has no picture to go fullscreen with: the open player stays portrait.
+    orientation.Bind(!inHub && playerOpen && !AudioOnly.enabled, landscape, locked = lockActive)
     // Leaving the app mid-video floats it (Settings › Playback, off unless turned on; #42).
     pip.AutoEnter(AutoPip.on && player.isPlaying && player.current != null && !AudioOnly.enabled, player.videoAspect)
     // The PiP window can be any shape: hold whatever was showing when it opened.
@@ -400,8 +402,9 @@ fun ClipFlowPlayerApp() {
     // tap anywhere else, and whenever the player stops being the open portrait page.
     val playerBar = remember { PlayerBarState(scope) }
     BackHandler(enabled = !inHub && playerBar.isOpen && playerOpen && !showFullscreen) { playerBar.closeAll() }
-    LaunchedEffect(playerOpen, showFullscreen, player.sheet) {
-        if (!playerOpen || showFullscreen || player.sheet != null) playerBar.closeAll()
+    LaunchedEffect(playerOpen, showFullscreen, player.sheet, player.screenLocked) {
+        if (!playerOpen || showFullscreen || player.sheet != null || player.screenLocked) playerBar.closeAll()
+        if (player.screenLocked) optionsFor = null
     }
 
     val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -852,6 +855,11 @@ fun ClipFlowPlayerApp() {
                     CaptionLayer(player, bottom = 4.dp)
                 }
             }
+        }
+        // Topmost window-wide screen lock: composed last so it sits above all content and its
+        // BackHandler supersedes fullscreen, bar, and player BackHandlers while locked.
+        if (lockActive) {
+            ScreenLockOverlay(state = player, fullscreen = showFullscreen)
         }
         }
     }

@@ -134,8 +134,22 @@ class PlayerState(private val scope: CoroutineScope) {
     var expanded by mutableStateOf(false)
     /** Fullscreen: requested (button, swipe up; upright for a vertical video) or entered (rotation). */
     var fullscreen by mutableStateOf(false)
+    /** Universal screen lock: freezes all touch input across the window and hides player controls. */
+    var screenLocked by mutableStateOf(false)
+        internal set
     /** Which bottom sheet is open over the player, if any. */
     var sheet by mutableStateOf<PlayerSheet?>(null)
+
+    fun lockScreen() {
+        screenLocked = true
+        sheet = null
+        closePlaylists()
+        endFastHold()
+    }
+
+    fun unlockScreen() {
+        screenLocked = false
+    }
 
     val comments = CommentsState(scope).apply {
         // NewPipe only knows chapters typed into the description; YouTube's auto chapters come
@@ -789,6 +803,7 @@ class PlayerState(private val scope: CoroutineScope) {
         queue = emptyList()
         expanded = false
         fullscreen = false
+        screenLocked = false
         sheet = null
         current = null
         details = null

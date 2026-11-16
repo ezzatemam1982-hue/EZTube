@@ -4,20 +4,31 @@ import com.deniscerri.ytdl.BuildConfig
 import com.deniscerri.ytdl.R
 
 import android.view.HapticFeedbackConstants
+import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.core.snap
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.outlined.Headphones
 import androidx.compose.material.icons.rounded.Headphones
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.zIndex
 import kotlin.math.hypot
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
@@ -215,12 +226,20 @@ fun VideoContent(
     )
 
     LaunchedEffect(interactive) { if (!interactive) { controlsVisible = false; burstActive = false } }
+    LaunchedEffect(state.screenLocked) {
+        if (state.screenLocked) {
+            controlsVisible = false
+            drop = null
+            burstActive = false
+        }
+    }
     LaunchedEffect(controlsVisible, fullscreen) { if (!controlsVisible || !fullscreen) drop = null }
     BackHandler(enabled = drop != null) { drop = null }
     val currentInteractive by androidx.compose.runtime.rememberUpdatedState(interactive)
     val currentInactiveTap by androidx.compose.runtime.rememberUpdatedState(onInactiveTap)
-    fun toggleControls() { if (overlay) { controlsVisible = !controlsVisible; touched() } }
-    SideEffect { edge?.controlsShown = controlsVisible && interactive }
+    val currentScreenLocked by androidx.compose.runtime.rememberUpdatedState(state.screenLocked)
+    fun toggleControls() { if (overlay && !state.screenLocked) { controlsVisible = !controlsVisible; touched() } }
+    SideEffect { edge?.controlsShown = controlsVisible && interactive && !state.screenLocked }
     // Scrubbing the bottom edge: the controls step aside for the landing frame, and the hide timer
     // starts over once it's let go.
     val scrubbing = edge?.fraction != null
@@ -254,8 +273,8 @@ fun VideoContent(
         delay(1_500)
         zoomPillShown = false
     }
-    LaunchedEffect(fullscreen) {
-        if (!fullscreen) zoomPillShown = false
+    LaunchedEffect(fullscreen, state.screenLocked) {
+        if (!fullscreen || state.screenLocked) zoomPillShown = false
     }
     // How fast the pinch was moving the zoom as it let go, so the spring carries on from it.
     val zoomFling = remember { floatArrayOf(0f) }
@@ -285,7 +304,7 @@ fun VideoContent(
                         if (event.changes.none { it.pressed }) return@awaitEachGesture
                         event = awaitPointerEvent(PointerEventPass.Initial)
                     }
-                    if (state.holdingFast || state.error != null || !currentInteractive) return@awaitEachGesture
+                    if (state.holdingFast || state.error != null || !currentInteractive || currentScreenLocked) return@awaitEachGesture
                     val fill = fillScale(size.width.toFloat(), size.height.toFloat(), state.videoAspect)
                     val from = 1f + (fill - 1f) * zoom.value
                     var total = 1f
@@ -342,6 +361,7 @@ fun VideoContent(
             var pendingAt = 0L
             awaitEachGesture {
                 val down = awaitFirstDown()
+                if (currentScreenLocked) return@awaitEachGesture
                 // Held still on the right side: 2× until it lifts (GitHub #36). Moving first (a swipe,
                 // the volume slide, a scrub) takes the gesture away from it before the timeout.
                 val holdable = currentInteractive && state.error == null && !burstActive && down.position.x / size.width > 0.6f
@@ -483,16 +503,18 @@ fun VideoContent(
                 modifier = Modifier.align(Alignment.Center).padding(top = 76.dp, start = 32.dp, end = 32.dp).graphicsLayer { alpha = botWait },
             )
         }
-        SkippedNote(state, Modifier.align(Alignment.TopCenter).padding(top = 12.dp).graphicsLayer { alpha = controlsAlpha() })
-        // The Ask pill stays reachable while the controls are hidden.
-        if (!controlsVisible) {
+        if (!state.screenLocked) {
+            SkippedNote(state, Modifier.align(Alignment.TopCenter).padding(top = 12.dp).graphicsLayer { alpha = controlsAlpha() })
+        }
+        // The Ask pill stays reachable while the controls are hidden (unless screen lock is on).
+        if (!controlsVisible && !state.screenLocked) {
             state.askSegment?.let { segment ->
                 SkipSegmentPill(segment, enabled = true, modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp)) {
                     touched(); state.skipSegment(segment)
                 }
             }
         }
-        if (overlay) Box(Modifier.fillMaxSize().graphicsLayer { alpha = visibleAlpha * controlsAlpha() * (1f - scrubFade) }) {
+        if (overlay && !state.screenLocked) Box(Modifier.fillMaxSize().graphicsLayer { alpha = visibleAlpha * controlsAlpha() * (1f - scrubFade) }) {
             Box(
                 Modifier.fillMaxSize().background(
                     Brush.verticalGradient(
@@ -663,6 +685,13 @@ fun VideoContent(
                                 )
                             }
                         }
+                        OverlayTile(stringResource(R.string.video_lock_screen), enabled, 34.dp, onClick = {
+                            controlsVisible = false
+                            drop = null
+                            state.lockScreen()
+                        }) { ink ->
+                            Icon(Icons.Rounded.LockOpen, null, tint = ink, modifier = Modifier.size(19.dp))
+                        }
                         OverlayTile(stringResource(if (fullscreen) R.string.video_exit_fullscreen else R.string.video_fullscreen), enabled, 34.dp, onClick = onToggleFullscreen) { ink ->
                             Icon(if (fullscreen) Icons.Rounded.FullscreenExit else Icons.Rounded.Fullscreen, null, tint = ink, modifier = Modifier.size(21.dp))
                         }
@@ -708,7 +737,22 @@ fun VideoContent(
                     .padding(top = pillTop),
             )
         }
-        if (edge != null) EdgeScrubPreview(state, edge)
+        if (edge != null && !state.screenLocked) EdgeScrubPreview(state, edge)
+        if (!overlay && !state.screenLocked && interactive && !state.holdingFast && state.error == null && !AudioOnly.enabled) {
+            OverlayTile(
+                description = stringResource(R.string.video_lock_screen),
+                enabled = interactive && controlsAlpha() > 0.5f,
+                size = 36.dp,
+                tile = Color.Black.copy(alpha = 0.50f),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(10.dp)
+                    .graphicsLayer { alpha = controlsAlpha() * (1f - scrubFade) },
+                onClick = { state.lockScreen() },
+            ) { _ ->
+                Icon(Icons.Rounded.LockOpen, null, tint = Color.White, modifier = Modifier.size(18.dp))
+            }
+        }
     }
 }
 
@@ -746,7 +790,7 @@ fun AudioOnlyStage(
     Box(
         modifier
             .graphicsLayer { alpha = cover().coerceIn(0f, 1f) }
-            .pointerInput(Unit) { detectTapGestures { if (!currentInteractive) currentInactiveTap() } },
+            .pointerInput(Unit) { detectTapGestures { if (!currentInteractive && !state.screenLocked) currentInactiveTap() } },
     ) {
         Box(Modifier.fillMaxSize().aspectFit(16f / 9f)) {
             Thumbnail(state.current?.thumbnail, Modifier.fillMaxSize(), radius = 0)
@@ -757,9 +801,9 @@ fun AudioOnlyStage(
             ErrorPanel(error, state, onCollapse = {})
             return@Box
         }
-        Box(Modifier.fillMaxSize().graphicsLayer { alpha = controlsAlpha() * gather().coerceIn(0f, 1f) }) {
+        if (!state.screenLocked) Box(Modifier.fillMaxSize().graphicsLayer { alpha = controlsAlpha() * gather().coerceIn(0f, 1f) }) {
             SkippedNote(state, Modifier.align(Alignment.TopCenter).padding(top = 12.dp))
-            // Where the video's overlay has them (on-video controls): audio only (on) and speed.
+            // Where the video's overlay has them (on-video controls): audio only (on), speed, and screen lock.
             if (!PlayerControls.inBar) {
                 Row(
                     Modifier.align(Alignment.TopEnd).padding(10.dp),
@@ -773,6 +817,9 @@ fun AudioOnlyStage(
                     val stickySpeed = PlaybackSpeed.remember && !PlaybackSpeed.isNormal(state.speed)
                     OverlayPill(PlaybackSpeed.label(state.speed) + "×", stringResource(R.string.video_playback_speed), interactive, 36.dp, filled = stickySpeed, tile = tile) {
                         state.sheet = PlayerSheet.Speed
+                    }
+                    OverlayTile(stringResource(R.string.video_lock_screen), interactive, 36.dp, tile = tile, onClick = { state.lockScreen() }) { ink ->
+                        Icon(Icons.Rounded.LockOpen, null, tint = ink, modifier = Modifier.size(18.dp))
                     }
                 }
             }
@@ -1172,6 +1219,13 @@ fun FullscreenPlayer(state: PlayerState, onExit: () -> Unit) {
     var drag by remember { mutableStateOf(0f) }
     // Up/down on the left = brightness, on the right = volume; the middle swipes down to exit.
     val sliders = rememberFullscreenSliders()
+    LaunchedEffect(state.screenLocked) {
+        if (state.screenLocked) {
+            drag = 0f
+            sliders.end()
+            sliders.hide()
+        }
+    }
     Box(Modifier.fillMaxSize()) {
         VideoContent(
             state = state,
@@ -1180,13 +1234,97 @@ fun FullscreenPlayer(state: PlayerState, onExit: () -> Unit) {
             onToggleFullscreen = onExit,
             modifier = Modifier
                 .fillMaxSize()
-                .fullscreenGestures(sliders, onPull = { drag = it }, onSwipeDown = onExit)
+                .then(if (state.screenLocked) Modifier else Modifier.fullscreenGestures(sliders, onPull = { drag = it }, onSwipeDown = onExit))
                 .graphicsLayer {
                     // A little give while dragging, so the gesture is visibly being heard.
-                    translationY = if (reduced) 0f else drag * 0.35f
+                    translationY = if (reduced || state.screenLocked) 0f else drag * 0.35f
                 },
         )
-        SliderLevel(sliders)
+        if (!state.screenLocked) SliderLevel(sliders)
+    }
+}
+
+internal const val ScreenLockPromptHideMs = 2_500L
+
+/**
+ * Full-window touch-freezing scrim while [PlayerState.screenLocked] is active. Consumes all pointer
+ * events anywhere on screen (video, details, comments, navigation bar, sheets) and intercepts Back
+ * gestures; tapping the frozen screen reveals the floating Unlock pill for [ScreenLockPromptHideMs].
+ */
+@Composable
+fun ScreenLockOverlay(state: PlayerState, fullscreen: Boolean) {
+    val context = LocalContext.current
+    val view = LocalView.current
+    val reduced = rememberReducedMotion()
+    val unlockedToastText = stringResource(R.string.video_screen_unlocked)
+    var promptVisible by remember { mutableStateOf(true) }
+    var promptSeq by remember { mutableIntStateOf(0) }
+    fun revealPrompt() {
+        promptVisible = true
+        promptSeq++
+    }
+    LaunchedEffect(promptSeq, promptVisible) {
+        if (promptVisible) {
+            delay(ScreenLockPromptHideMs)
+            promptVisible = false
+        }
+    }
+    BackHandler { revealPrompt() }
+    Box(
+        Modifier
+            .fillMaxSize()
+            .zIndex(100f)
+            .pointerInput(Unit) {
+                val slopSq = viewConfiguration.touchSlop * viewConfiguration.touchSlop
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = true)
+                    down.consume()
+                    var maxPointers = 1
+                    var moved = false
+                    var handledByChild = false
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        maxPointers = maxOf(maxPointers, event.changes.size)
+                        for (change in event.changes) {
+                            if (change.isConsumed) handledByChild = true
+                            val dx = change.position.x - down.position.x
+                            val dy = change.position.y - down.position.y
+                            if (dx * dx + dy * dy > slopSq) moved = true
+                            change.consume()
+                        }
+                        if (event.changes.none { it.pressed }) break
+                    }
+                    if (!moved && maxPointers == 1 && !handledByChild) revealPrompt()
+                }
+            },
+    ) {
+        AnimatedVisibility(
+            visible = promptVisible,
+            enter = if (reduced) fadeIn(snap()) else fadeIn(tween(160, easing = Motion.Emphasized)) + scaleIn(tween(180, easing = Motion.Emphasized), initialScale = 0.92f),
+            exit = if (reduced) fadeOut(snap()) else fadeOut(tween(200, easing = Motion.Emphasized)) + scaleOut(tween(180, easing = Motion.Emphasized), targetScale = 0.94f),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .windowInsetsPadding(if (fullscreen) WindowInsets.displayCutout else WindowInsets.navigationBars)
+                .padding(bottom = if (fullscreen) 32.dp else 108.dp),
+        ) {
+            Row(
+                modifier = Modifier
+                    .height(44.dp)
+                    .pressable(enabled = promptVisible) {
+                        view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                        state.unlockScreen()
+                        Toast.makeText(context, unlockedToastText, Toast.LENGTH_SHORT).show()
+                    }
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.78f))
+                    .padding(horizontal = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(Icons.Rounded.Lock, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                Text(stringResource(R.string.video_unlock), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+            }
+        }
     }
 }
 

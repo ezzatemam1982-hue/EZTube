@@ -620,6 +620,7 @@ private fun VideoStage(state: PlayerState, morph: PlayerMorph, fold: Animatable<
                 else morph.dragBy(delta)
             },
             orientation = Orientation.Vertical,
+            enabled = interactive && !state.screenLocked,
             onDragStopped = { velocity ->
                 val wasPulling = pulling
                 decided = false
@@ -664,8 +665,8 @@ private fun VideoStage(state: PlayerState, morph: PlayerMorph, fold: Animatable<
             .zIndex(1f)
             .videoEdge(
                 state, edge,
-                enabled = onVideo && interactive && !audio,
-                shown = { if (onVideo) ramp(morph.progress.value, 0.85f) * (1f - cover.value) else 0f },
+                enabled = onVideo && interactive && !audio && !state.screenLocked,
+                shown = { if (onVideo && !state.screenLocked) ramp(morph.progress.value, 0.85f) * (1f - cover.value) else 0f },
                 scale = swell,
             ),
     ) {
