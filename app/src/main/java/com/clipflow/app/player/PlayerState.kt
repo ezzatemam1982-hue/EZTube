@@ -851,12 +851,35 @@ class PlayerState(private val scope: CoroutineScope) {
 
     fun close() {
         loadJob?.cancel()
+        choicesJob?.cancel()
+        pendingStart = null
+        heldFrom = null
+        holdingFast = false
         manualAudioTrackId = null
         selectedAudioTrackId = null
         controller?.let(::clearAudioTrackOverride)
         QualityPreference.clearVideoOverride()
         fullscreenScaleFor = null
-        controller?.run { stop(); clearMediaItems() }
+        SavedSession.save(emptyList())
+        StreamRecovery.recovering = null
+        StreamRecovery.failed = null
+        controller?.run {
+            pause()
+            stop()
+            clearMediaItems()
+        }
+        isPlaying = false
+        isBuffering = false
+        positionMs = 0L
+        bufferedMs = 0L
+        durationMs = 0L
+        playingFormat = null
+        decodedHeight = null
+        firstFrameRendered = false
+        videoStale = false
+        accountState = null
+        actionMessage = null
+        playlistTarget = null
         queue = emptyList()
         expanded = false
         fullscreen = false

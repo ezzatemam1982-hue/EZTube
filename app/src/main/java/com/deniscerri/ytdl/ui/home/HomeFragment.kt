@@ -29,7 +29,6 @@ import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
-import androidx.activity.addCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
@@ -316,21 +315,25 @@ class HomeFragment : Fragment(), HomeAdapter.OnItemClickListener, SearchSuggesti
             }
         }
 
-        searchView?.addTransitionListener { _, _, newState ->
-            if (newState == SearchView.TransitionState.SHOWING){
-                mainActivity?.hideBottomNavigation()
-            }else if (newState == SearchView.TransitionState.HIDING){
-                mainActivity?.showBottomNavigation()
-            } else if (newState == SearchView.TransitionState.HIDDEN) {
-                appBarLayout?.setExpanded(true, true)
+        val searchBackCallback = object : androidx.activity.OnBackPressedCallback(searchView?.isShowing == true) {
+            override fun handleOnBackPressed() {
+                searchView?.hide()
             }
         }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, searchBackCallback)
 
-        mainActivity?.onBackPressedDispatcher?.addCallback(this) {
-            if (searchView?.isShowing == true) {
-                searchView?.hide()
-            }else{
-                mainActivity?.finishAffinity()
+        searchView?.addTransitionListener { _, _, newState ->
+            if (newState == SearchView.TransitionState.SHOWING) {
+                searchBackCallback.isEnabled = true
+                mainActivity?.hideBottomNavigation()
+            } else if (newState == SearchView.TransitionState.SHOWN) {
+                searchBackCallback.isEnabled = true
+            } else if (newState == SearchView.TransitionState.HIDING) {
+                searchBackCallback.isEnabled = false
+                mainActivity?.showBottomNavigation()
+            } else if (newState == SearchView.TransitionState.HIDDEN) {
+                searchBackCallback.isEnabled = false
+                appBarLayout?.setExpanded(true, true)
             }
         }
 

@@ -387,21 +387,50 @@ fun ClipFlowPlayerApp() {
         // Closing it puts the remote back on the card that opened the video (if it's still there).
         else if (tvPlayerWasOpen) { tvPlayerWasOpen = false; TvFocusMemory.opener?.focusWhenReady() }
     }
-    // Root BackHandler: when at the root of Streaming (Home tab, no overlays), Back returns to the default Downloader screen.
-    BackHandler(enabled = !inHub && !settingsOpen) { InAppDownloadBridge.openDownloaderHub(host) }
-    BackHandler(enabled = !inHub && player.expanded) { player.expanded = false }
-    BackHandler(enabled = !inHub && !player.expanded && tab != Tab.Home && openPlaylist == null) { if (tab == Tab.Shorts) leaveShorts() else tab = Tab.Home }
-    BackHandler(enabled = !inHub && !player.expanded && openPlaylist != null) { openPlaylist = null }
-    BackHandler(enabled = !inHub && signingIn) { signingIn = false }
-    BackHandler(enabled = !inHub && !player.expanded && openChannel != null && !(playlistOverChannel && openPlaylist != null)) { openChannel = null }
-    BackHandler(enabled = !inHub && tab == Tab.Shorts && shorts.commentsOpen) { shorts.commentsOpen = false }
-    // Registered last so it wins: in fullscreen, Back returns to the portrait player first.
-    BackHandler(enabled = !inHub && showFullscreen) { orientation.exitFullscreen() }
+    // Layered BackHandlers in ascending priority (last composed enabled handler wins):
+    // Tab -> Channel / Playlist -> Portrait Player -> Player Bar -> Fullscreen -> (later: Settings -> SignIn -> ScreenLock).
+    BackHandler(
+        enabled = !inHub && !settingsOpen && !signingIn && !player.expanded && !showFullscreen && !player.screenLocked &&
+            openPlaylist == null && openChannel == null && tab != Tab.Home,
+    ) {
+        if (tab == Tab.Shorts) leaveShorts() else tab = Tab.Home
+    }
+    BackHandler(
+        enabled = !inHub && !settingsOpen && !signingIn && !player.expanded && !showFullscreen && !player.screenLocked &&
+            openChannel != null && (!playlistOverChannel || openPlaylist == null),
+    ) {
+        openChannel = null
+    }
+    BackHandler(
+        enabled = !inHub && !settingsOpen && !signingIn && !player.expanded && !showFullscreen && !player.screenLocked &&
+            openPlaylist != null && (playlistOverChannel || openChannel == null),
+    ) {
+        openPlaylist = null
+    }
+    BackHandler(
+        enabled = !inHub && !settingsOpen && !signingIn && !player.expanded &&
+            tab == Tab.Shorts && openChannel == null && openPlaylist == null && shorts.commentsOpen,
+    ) {
+        shorts.commentsOpen = false
+    }
+    BackHandler(
+        enabled = !inHub && !settingsOpen && !signingIn && player.current != null && player.expanded && !showFullscreen,
+    ) {
+        player.expanded = false
+    }
 
     // The open player's bar (PlayerBar.kt): its tools card / quality list close on Back, on a
     // tap anywhere else, and whenever the player stops being the open portrait page.
     val playerBar = remember { PlayerBarState(scope) }
-    BackHandler(enabled = !inHub && playerBar.isOpen && playerOpen && !showFullscreen) { playerBar.closeAll() }
+    BackHandler(
+        enabled = !inHub && !settingsOpen && !signingIn && playerBar.isOpen && playerOpen && !showFullscreen,
+    ) {
+        playerBar.closeAll()
+    }
+    // Registered after player/bar handlers so fullscreen Back always exits to portrait player first.
+    BackHandler(enabled = !inHub && !settingsOpen && !signingIn && showFullscreen) {
+        orientation.exitFullscreen()
+    }
     LaunchedEffect(playerOpen, showFullscreen, player.sheet, player.screenLocked) {
         if (!playerOpen || showFullscreen || player.sheet != null || player.screenLocked) playerBar.closeAll()
         if (player.screenLocked) optionsFor = null
@@ -475,7 +504,12 @@ fun ClipFlowPlayerApp() {
 
     // A channel opened from Shorts sits over the short, which waits paused.
     SideEffect { shorts.cover(tab == Tab.Shorts && openChannel != null) }
-    BackHandler(enabled = !inHub && tab == Tab.Shorts && shorts.channelMenu) { shorts.channelMenu = false }
+    BackHandler(
+        enabled = !inHub && !settingsOpen && !signingIn && !player.expanded &&
+            tab == Tab.Shorts && openChannel == null && openPlaylist == null && shorts.channelMenu,
+    ) {
+        shorts.channelMenu = false
+    }
 
     BoxWithConstraints(Modifier.fillMaxSize().background(c.surface)) {
         // The open player's shape on this window (PlayerUi.kt): the phone page, or on a wide window
@@ -652,6 +686,10 @@ fun ClipFlowPlayerApp() {
                 player,
                 onExpand = { player.expanded = true },
                 showVideo = !showPlayer && !showFullscreen,
+                onClose = {
+                    scope.launch { dismiss.snapTo(0f) }
+                    player.close()
+                },
                 modifier = Modifier
                     // Wide: a card in the bottom-right corner (no tab pill under it; the rail has the tabs).
                     .align(if (wide) Alignment.BottomEnd else Alignment.BottomCenter)
@@ -810,7 +848,7 @@ fun ClipFlowPlayerApp() {
         ) {
             Box(Modifier.tvPage()) { SettingsScreen(
                 player,
-                active = settingsOpen && !inHub,
+                active = settingsOpen && !inHub && !signingIn,
                 onClose = { settingsOpen = false },
                 onSignIn = { signingIn = true },
                 onSignedOut = { lib.reset(); player.refreshAccountState() },
@@ -819,6 +857,7 @@ fun ClipFlowPlayerApp() {
             ) }
         }
         if (signingIn) Box(Modifier.tvPage()) {
+            BackHandler(enabled = !inHub) { signingIn = false }
             SignInScreen(
                 onDone = {
                     signingIn = false

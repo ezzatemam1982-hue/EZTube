@@ -407,7 +407,7 @@ fun PlayerPanel(
             if (!reduced) slide.animateTo(1f, tween(240, easing = Motion.Emphasized))
             onClose()
         }
-        BackHandler { close() }
+        BackHandler(enabled = !PlayerWindowTracker.inDownloaderHub) { close() }
         fun dragBy(dy: Float): Float {
             val before = height.value
             val after = (before - dy).coerceIn(partialPx * 0.25f, fullPx)

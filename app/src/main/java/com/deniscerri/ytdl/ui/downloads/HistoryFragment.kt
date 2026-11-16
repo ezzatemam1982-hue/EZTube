@@ -239,21 +239,29 @@ class HistoryFragment : Fragment(), HistoryPaginatedAdapter.OnItemClickListener{
     }
 
     private fun initMenu() {
-        val searchView = topAppBar.menu.findItem(R.id.search_history).actionView as SearchView?
+        val searchItem = topAppBar.menu.findItem(R.id.search_history)
+        val searchView = searchItem.actionView as SearchView?
+        val searchBackCallback = object : androidx.activity.OnBackPressedCallback(searchItem.isActionViewExpanded) {
+            override fun handleOnBackPressed() {
+                searchItem.collapseActionView()
+            }
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, searchBackCallback)
 
         val onActionExpandListener: MenuItem.OnActionExpandListener =
             object : MenuItem.OnActionExpandListener {
                 override fun onMenuItemActionExpand(menuItem: MenuItem): Boolean {
+                    searchBackCallback.isEnabled = true
                     searchView?.requestFocus()
                     return true
                 }
 
                 override fun onMenuItemActionCollapse(menuItem: MenuItem): Boolean {
+                    searchBackCallback.isEnabled = false
                     return true
                 }
             }
-        topAppBar.menu.findItem(R.id.search_history)
-            .setOnActionExpandListener(onActionExpandListener)
+        searchItem.setOnActionExpandListener(onActionExpandListener)
 
         searchView!!.inputType = InputType.TYPE_CLASS_TEXT
         searchView.queryHint = getString(R.string.search_history_hint)

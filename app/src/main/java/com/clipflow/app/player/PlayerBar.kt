@@ -133,7 +133,8 @@ import kotlin.math.roundToInt
 // fullscreen, and next when the queue has one); speed and quality turn the bar into their panel; a
 // sideways drag on play turns it into a chapter track. Swiping down on the card or a panel closes it.
 // Everything follows three 0…1 values that fingers move directly and releases settle with a spring.
-internal val SideSlotWidth = 41.dp
+internal val SideSlotWidth = 46.dp
+private val SideVisualSize = 41.dp
 // 0.5.39 (Derek picked A "Card" in docs/design/player-bar-row.html): the dome's arc became one straight
 // row of tools over the transport row, so the open bar is a short rounded card. It reaches CardHeight
 // above the resting bar's bottom and CardBelow under it, where the chapter and time sit under the line.
@@ -579,33 +580,40 @@ internal fun BarKey(bar: PlayerBarState, enabled: Boolean, modifier: Modifier) {
     val open = { maxOf(bar.card.value, bar.panel.value).coerceIn(0f, 1f) }
     Box(
         modifier
-            .size(SideSlotWidth)
+            .width(SideSlotWidth)
+            .height(48.dp)
             .pressable(enabled = enabled) {
                 haptic(view, HapticFeedbackConstants.CONTEXT_CLICK)
                 if (bar.isOpen) bar.closeAll() else bar.openCard()
-            }
-            .clip(CircleShape)
-            .background(tile),
+            },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            Icons.Rounded.MoreVert, stringResource(R.string.bar_more_controls), tint = c.onSurface,
-            modifier = Modifier.size(21.dp).graphicsLayer {
-                val t = open()
-                alpha = 1f - t
-                rotationZ = 90f * t
-                scaleX = 1f - 0.5f * t; scaleY = scaleX
-            },
-        )
-        Icon(
-            Icons.Rounded.Close, stringResource(R.string.bar_close), tint = c.onSurface,
-            modifier = Modifier.size(21.dp).graphicsLayer {
-                val t = open()
-                alpha = t
-                rotationZ = -90f * (1f - t)
-                scaleX = 0.5f + 0.5f * t; scaleY = scaleX
-            },
-        )
+        Box(
+            Modifier
+                .size(SideVisualSize)
+                .clip(CircleShape)
+                .background(tile),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Rounded.MoreVert, stringResource(R.string.bar_more_controls), tint = c.onSurface,
+                modifier = Modifier.size(21.dp).graphicsLayer {
+                    val t = open()
+                    alpha = 1f - t
+                    rotationZ = 90f * t
+                    scaleX = 1f - 0.5f * t; scaleY = scaleX
+                },
+            )
+            Icon(
+                Icons.Rounded.Close, stringResource(R.string.bar_close), tint = c.onSurface,
+                modifier = Modifier.size(21.dp).graphicsLayer {
+                    val t = open()
+                    alpha = t
+                    rotationZ = -90f * (1f - t)
+                    scaleX = 0.5f + 0.5f * t; scaleY = scaleX
+                },
+            )
+        }
     }
 }
 
@@ -617,21 +625,28 @@ internal fun BarAudioOnly(player: PlayerState, enabled: Boolean, modifier: Modif
     val on = AudioOnly.enabled
     Box(
         modifier
+            .width(SideSlotWidth)
+            .height(48.dp)
             .squishOn(on)
-            .size(SideSlotWidth)
             .pressable(enabled = enabled) {
                 haptic(view, HapticFeedbackConstants.CONTEXT_CLICK)
                 player.setAudioOnly(!on)
-            }
-            .clip(CircleShape)
-            .background(if (on) c.primary else barTile()),
+            },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            if (on) Icons.Rounded.Headphones else Icons.Outlined.Headphones,
-            stringResource(if (on) R.string.bar_audio_only_on else R.string.bar_audio_only),
-            tint = if (on) c.onPrimary else c.onSurface, modifier = Modifier.size(19.dp),
-        )
+        Box(
+            Modifier
+                .size(SideVisualSize)
+                .clip(CircleShape)
+                .background(if (on) c.primary else barTile()),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                if (on) Icons.Rounded.Headphones else Icons.Outlined.Headphones,
+                stringResource(if (on) R.string.bar_audio_only_on else R.string.bar_audio_only),
+                tint = if (on) c.onPrimary else c.onSurface, modifier = Modifier.size(19.dp),
+            )
+        }
     }
 }
 

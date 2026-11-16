@@ -115,9 +115,9 @@ internal val PlaySlotWidth = 102.dp
 internal val SeekSlotWidth = 51.dp
 internal val BarPadding = 6.dp
 /** The open player's own inset (the tabs keep [BarPadding]). */
-internal val PlayerBarPadding = 5.dp
+internal val PlayerBarPadding = 4.dp
 private val BarGap = 4.dp
-internal val PlayerBarGap = 5.dp
+internal val PlayerBarGap = 3.dp
 internal val CompactBarWidth = PlayerBarPadding * 2 + SideSlotWidth * 2 + SeekSlotWidth * 2 + PlaySlotWidth + PlayerBarGap * 4
 // 0.5.37 (Derek): 10% taller (row 67) and, under it, the progress hairline's 8 dp (mockup A "Inside" in
 // docs/design/player-bar-progress.html): 316×75 at rest.

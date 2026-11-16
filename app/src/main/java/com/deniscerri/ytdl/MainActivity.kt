@@ -115,11 +115,11 @@ class MainActivity : BaseActivity() {
         override fun handleOnBackPressed() {
             if (::navController.isInitialized && navController.previousBackStackEntry != null) {
                 navController.popBackStack()
+                syncBackCallbackState()
             } else if (openedHubFromStream) {
                 closeDownloaderHub()
             } else {
-                isEnabled = false
-                onBackPressedDispatcher.onBackPressed()
+                syncBackCallbackState()
             }
         }
     }
@@ -271,6 +271,7 @@ class MainActivity : BaseActivity() {
 
             val showingNavbarItems = NavbarUtil.getNavBarItems(this@MainActivity).filter { it.isVisible }.map { it.itemId }
             navController.addOnDestinationChangedListener { _, destination, _ ->
+                syncBackCallbackState()
                 Handler(Looper.getMainLooper()).post {
                     if (showingNavbarItems.contains(destination.id)) {
                         showBottomNavigation()
@@ -383,6 +384,15 @@ class MainActivity : BaseActivity() {
         applyHubVisibility()
     }
 
+    private fun syncBackCallbackState() {
+        val hasBackStack = ::navController.isInitialized && navController.previousBackStackEntry != null
+        backToStreamCallback.isEnabled = shouldEnableHubBackCallback(
+            inHub = isInDownloaderHub,
+            hasNavBackStack = hasBackStack,
+            openedFromStream = openedHubFromStream,
+        )
+    }
+
     private fun applyHubVisibility() {
         PlayerWindowTracker.inDownloaderHub = isInDownloaderHub
         val root = findViewById<ConstraintLayout>(R.id.root_constraint_layout)
@@ -395,13 +405,7 @@ class MainActivity : BaseActivity() {
         } else {
             navigationBarView?.visibility = View.VISIBLE
         }
-        backToStreamCallback.remove()
-        if (isInDownloaderHub) {
-            backToStreamCallback.isEnabled = true
-            onBackPressedDispatcher.addCallback(this, backToStreamCallback)
-        } else {
-            backToStreamCallback.isEnabled = false
-        }
+        syncBackCallbackState()
     }
 
     fun openDownloaderHub(destination: String? = null) {
@@ -442,6 +446,7 @@ class MainActivity : BaseActivity() {
                     navController.navigate(R.id.homeFragment, bundle)
                 }
             }
+            syncBackCallbackState()
         }
         if (appliedThemeSignature != null && appliedThemeSignature != ThemeUtil.currentThemeSignature() && !isFinishing && !isDestroyed) {
             recreate()
@@ -667,5 +672,11 @@ class MainActivity : BaseActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
+
+        internal fun shouldEnableHubBackCallback(
+            inHub: Boolean,
+            hasNavBackStack: Boolean,
+            openedFromStream: Boolean,
+        ): Boolean = inHub && (hasNavBackStack || openedFromStream)
     }
 }

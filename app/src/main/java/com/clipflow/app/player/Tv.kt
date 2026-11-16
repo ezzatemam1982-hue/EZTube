@@ -172,7 +172,7 @@ fun TvPlayer(state: PlayerState, onClose: () -> Unit, onOpen: (VideoItem) -> Uni
     }
     fun closePanel() { val was = panel; panel = null; focusNext = was?.let(panelKeys::get) ?: playFocus }
 
-    BackHandler {
+    BackHandler(enabled = !PlayerWindowTracker.inDownloaderHub) {
         when {
             panel != null -> closePanel()
             scrubMs != null -> { scrubMs = null; scrubPresses = 0 }

@@ -113,6 +113,28 @@ class SettingsActivity : BaseActivity(), SettingHost {
             supportFragmentManager.findFragmentById(R.id.frame_layout) as NavHostFragment
         navController = navHostFragment.findNavController()
 
+        val backCallback = object : androidx.activity.OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() {
+                if (binding.searchView.isShowing) {
+                    binding.searchView.hide()
+                } else if (navController.currentDestination?.id == R.id.mainSettingsFragment) {
+                    if (isTaskRoot) {
+                        navController.popBackStack()
+                        finishAndRemoveTask()
+                    } else {
+                        finish()
+                    }
+                } else {
+                    navController.navigateUp()
+                }
+            }
+        }
+
+        fun syncSettingsBackCallback() {
+            val atRoot = navController.currentDestination?.id == R.id.mainSettingsFragment
+            backCallback.isEnabled = binding.searchView.isShowing || !atRoot || isTaskRoot
+        }
+
         val listener =
             NavController.OnDestinationChangedListener { controller, destination, arguments ->
                 if (destination.id == R.id.mainSettingsFragment) {
@@ -122,6 +144,7 @@ class SettingsActivity : BaseActivity(), SettingHost {
                         settingViewModel.indexSearchSettings()
                     }
                 }
+                syncSettingsBackCallback()
             }
 
         navController.addOnDestinationChangedListener(listener)
@@ -129,23 +152,18 @@ class SettingsActivity : BaseActivity(), SettingHost {
             onBackPressedDispatcher.onBackPressed()
         }
 
-        onBackPressedDispatcher.addCallback(this) {
-            if (binding.searchView.isShowing) {
-                binding.searchView.hide()
-            } else if (navController.currentDestination?.id == R.id.mainSettingsFragment) {
-                navController.popBackStack()
-                finishAndRemoveTask()
-            } else {
-                navController.navigateUp()
-            }
-        }
+        onBackPressedDispatcher.addCallback(this, backCallback)
 
-        if (savedInstanceState == null) navController.navigate(R.id.mainSettingsFragment)
+        if (savedInstanceState == null && navController.currentDestination?.id != R.id.mainSettingsFragment) {
+            navController.navigate(R.id.mainSettingsFragment)
+        }
 
         //setup search
         val searchBar = binding.searchBar
         val searchView = binding.searchView
         searchView.setupWithSearchBar(searchBar)
+        searchView.addTransitionListener { _, _, _ -> syncSettingsBackCallback() }
+        syncSettingsBackCallback()
 
         searchAdapter = SettingsSearchAdapter(emptyList(), this)
         binding.searchSuggestionsRecycler.layoutManager = LinearLayoutManager(context)

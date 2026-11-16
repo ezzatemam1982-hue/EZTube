@@ -5,7 +5,10 @@ import com.deniscerri.ytdl.R
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.foundation.rememberScrollState
@@ -58,6 +61,7 @@ import androidx.compose.material.icons.rounded.ThumbDown
 import androidx.compose.material.icons.rounded.ThumbUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -884,24 +888,46 @@ private fun ActionMessage(state: PlayerState, modifier: Modifier) {
 // ── Mini player ────────────────────────────────────────────────────────────────
 
 @Composable
-fun MiniPlayer(state: PlayerState, onExpand: () -> Unit, modifier: Modifier = Modifier, showVideo: Boolean = true) {
+fun MiniPlayer(
+    state: PlayerState,
+    onExpand: () -> Unit,
+    modifier: Modifier = Modifier,
+    showVideo: Boolean = true,
+    onClose: () -> Unit = state::close,
+) {
     val c = MaterialTheme.colorScheme
     val item = state.current ?: return
     val shape = RoundedCornerShape(MiniRadius)
+    val reduced = rememberReducedMotion()
+    val expandInteraction = remember { MutableInteractionSource() }
+    val expandPressed by expandInteraction.collectIsPressedAsState()
+    val expandScale by animateFloatAsState(
+        targetValue = if (expandPressed && !reduced) 0.98f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 1400f),
+        label = "miniExpandScale",
+    )
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(MiniHeight)
-            .pressable(pressedScale = 0.98f, onClick = onExpand)
+            .graphicsLayer {
+                scaleX = expandScale
+                scaleY = expandScale
+            }
             .shadow(16.dp, shape, ambientColor = Color.Black.copy(alpha = 0.12f), spotColor = Color.Black.copy(alpha = 0.18f))
             .clip(shape)
-            .background(c.surfaceContainerHighest)
+            .background(c.surfaceContainerHighest),
     ) {
-        Row(Modifier.fillMaxSize().padding(start = MiniThumbStart, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxSize().padding(start = MiniThumbStart, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             // The live video, not a still. While the player is open or morphing, this slot
             // stays EMPTY: the shrinking video is on its way here, and a thumbnail already
             // sitting in the slot read as a second copy it was flying towards.
-            Box(Modifier.size(width = MiniThumbWidth, height = MiniThumbHeight).clip(RoundedCornerShape(MiniThumbRadius))) {
+            Box(
+                Modifier
+                    .size(width = MiniThumbWidth, height = MiniThumbHeight)
+                    .clip(RoundedCornerShape(MiniThumbRadius))
+                    .clickable(interactionSource = expandInteraction, indication = null, onClick = onExpand),
+            ) {
                 if (showVideo) {
                     Box(Modifier.fillMaxSize().background(Color.Black))
                     Thumbnail(item.thumbnail, Modifier.fillMaxSize(), radius = 0)
@@ -915,8 +941,19 @@ fun MiniPlayer(state: PlayerState, onExpand: () -> Unit, modifier: Modifier = Mo
                     }
                 }
             }
-            Spacer(Modifier.width(12.dp))
-            MiniDetails(state, interactive = true)
+            Spacer(
+                Modifier
+                    .width(12.dp)
+                    .fillMaxHeight()
+                    .clickable(interactionSource = expandInteraction, indication = null, onClick = onExpand),
+            )
+            MiniDetails(
+                state = state,
+                interactive = true,
+                onExpand = onExpand,
+                expandInteraction = expandInteraction,
+                onClose = onClose,
+            )
         }
     }
 }
@@ -927,12 +964,34 @@ fun MiniPlayer(state: PlayerState, onExpand: () -> Unit, modifier: Modifier = Mo
  * false: drawn only, touches go to the real one underneath).
  */
 @Composable
-private fun RowScope.MiniDetails(state: PlayerState, interactive: Boolean) {
+private fun RowScope.MiniDetails(
+    state: PlayerState,
+    interactive: Boolean,
+    onExpand: (() -> Unit)? = null,
+    expandInteraction: MutableInteractionSource? = null,
+    onClose: () -> Unit = state::close,
+) {
     val c = MaterialTheme.colorScheme
     val item = state.current ?: return
     Box(Modifier.weight(1f).fillMaxHeight()) {
         Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .then(
+                        if (interactive && onExpand != null && expandInteraction != null) {
+                            Modifier.clickable(
+                                interactionSource = expandInteraction,
+                                indication = null,
+                                onClick = onExpand,
+                            )
+                        } else {
+                            Modifier
+                        },
+                    ),
+                verticalArrangement = Arrangement.Center,
+            ) {
                 Text(item.title, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(item.channel, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = c.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
@@ -946,13 +1005,22 @@ private fun RowScope.MiniDetails(state: PlayerState, interactive: Boolean) {
                 enabled = interactive,
                 onClick = state::togglePlay,
             )
-            Box(Modifier.size(40.dp).pressable(enabled = interactive, onClick = state::close), contentAlignment = Alignment.Center) {
-                Icon(Icons.Rounded.Close, stringResource(R.string.player_close), tint = c.onSurfaceVariant)
+            if (interactive) {
+                IconButton(
+                    onClick = onClose,
+                    modifier = Modifier.size(48.dp),
+                ) {
+                    Icon(Icons.Rounded.Close, stringResource(R.string.player_close), tint = c.onSurfaceVariant)
+                }
+            } else {
+                Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.Close, stringResource(R.string.player_close), tint = c.onSurfaceVariant)
+                }
             }
         }
         val progress = if (state.durationMs > 0) (state.positionMs.toFloat() / state.durationMs).coerceIn(0f, 1f) else 0f
         Box(
-            Modifier.align(Alignment.BottomStart).padding(end = 96.dp, bottom = 7.dp)
+            Modifier.align(Alignment.BottomStart).padding(end = 100.dp, bottom = 7.dp)
                 .fillMaxWidth().height(4.dp).clip(CircleShape).background(c.primary.copy(alpha = 0.18f)),
         ) {
             Box(Modifier.fillMaxHeight().fillMaxWidth(progress).clip(CircleShape).background(c.primary))
@@ -981,7 +1049,7 @@ private fun MorphingMiniDetails(state: PlayerState, morph: PlayerMorph) {
                 val start = g.stage.left + f.offset.x + f.scale * f.window.right + gap
                 val videoCenterY = g.stage.top + f.offset.y + f.scale * f.window.center.y
                 val frameRight = lerpF(g.miniCard.right, g.screen.width, p)
-                val width = (frameRight - 8.dp.toPx() - start).coerceAtLeast(0f).toInt()
+                val width = (frameRight - 4.dp.toPx() - start).coerceAtLeast(0f).toInt()
                 val height = MiniHeight.roundToPx()
                 val placeable = measurable.measure(androidx.compose.ui.unit.Constraints.fixed(width, height))
                 layout(width, height) {

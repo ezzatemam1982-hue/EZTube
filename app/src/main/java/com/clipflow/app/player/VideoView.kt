@@ -236,7 +236,7 @@ fun VideoContent(
         }
     }
     LaunchedEffect(controlsVisible, fullscreen) { if (!controlsVisible || !fullscreen) drop = null }
-    BackHandler(enabled = drop != null) { drop = null }
+    BackHandler(enabled = drop != null && !PlayerWindowTracker.inDownloaderHub) { drop = null }
     val currentInteractive by androidx.compose.runtime.rememberUpdatedState(interactive)
     val currentInactiveTap by androidx.compose.runtime.rememberUpdatedState(onInactiveTap)
     val currentScreenLocked by androidx.compose.runtime.rememberUpdatedState(state.screenLocked)
@@ -1309,7 +1309,7 @@ fun ScreenLockOverlay(state: PlayerState, fullscreen: Boolean) {
             promptVisible = false
         }
     }
-    BackHandler { revealPrompt() }
+    BackHandler(enabled = !PlayerWindowTracker.inDownloaderHub) { revealPrompt() }
     Box(
         Modifier
             .fillMaxSize()

@@ -1,8 +1,13 @@
 package com.clipflow.app.player
 
 import androidx.compose.ui.text.style.TextAlign
+import com.deniscerri.ytdl.MainActivity
 import com.deniscerri.ytdl.util.AppPreferenceDefaults
 import com.deniscerri.ytdl.util.UpdateUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -181,5 +186,57 @@ class SettingsAndDefaultsOverhaulTest {
         assertTrue(UpdateUtil.isSilentYtdlpUpdateDue(lastCheckedMs = 0L, nowMs = 1_000L))
         assertFalse(UpdateUtil.isSilentYtdlpUpdateDue(lastCheckedMs = 10_000L, nowMs = 10_000L + dayMs - 1L))
         assertTrue(UpdateUtil.isSilentYtdlpUpdateDue(lastCheckedMs = 10_000L, nowMs = 10_000L + dayMs))
+    }
+
+    @Test
+    fun hubBackCallbackOnlyInterceptsWhenHubHasBackStackOrCameFromStreaming() {
+        assertFalse(MainActivity.shouldEnableHubBackCallback(inHub = false, hasNavBackStack = true, openedFromStream = true))
+        assertFalse(MainActivity.shouldEnableHubBackCallback(inHub = false, hasNavBackStack = false, openedFromStream = false))
+        assertFalse(MainActivity.shouldEnableHubBackCallback(inHub = true, hasNavBackStack = false, openedFromStream = false))
+
+        assertTrue(MainActivity.shouldEnableHubBackCallback(inHub = true, hasNavBackStack = true, openedFromStream = false))
+        assertTrue(MainActivity.shouldEnableHubBackCallback(inHub = true, hasNavBackStack = false, openedFromStream = true))
+        assertTrue(MainActivity.shouldEnableHubBackCallback(inHub = true, hasNavBackStack = true, openedFromStream = true))
+    }
+
+    @Test
+    fun playerStateCloseClearsPlaybackFlagsOverlaysAndRecoveryState() {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        try {
+            val state = PlayerState(scope)
+            state.expanded = true
+            state.fullscreen = true
+            state.lockScreen()
+            state.sheet = PlayerSheet.Comments
+            state.actionMessage = "Queued"
+            StreamRecovery.recovering = "abc123"
+            QualityPreference.setVideoOverride("abc123", VideoQualityMode.Fixed(720))
+
+            state.close()
+
+            assertNull(state.current)
+            assertNull(state.details)
+            assertTrue(state.queue.isEmpty())
+            assertFalse(state.expanded)
+            assertFalse(state.fullscreen)
+            assertFalse(state.screenLocked)
+            assertNull(state.sheet)
+            assertNull(state.error)
+            assertFalse(state.botCheck)
+            assertFalse(state.loading)
+            assertFalse(state.isPlaying)
+            assertFalse(state.isBuffering)
+            assertEquals(0L, state.positionMs)
+            assertEquals(0L, state.bufferedMs)
+            assertEquals(0L, state.durationMs)
+            assertNull(state.actionMessage)
+            assertNull(state.playingFormat)
+            assertNull(state.decodedHeight)
+            assertNull(StreamRecovery.recovering)
+            assertNull(StreamRecovery.failed)
+            assertNull(QualityPreference.videoOverride)
+        } finally {
+            scope.cancel()
+        }
     }
 }
