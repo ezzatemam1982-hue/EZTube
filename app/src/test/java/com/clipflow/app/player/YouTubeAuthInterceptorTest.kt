@@ -24,6 +24,9 @@ class YouTubeAuthInterceptorTest {
 
     @After
     fun tearDown() {
+        AuthSessionManager.cookieHeaderProviderForTest = null
+        AuthSessionManager.clearSignOutGuardForTest()
+        Account.passiveExchangeRunner = null
         Account.setSessionCookiesForTest(null)
     }
 
@@ -246,6 +249,89 @@ class YouTubeAuthInterceptorTest {
             assertNull(req.header("X-Origin"))
             assertNull(req.header("X-Goog-AuthUser"))
         }
+    }
+
+    @Test
+    fun dynamicCookieManagerUpdatesOverridePreLoginEmptyCacheAndStripGoogleOnlyCookies() {
+        Account.setSessionCookiesForTest("")
+        var cmCookies: Map<String, String> = emptyMap()
+        AuthSessionManager.cookieHeaderProviderForTest = { url -> cmCookies[url] }
+
+        assertFalse(Account.hasSessionCookies())
+        cmCookies = mapOf(
+            "https://www.youtube.com" to "SAPISID=live_sapisid; SID=live_sid; LOGIN_INFO=live_login_info; SIDCC=EXPIRED; LSID=google_only; YTSESSION-xyz=transient; __Host-GAPS=gaps_secret",
+            "https://m.youtube.com" to "__Secure-3PAPISID=live_3p",
+        )
+
+        assertTrue(Account.hasSessionCookies())
+        assertTrue(Account.hasUsableYouTubeSession())
+
+        val req = executeThroughInterceptor(
+            Request.Builder()
+                .url("https://www.youtube.com/youtubei/v1/browse?prettyPrint=false")
+                .post("{\"browseId\":\"FEsubscriptions\"}".toRequestBody("application/json".toMediaType()))
+                .build(),
+        )
+        val header = req.header("Cookie").orEmpty()
+        assertTrue(header.contains("SAPISID=live_sapisid"))
+        assertTrue(header.contains("LOGIN_INFO=live_login_info"))
+        assertFalse(header.contains("SIDCC=EXPIRED"))
+        assertFalse(header.contains("LSID="))
+        assertFalse(header.contains("YTSESSION-"))
+        assertFalse(header.contains("__Host-GAPS"))
+        assertTrue(req.header("Authorization").orEmpty().startsWith("SAPISIDHASH "))
+    }
+
+    @Test
+    fun detectsPoisonedGoogleOnlySessionAndRecoversViaPassiveExchange() {
+        Account.setSessionCookiesForTest(
+            "SID=g_sid; HSID=g_hsid; SSID=g_ssid; SAPISID=g_sapisid; LSID=o.myaccount.google.com:123; __Host-1PLSID=p1; YTSESSION-rvkia=handoff; SIDCC=EXPIRED",
+        )
+        AuthSessionManager.cookieHeaderProviderForTest = { url ->
+            if (url == "https://accounts.google.com") "LSID=o.myaccount.google.com:123; __Host-1PLSID=p1; SIDCC=acct_sidcc" else null
+        }
+        assertTrue(Account.hasSessionCookies())
+        assertFalse(Account.hasUsableYouTubeSession())
+
+        var exchangedCalled = false
+        Account.passiveExchangeRunner = { googleSeed, ytSeed ->
+            exchangedCalled = true
+            assertEquals("acct_sidcc", googleSeed["SIDCC"])
+            assertFalse(ytSeed.containsKey("LSID"))
+            assertFalse(ytSeed.containsKey("SIDCC"))
+            Account.PassiveExchangeResult(
+                youtubeCookies = mapOf(
+                    "SID" to "g_sid",
+                    "SAPISID" to "g_sapisid",
+                    "HSID" to "g_hsid",
+                    "SSID" to "g_ssid",
+                    "LOGIN_INFO" to "minted_login_info_token",
+                    "SIDCC" to "minted_sidcc",
+                    "__Secure-1PSIDTS" to "minted_psidts",
+                ),
+                loggedIn = true,
+                clientVersion = "2.20261115.01.00",
+                visitorData = "fresh_authed_visitor",
+            )
+        }
+
+        assertTrue(Account.ensureGenuineYouTubeSession())
+        assertTrue(exchangedCalled)
+        assertTrue(Account.hasUsableYouTubeSession())
+        assertTrue(Account.cookieHeader().contains("LOGIN_INFO=minted_login_info_token"))
+        assertTrue(Account.cookieHeader().contains("__Secure-1PSIDTS=minted_psidts"))
+        assertEquals("2.20261115.01.00", Account.clientVersion())
+        assertEquals("fresh_authed_visitor", Account.visitorData())
+    }
+
+    @Test
+    fun explicitSignOutGuardIgnoresStaleCookieManagerCookies() {
+        AuthSessionManager.cookieHeaderProviderForTest = { url ->
+            if (url == "https://www.youtube.com") "SAPISID=stale; SID=stale_sid; LOGIN_INFO=stale_li" else null
+        }
+        AuthSessionManager.clear()
+        Account.setSessionCookiesForTest(null)
+        assertFalse(Account.hasSessionCookies())
     }
 
     private fun executeThroughInterceptor(

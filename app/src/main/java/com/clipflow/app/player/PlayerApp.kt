@@ -188,7 +188,9 @@ fun ClipFlowPlayerApp() {
     val search = remember { SearchState(scope) }
     val appContext = LocalContext.current.applicationContext
     val lib = remember { LibraryData(scope, appContext) }
-    LaunchedEffect(Account.signedIn) { if (Account.signedIn) lib.warmUp() }
+    LaunchedEffect(Account.signedIn, PlayerWindowTracker.inDownloaderHub) {
+        if (Account.signedIn && !PlayerWindowTracker.inDownloaderHub) lib.warmUp()
+    }
     var signingIn by remember { mutableStateOf(false) }
     // Settings (Settings.kt): a page over the app, from the header avatar. Saveable: picking a language rebuilds the window.
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
@@ -817,6 +819,7 @@ fun ClipFlowPlayerApp() {
             SignInScreen(
                 onDone = {
                     signingIn = false
+                    Account.syncSignedInState()
                     lib.reloadSignedIn()
                     player.refreshAccountState()
                 },

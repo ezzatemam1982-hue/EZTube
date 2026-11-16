@@ -38,7 +38,12 @@ data class ChannelRef(val id: String, val name: String, val avatar: String?)
  * YouTube put over the feed (Home's first page only; empty everywhere else).
  */
 @Immutable
-data class FeedPage(val videos: List<VideoItem>, val next: String?, val chips: List<FeedChip> = emptyList())
+data class FeedPage(
+    val videos: List<VideoItem>,
+    val next: String?,
+    val chips: List<FeedChip> = emptyList(),
+    val statusMessage: String? = null,
+)
 
 /**
  * One of Home's category chips ("All", "Music", "Gaming", "Recently uploaded"…), titled as
@@ -125,10 +130,26 @@ object Account {
         private set
     val signedIn get() = profile != null
 
+    internal data class PassiveExchangeResult(
+        val youtubeCookies: Map<String, String>,
+        val loggedIn: Boolean,
+        val clientVersion: String? = null,
+        val visitorData: String? = null,
+    )
+
     private var store: SecureStore? = null
     private val cookies = linkedMapOf<String, String>()
+    private val rotatedCookies = linkedMapOf<String, String>()
+    private val removedCookies = HashSet<String>()
+    private val exchangeLock = Any()
     private var clientVersion = FALLBACK_CLIENT_VERSION
     private var visitorData: String? = null
+    @Volatile
+    private var profileRefreshInFlight = false
+
+    /** Test seam overriding passive Google -> YouTube HTTP exchange. */
+    @Volatile
+    internal var passiveExchangeRunner: ((googleCookies: Map<String, String>, youtubeCookies: Map<String, String>) -> PassiveExchangeResult?)? = null
 
     fun init(context: Context) {
         AuthSessionManager.init(context)
@@ -137,11 +158,11 @@ object Account {
         val storedCookies = persistedRaw ?: runCatching { s?.get(KEY_COOKIES) }.getOrNull()?.also { legacy ->
             AuthSessionManager.saveSession(legacy)
         }
-        storedCookies?.let {
-            synchronized(cookies) {
-                cookies.clear()
-                parseCookieHeader(it, cookies)
-            }
+        synchronized(cookies) {
+            cookies.clear()
+            rotatedCookies.clear()
+            removedCookies.clear()
+            storedCookies?.let { parseCookieHeader(it, cookies) }
         }
         (AuthSessionManager.getClientVersion() ?: runCatching { s?.get(KEY_CLIENT_VERSION) }.getOrNull())
             ?.takeIf { it.startsWith("2.") }
@@ -156,17 +177,74 @@ object Account {
             val fallbackName = runCatching { str(R.string.app_account_fallback_name) }.getOrDefault("YouTube")
             profile = savedProfile ?: Profile(fallbackName, null, null, null)
         }
-        authLog(
-            Log.INFO,
-            "Account.init: signedIn=$signedIn, hasSAPISID=${AuthSessionManager.getSapisid() != null}, has3PAPISID=${AuthSessionManager.getSecure3pApiSid() != null}",
-        )
+        val mergedRaw = resolveRawMergedCookieMap()
+        val msg = "Account.init: signedIn=$signedIn, hasUsableYT=${AuthSessionManager.hasGenuineYouTubeSession(mergedRaw)}, hasLoginInfo=${!mergedRaw["LOGIN_INFO"].isNullOrBlank()}, hasSAPISID=${AuthSessionManager.getSapisid() != null}, has3PAPISID=${AuthSessionManager.getSecure3pApiSid() != null}"
+        authLog(Log.INFO, msg)
+        feedLog(Log.INFO, msg)
+    }
+
+    internal fun syncSignedInState() {
+        if (!hasSessionCookies()) return
+        if (profile != null) return
+        val savedProfile = AuthSessionManager.loadProfile()
+        val fallbackName = runCatching { str(R.string.app_account_fallback_name) }.getOrDefault("YouTube")
+        profile = savedProfile ?: Profile(fallbackName, null, null, null)
+    }
+
+    internal fun isFallbackProfile(): Boolean {
+        val p = profile ?: return false
+        return p.handle == null && p.avatar == null && p.email == null
     }
 
     private fun hasAuthCookiePair(map: Map<String, String>): Boolean =
         AuthSessionManager.hasAuthCookiePair(map)
 
-    internal fun hasSessionCookies(): Boolean =
-        synchronized(cookies) { hasAuthCookiePair(cookies) } || AuthSessionManager.hasValidSession()
+    private fun resolveRawMergedCookieMap(): LinkedHashMap<String, String> {
+        val out = linkedMapOf<String, String>()
+        val hasInMemory = synchronized(cookies) { cookies.isNotEmpty() || rotatedCookies.isNotEmpty() }
+        if (AuthSessionManager.isExplicitlySignedOut() && !hasInMemory) {
+            return out
+        }
+        AuthSessionManager.getRawCookieString()?.let { persisted ->
+            parseCookieHeader(persisted, out)
+        }
+        synchronized(cookies) {
+            for ((k, v) in cookies) {
+                if (k.isNotBlank() && !AuthSessionManager.isExpiredOrDeletedCookieValue(v)) out[k] = v
+            }
+        }
+        val liveYouTube = AuthSessionManager.readYouTubeCookiesFromManager()
+        val liveHasNewLoginInfo = !liveYouTube["LOGIN_INFO"].isNullOrBlank()
+        for ((k, v) in liveYouTube) {
+            if (k.isNotBlank() && !AuthSessionManager.isExpiredOrDeletedCookieValue(v)) {
+                out[k] = v
+            }
+        }
+        synchronized(cookies) {
+            for (dead in removedCookies) {
+                if (!liveHasNewLoginInfo || !liveYouTube.containsKey(dead)) {
+                    out.remove(dead)
+                }
+            }
+            for ((k, v) in rotatedCookies) {
+                if (k.isNotBlank() && !AuthSessionManager.isExpiredOrDeletedCookieValue(v)) out[k] = v
+            }
+        }
+        return out
+    }
+
+    private fun resolveYouTubeRequestCookieMap(): LinkedHashMap<String, String> =
+        AuthSessionManager.stripGoogleOnlyAndTransientCookies(resolveRawMergedCookieMap())
+
+    internal fun hasSessionCookies(): Boolean {
+        val hasInMemory = synchronized(cookies) { cookies.isNotEmpty() || rotatedCookies.isNotEmpty() }
+        if (AuthSessionManager.isExplicitlySignedOut() && !hasInMemory) return false
+        if (hasAuthCookiePair(resolveRawMergedCookieMap())) return true
+        return hasAuthCookiePair(AuthSessionManager.readGoogleAccountCookiesFromManager())
+    }
+
+    internal fun hasUsableYouTubeSession(): Boolean =
+        AuthSessionManager.hasGenuineYouTubeSession(resolveRawMergedCookieMap())
 
     /** True once the WebView's cookies prove a completed YouTube sign-in. */
     fun looksSignedIn(cookieHeader: String?): Boolean {
@@ -179,26 +257,234 @@ object Account {
     internal fun setSessionCookiesForTest(cookieHeader: String?) {
         synchronized(cookies) {
             cookies.clear()
+            rotatedCookies.clear()
+            removedCookies.clear()
             if (!cookieHeader.isNullOrBlank()) {
+                AuthSessionManager.clearSignOutGuardForTest()
                 parseCookieHeader(cookieHeader, cookies)
             }
         }
     }
 
-    /** Takes over the WebView session: stores the cookies persistently, then loads the account's name and email. */
+    /**
+     * Ensures the current session holds genuine `.youtube.com` cookies (`LOGIN_INFO`,
+     * `__Secure-*PSIDTS`, valid `SIDCC`) rather than an interrupted `accounts.google.com` or
+     * `/signin` snapshot. Single-flight synchronized across concurrent feed fetches.
+     */
+    internal fun ensureGenuineYouTubeSession(
+        seedHeader: String? = null,
+        forceRefresh: Boolean = false,
+    ): Boolean {
+        if (!forceRefresh && hasUsableYouTubeSession()) return false
+        synchronized(exchangeLock) {
+            if (!forceRefresh && hasUsableYouTubeSession()) return false
+            if (AuthSessionManager.isExplicitlySignedOut() && seedHeader.isNullOrBlank()) return false
+
+            val googleSeed = linkedMapOf<String, String>()
+            val ytSeed = linkedMapOf<String, String>()
+
+            fun absorbSeed(source: Map<String, String>, preferGoogle: Boolean, allowYouTube: Boolean) {
+                for ((k, v) in source) {
+                    if (k.isBlank() || AuthSessionManager.isExpiredOrDeletedCookieValue(v)) continue
+                    if (preferGoogle || AuthSessionManager.isGoogleOnlyOrTransientCookieName(k)) {
+                        if (!k.startsWith("YTSESSION-", ignoreCase = true)) {
+                            googleSeed[k] = v
+                        }
+                    }
+                    if (allowYouTube &&
+                        !AuthSessionManager.isGoogleOnlyOrTransientCookieName(k) &&
+                        !k.startsWith("__Host-", ignoreCase = true) &&
+                        k != "VISITOR_INFO1_LIVE"
+                    ) {
+                        ytSeed[k] = v
+                    }
+                }
+            }
+
+            AuthSessionManager.getRawCookieString()?.let { absorbSeed(AuthSessionManager.parseCookieHeader(it), preferGoogle = true, allowYouTube = true) }
+            synchronized(cookies) { absorbSeed(cookies, preferGoogle = true, allowYouTube = true) }
+            seedHeader?.let { absorbSeed(AuthSessionManager.parseCookieHeader(it), preferGoogle = true, allowYouTube = true) }
+            absorbSeed(AuthSessionManager.readYouTubeCookiesFromManager(), preferGoogle = false, allowYouTube = true)
+            // Live CookieManager values from accounts.google.com / .google.com seed only Google domains
+            absorbSeed(AuthSessionManager.readGoogleAccountCookiesFromManager(), preferGoogle = true, allowYouTube = false)
+
+            if (!hasAuthCookiePair(googleSeed)) {
+                feedLog(Log.WARN, "ensureGenuineYouTubeSession: no Google auth cookie pair available (keys=${googleSeed.keys.joinToString(",")})")
+                return false
+            }
+
+            val runner = passiveExchangeRunner ?: ::performPassiveGoogleToYouTubeExchange
+            val result = try {
+                runner(googleSeed, ytSeed)
+            } catch (err: Exception) {
+                feedLog(Log.ERROR, "ensureGenuineYouTubeSession: passive exchange threw", err)
+                authLog(Log.WARN, "ensureGenuineYouTubeSession: passive exchange failed", err)
+                null
+            } ?: return false
+
+            val cleanYt = AuthSessionManager.stripGoogleOnlyAndTransientCookies(result.youtubeCookies)
+            val usable = !cleanYt["LOGIN_INFO"].isNullOrBlank() && hasAuthCookiePair(cleanYt)
+            if (!usable) {
+                feedLog(
+                    Log.WARN,
+                    "ensureGenuineYouTubeSession: exchange did not yield usable YouTube session (loggedIn=${result.loggedIn}, hasLoginInfo=${!cleanYt["LOGIN_INFO"].isNullOrBlank()}, keys=${cleanYt.keys.joinToString(",")})",
+                )
+                return false
+            }
+
+            AuthSessionManager.clearYouTubeCookiesInManager()
+            synchronized(cookies) {
+                cookies.clear()
+                rotatedCookies.clear()
+                removedCookies.clear()
+                cookies.putAll(cleanYt)
+            }
+            val header = AuthSessionManager.formatCookieHeader(cleanYt)
+            AuthSessionManager.saveSession(header)
+            runCatching { store?.put(KEY_COOKIES, header) }
+            AuthSessionManager.restoreCookiesToCookieManager()
+
+            result.clientVersion?.takeIf { it.startsWith("2.") }?.let { clientVersion = it }
+            // Never retain an old logged-out visitorData once an authenticated HTML page answered.
+            visitorData = result.visitorData?.takeIf { it.isNotBlank() }
+            AuthSessionManager.saveClientConfig(clientVersion, visitorData)
+            runCatching {
+                store?.put(KEY_CLIENT_VERSION, clientVersion)
+                store?.put(KEY_VISITOR, visitorData)
+            }
+
+            val msg = "ensureGenuineYouTubeSession succeeded: loggedIn=${result.loggedIn}, cookies=${cleanYt.size}, hasLoginInfo=true, clientVersion=$clientVersion, hasVisitor=${visitorData != null}"
+            authLog(Log.INFO, msg)
+            feedLog(Log.INFO, msg)
+            return true
+        }
+    }
+
+    private fun performPassiveGoogleToYouTubeExchange(
+        googleCookies: Map<String, String>,
+        ytCookies: Map<String, String>,
+    ): PassiveExchangeResult? {
+        val futureExpires = System.currentTimeMillis() + 30L * 24L * 3600L * 1000L
+        val jarCookies = ArrayList<okhttp3.Cookie>()
+        fun putSeed(cookie: okhttp3.Cookie) {
+            jarCookies.removeAll { it.name == cookie.name && it.domain == cookie.domain && it.path == cookie.path }
+            jarCookies += cookie
+        }
+
+        val accountsHostOnly = setOf("LSID", "__Host-1PLSID", "__Host-3PLSID", "__Host-GAPS", "ACCOUNT_CHOOSER")
+        val myAccountHostOnly = setOf("OSID", "__Secure-OSID")
+        for ((name, value) in googleCookies) {
+            if (name.isBlank() || AuthSessionManager.isExpiredOrDeletedCookieValue(value)) continue
+            val builder = okhttp3.Cookie.Builder().name(name).value(value).path("/").expiresAt(futureExpires).secure()
+            when (name) {
+                in accountsHostOnly -> builder.hostOnlyDomain("accounts.google.com")
+                in myAccountHostOnly -> builder.hostOnlyDomain("myaccount.google.com")
+                else -> builder.domain("google.com")
+            }
+            putSeed(builder.build())
+        }
+        for ((name, value) in ytCookies) {
+            if (name.isBlank() || AuthSessionManager.isExpiredOrDeletedCookieValue(value)) continue
+            if (AuthSessionManager.isGoogleOnlyOrTransientCookieName(name)) continue
+            if (name.startsWith("__Host-", ignoreCase = true) || name == "VISITOR_INFO1_LIVE") continue
+            putSeed(
+                okhttp3.Cookie.Builder()
+                    .name(name)
+                    .value(value)
+                    .domain("youtube.com")
+                    .path("/")
+                    .expiresAt(futureExpires)
+                    .secure()
+                    .build(),
+            )
+        }
+
+        val cookieJar = object : okhttp3.CookieJar {
+            private val lock = Any()
+            override fun saveFromResponse(url: okhttp3.HttpUrl, cookies: List<okhttp3.Cookie>) {
+                val now = System.currentTimeMillis()
+                synchronized(lock) {
+                    for (c in cookies) {
+                        jarCookies.removeAll { it.name == c.name && it.domain == c.domain && it.path == c.path }
+                        if (c.expiresAt > now && !AuthSessionManager.isExpiredOrDeletedCookieValue(c.value)) {
+                            jarCookies += c
+                        }
+                    }
+                }
+            }
+
+            override fun loadForRequest(url: okhttp3.HttpUrl): List<okhttp3.Cookie> {
+                val now = System.currentTimeMillis()
+                synchronized(lock) {
+                    jarCookies.removeAll { it.expiresAt <= now }
+                    return jarCookies.filter { it.matches(url) }
+                }
+            }
+        }
+
+        val client = Net.client.newBuilder()
+            .cookieJar(cookieJar)
+            .followRedirects(true)
+            .followSslRedirects(true)
+            .build()
+        val request = Request.Builder()
+            .url(
+                "https://accounts.google.com/ServiceLogin?service=youtube&uilel=3&passive=true&hl=en" +
+                    "&continue=https%3A%2F%2Fwww.youtube.com%2Fsignin%3Faction_handle_signin%3Dtrue%26app%3Dm%26hl%3Den%26next%3D%252F",
+            )
+            .header("User-Agent", Net.USER_AGENT)
+            .get()
+            .build()
+        val html = client.newCall(request).execute().use { r ->
+            feedLog(Log.INFO, "Passive exchange HTTP ${r.code} finalUrl=${r.request.url.host}${r.request.url.encodedPath}")
+            r.body.string()
+        }
+        val collected = linkedMapOf<String, String>()
+        val now = System.currentTimeMillis()
+        for (c in jarCookies) {
+            if (c.expiresAt <= now) continue
+            val domain = c.domain.lowercase()
+            if (domain == "youtube.com" || domain == "www.youtube.com" || domain == "m.youtube.com") {
+                if (!AuthSessionManager.isExpiredOrDeletedCookieValue(c.value) &&
+                    !AuthSessionManager.isGoogleOnlyOrTransientCookieName(c.name) &&
+                    !c.name.startsWith("__Host-", ignoreCase = true)
+                ) {
+                    collected[c.name] = c.value
+                }
+            }
+        }
+        val loggedIn = Regex("\"LOGGED_IN\"\\s*:\\s*true").containsMatchIn(html)
+        val ver = Regex("\"INNERTUBE_CLIENT_VERSION\"\\s*:\\s*\"([^\"]+)\"").find(html)?.groupValues?.get(1)
+        val vis = Regex("\"VISITOR_DATA\"\\s*:\\s*\"([^\"]+)\"").find(html)?.groupValues?.get(1)
+        return PassiveExchangeResult(
+            youtubeCookies = collected,
+            loggedIn = loggedIn,
+            clientVersion = ver,
+            visitorData = vis,
+        )
+    }
+
+    /** Takes over the WebView session: ensures genuine YouTube cookies, stores persistently, then loads the account's name and email. */
     suspend fun completeSignIn(cookieHeader: String) = withContext(Dispatchers.IO) {
         synchronized(cookies) {
             cookies.clear()
+            rotatedCookies.clear()
+            removedCookies.clear()
             parseCookieHeader(cookieHeader, cookies)
         }
         AuthSessionManager.saveSession(cookieHeader)
         persistCookies()
+        if (!hasUsableYouTubeSession()) {
+            feedLog(Log.INFO, "Account.completeSignIn: captured session incomplete (missing LOGIN_INFO or poisoned); exchanging via ServiceLogin")
+            ensureGenuineYouTubeSession(seedHeader = cookieHeader, forceRefresh = true)
+        }
+        val currentMap = resolveRawMergedCookieMap()
         authLog(
             Log.INFO,
-            "Account.completeSignIn: stored cookies (len=${cookieHeader.length}, hasSAPISID=${AuthSessionManager.getSapisid() != null}, has3PAPISID=${AuthSessionManager.getSecure3pApiSid() != null})",
+            "Account.completeSignIn: cookies ready (count=${currentMap.size}, hasLoginInfo=${!currentMap["LOGIN_INFO"].isNullOrBlank()}, hasSAPISID=${AuthSessionManager.getSapisid() != null}, has3PAPISID=${AuthSessionManager.getSecure3pApiSid() != null})",
         )
         refreshClientConfig()
-        val menu = runCatching { InnerTube.post("account/account_menu", JSONObject()) }
+        var menu = runCatching { InnerTube.post("account/account_menu", JSONObject()) }
             .getOrElse {
                 if (it is YouTubeRefusedException && (it.code == 401 || it.code == 403)) {
                     authLog(Log.WARN, "Account.completeSignIn: account_menu refused (${it.code})", it)
@@ -208,6 +494,12 @@ object Account {
                 authLog(Log.WARN, "Account.completeSignIn: account_menu failed (using fallback profile)", it)
                 null
             }
+        if (menu != null && InnerTube.isLoggedOutResponse(menu)) {
+            feedLog(Log.WARN, "Account.completeSignIn: account_menu returned loggedOut=true; retrying after forced passive exchange")
+            if (ensureGenuineYouTubeSession(seedHeader = cookieHeader, forceRefresh = true)) {
+                menu = runCatching { InnerTube.post("account/account_menu", JSONObject()) }.getOrNull()
+            }
+        }
         var found: Profile? = null
         // A fallback name is stored with the session, so it stays in the language of the sign-in.
         val fallbackName = runCatching { str(R.string.app_account_fallback_name) }.getOrDefault("YouTube")
@@ -231,8 +523,46 @@ object Account {
         withContext(Dispatchers.Main) { profile = p }
     }
 
+    /** Refreshes the user's real profile name/avatar in the background when only the generic fallback was stored. */
+    internal suspend fun refreshProfileIfNeeded() {
+        if (!isFallbackProfile() || !hasUsableYouTubeSession() || profileRefreshInFlight) return
+        profileRefreshInFlight = true
+        try {
+            val menu = withContext(Dispatchers.IO) {
+                runCatching { InnerTube.post("account/account_menu", JSONObject()) }.getOrNull()
+            } ?: return
+            if (InnerTube.isLoggedOutResponse(menu)) return
+            val fallbackName = runCatching { str(R.string.app_account_fallback_name) }.getOrDefault("YouTube")
+            var found: Profile? = null
+            menu.walk { key, obj ->
+                if (key == "activeAccountHeaderRenderer" && found == null) {
+                    found = Profile(
+                        name = obj.text("accountName") ?: fallbackName,
+                        handle = obj.text("channelHandle"),
+                        avatar = obj.optJSONObject("accountPhoto")?.thumbnails()?.lastOrNull(),
+                        email = obj.text("email"),
+                    )
+                }
+            }
+            val updated = found ?: return
+            AuthSessionManager.saveProfile(updated)
+            runCatching {
+                store?.apply {
+                    put(KEY_NAME, updated.name); put(KEY_HANDLE, updated.handle); put(KEY_AVATAR, updated.avatar); put(KEY_EMAIL, updated.email)
+                }
+            }
+            withContext(Dispatchers.Main) { profile = updated }
+        } finally {
+            profileRefreshInFlight = false
+        }
+    }
+
     fun signOut() {
-        synchronized(cookies) { cookies.clear() }
+        synchronized(cookies) {
+            cookies.clear()
+            rotatedCookies.clear()
+            removedCookies.clear()
+        }
         clientVersion = FALLBACK_CLIENT_VERSION
         visitorData = null
         runCatching { store?.clear() }
@@ -248,15 +578,18 @@ object Account {
         runCatching {
             val request = Request.Builder().url("https://www.youtube.com/?hl=en")
                 .header("User-Agent", Net.USER_AGENT)
-                .header("Cookie", cookieHeader())
+                .apply {
+                    val hdr = cookieHeader()
+                    if (hdr.isNotBlank()) header("Cookie", hdr)
+                }
                 .build()
             Net.client.newCall(request).execute().use { r ->
                 absorbSetCookies(r.headers("Set-Cookie"))
-                val html = r.body?.string().orEmpty()
+                val html = r.body.string()
                 Regex("\"INNERTUBE_CLIENT_VERSION\":\"([^\"]+)\"").find(html)?.groupValues?.get(1)
                     ?.takeIf { it.startsWith("2.") }
                     ?.let { clientVersion = it }
-                Regex("\"VISITOR_DATA\":\"([^\"]+)\"").find(html)?.groupValues?.get(1)?.let { visitorData = it }
+                visitorData = Regex("\"VISITOR_DATA\":\"([^\"]+)\"").find(html)?.groupValues?.get(1)
                 authLog(
                     Log.INFO,
                     "Account.refreshClientConfig: HTTP ${r.code}, clientVersion=$clientVersion, hasVisitor=${visitorData != null}",
@@ -275,26 +608,11 @@ object Account {
     internal fun clientVersion() = clientVersion
     internal fun visitorData() = visitorData
 
-    internal fun cookieNamesSummary(): String = synchronized(cookies) {
-        cookies.keys.joinToString(",")
-    }
+    internal fun cookieNamesSummary(): String =
+        resolveRawMergedCookieMap().keys.joinToString(",")
 
-    internal fun cookieHeader(): String {
-        val hasInMemoryAuth = synchronized(cookies) { hasAuthCookiePair(cookies) }
-        if (hasInMemoryAuth) {
-            val inMemory = synchronized(cookies) { AuthSessionManager.formatCookieHeader(cookies) }
-            if (inMemory.isNotBlank()) return inMemory
-        }
-        val persisted = AuthSessionManager.getRawCookieString().orEmpty()
-        if (persisted.isNotBlank()) {
-            synchronized(cookies) {
-                if (!hasAuthCookiePair(cookies)) parseCookieHeader(persisted, cookies)
-            }
-            val merged = synchronized(cookies) { AuthSessionManager.formatCookieHeader(cookies) }
-            if (merged.isNotBlank()) return merged
-        }
-        return persisted
-    }
+    internal fun cookieHeader(): String =
+        AuthSessionManager.formatCookieHeader(resolveYouTubeRequestCookieMap())
 
     /** youtube.com's own request signature: SHA-1 of "timestamp SAPISID origin". */
     internal fun authorization(origin: String = ORIGIN): String? {
@@ -303,25 +621,14 @@ object Account {
             val digest = MessageDigest.getInstance("SHA-1").digest("$ts $secret $origin".toByteArray())
             return "${ts}_" + digest.joinToString("") { "%02x".format(it) }
         }
-        // Ensure in-memory map reflects persisted SharedPreferences if called before WebView/Account init completes
-        if (synchronized(cookies) { !hasAuthCookiePair(cookies) }) {
-            AuthSessionManager.getRawCookieString()?.let { persisted ->
-                synchronized(cookies) {
-                    if (!hasAuthCookiePair(cookies)) parseCookieHeader(persisted, cookies)
-                }
-            }
-        }
-        val (sapisid, p1, p3) = synchronized(cookies) {
-            Triple(
-                cookies["SAPISID"]?.takeIf { it.isNotBlank() }
-                    ?: cookies["__Secure-3PAPISID"]?.takeIf { it.isNotBlank() }
-                    ?: cookies["__Secure-1PAPISID"]?.takeIf { it.isNotBlank() }
-                    ?: cookies["APISID"]?.takeIf { it.isNotBlank() },
-                cookies["__Secure-1PAPISID"]?.takeIf { it.isNotBlank() },
-                cookies["__Secure-3PAPISID"]?.takeIf { it.isNotBlank() },
-            )
-        }
-        sapisid ?: return null
+        val activeCookies = resolveYouTubeRequestCookieMap()
+        val sapisid = activeCookies["SAPISID"]?.takeIf { it.isNotBlank() }
+            ?: activeCookies["__Secure-3PAPISID"]?.takeIf { it.isNotBlank() }
+            ?: activeCookies["__Secure-1PAPISID"]?.takeIf { it.isNotBlank() }
+            ?: activeCookies["APISID"]?.takeIf { it.isNotBlank() }
+            ?: return null
+        val p1 = activeCookies["__Secure-1PAPISID"]?.takeIf { it.isNotBlank() }
+        val p3 = activeCookies["__Secure-3PAPISID"]?.takeIf { it.isNotBlank() }
         return buildString {
             append("SAPISIDHASH ").append(hash(sapisid))
             p1?.let { append(" SAPISID1PHASH ").append(hash(it)) }
@@ -333,16 +640,36 @@ object Account {
     internal fun absorbSetCookies(setCookies: List<String>) {
         if (setCookies.isEmpty()) return
         var changed = false
+        val newlySet = linkedMapOf<String, String>()
         synchronized(cookies) {
             setCookies.forEach { header ->
                 val pair = header.substringBefore(';')
                 val name = pair.substringBefore('=').trim()
                 val value = pair.substringAfter('=', "").trim()
-                if (name.isEmpty() || value.isEmpty() || value == "\"\"") return@forEach
-                if (cookies[name] != value) { cookies[name] = value; changed = true }
+                if (name.isEmpty()) return@forEach
+                if (AuthSessionManager.isExpiredOrDeletedCookieValue(value)) {
+                    if (cookies.remove(name) != null) changed = true
+                    if (rotatedCookies.remove(name) != null) changed = true
+                    removedCookies += name
+                    return@forEach
+                }
+                if (AuthSessionManager.isGoogleOnlyOrTransientCookieName(name)) return@forEach
+                removedCookies.remove(name)
+                if (cookies[name] != value) {
+                    cookies[name] = value
+                    changed = true
+                }
+                if (rotatedCookies[name] != value) {
+                    rotatedCookies[name] = value
+                    changed = true
+                }
+                newlySet[name] = value
             }
         }
-        if (changed) persistCookies()
+        if (changed) {
+            persistCookies()
+            if (newlySet.isNotEmpty()) AuthSessionManager.syncCookiesToManager(newlySet)
+        }
     }
 
     private fun persistCookies() {
@@ -359,7 +686,9 @@ object Account {
             if (idx <= 0) return@forEach
             val name = part.substring(0, idx).trim()
             val value = part.substring(idx + 1).trim()
-            if (name.isNotEmpty() && value.isNotEmpty()) into[name] = value
+            if (name.isNotEmpty() && !AuthSessionManager.isExpiredOrDeletedCookieValue(value)) {
+                into[name] = value
+            }
         }
     }
 
@@ -432,16 +761,46 @@ object InnerTube {
     private const val BASE = "https://www.youtube.com/youtubei/v1/"
     private val JSON_TYPE = "application/json".toMediaType()
 
+    @Volatile
+    internal var httpClientProvider: () -> okhttp3.OkHttpClient = { Net.client }
+
     /** Signed in when there's a session, otherwise anonymous (public pages like channels). */
     internal fun postAny(endpoint: String, body: JSONObject): JSONObject =
         if (Account.signedIn) post(endpoint, body) else post(endpoint, body, anonymous = true)
 
-    internal fun post(endpoint: String, body: JSONObject, anonymous: Boolean = false): JSONObject {
+    internal fun isLoggedOutResponse(root: JSONObject): Boolean =
+        root.optJSONObject("responseContext")
+            ?.optJSONObject("mainAppWebResponseContext")
+            ?.optBoolean("loggedOut", false) == true
+
+    internal fun parseFeedNudgeMessage(root: JSONObject): String? {
+        val nudge = root.findObject("feedNudgeRenderer") ?: return null
+        val title = nudge.text("title")?.trim()?.ifBlank { null }
+        val subtitle = nudge.text("subtitle")?.trim()?.ifBlank { null }
+        return listOfNotNull(title, subtitle).joinToString(" — ").ifBlank { null }
+    }
+
+    internal fun post(
+        endpoint: String,
+        body: JSONObject,
+        anonymous: Boolean = false,
+        allowSessionExchangeRetry: Boolean = true,
+    ): JSONObject {
+        if (!anonymous && !Account.hasUsableYouTubeSession() && Account.hasSessionCookies()) {
+            feedLog(
+                Log.INFO,
+                "InnerTube.post($endpoint): YouTube session incomplete/missing LOGIN_INFO; attempting passive exchange before request",
+            )
+            Account.ensureGenuineYouTubeSession()
+        }
         val auth = if (anonymous) null else Account.authorization() ?: run {
-            authLog(Log.WARN, "InnerTube.post($endpoint): missing SAPISID authorization (cookies=${Account.cookieNamesSummary()})")
+            val msg = "InnerTube.post($endpoint): missing SAPISID authorization (cookies=${Account.cookieNamesSummary()})"
+            authLog(Log.WARN, msg)
+            feedLog(Log.ERROR, msg)
             throw NotSignedInException()
         }
-        body.put(
+        val payload = JSONObject(body.toString())
+        payload.put(
             "context",
             JSONObject().put(
                 "client",
@@ -455,7 +814,7 @@ object InnerTube {
         )
         val request = Request.Builder()
             .url("$BASE$endpoint?prettyPrint=false")
-            .post(body.toString().toRequestBody(JSON_TYPE))
+            .post(payload.toString().toRequestBody(JSON_TYPE))
             .header("User-Agent", Net.USER_AGENT)
             .apply { if (auth != null) { header("Cookie", Account.cookieHeader()); header("Authorization", auth) } }
             .header("Origin", Account.ORIGIN)
@@ -466,35 +825,60 @@ object InnerTube {
             .header("X-Youtube-Client-Version", Account.clientVersion())
             .apply { Account.visitorData()?.let { header("X-Goog-Visitor-Id", it) } }
             .build()
-        Net.client.newCall(request).execute().use { r ->
+        httpClientProvider().newCall(request).execute().use { r ->
             if (auth != null) Account.absorbSetCookies(r.headers("Set-Cookie"))
-            val text = r.body?.string().orEmpty()
+            val text = r.body.string()
             if (!r.isSuccessful) {
                 val snippet = text.take(400).replace('\n', ' ').trim()
-                authLog(
-                    Log.ERROR,
-                    "InnerTube.post($endpoint) HTTP ${r.code} (signedIn=${!anonymous}, cookies=${Account.cookieNamesSummary()}): $snippet",
-                )
+                val errMsg = "InnerTube.post($endpoint) HTTP ${r.code} (signedIn=${!anonymous}, cookies=${Account.cookieNamesSummary()}): $snippet"
+                authLog(Log.ERROR, errMsg)
+                feedLog(Log.ERROR, errMsg)
+                if (!anonymous && allowSessionExchangeRetry && (r.code == 401 || r.code == 403)) {
+                    if (Account.ensureGenuineYouTubeSession(forceRefresh = true)) {
+                        feedLog(Log.INFO, "InnerTube.post($endpoint): retrying once after HTTP ${r.code} session exchange")
+                        return post(endpoint, body, anonymous = false, allowSessionExchangeRetry = false)
+                    }
+                }
                 throw YouTubeRefusedException(r.code)
             }
             if (text.isBlank()) {
-                authLog(Log.ERROR, "InnerTube.post($endpoint) empty response body (HTTP ${r.code})")
+                val msg = "InnerTube.post($endpoint) empty response body (HTTP ${r.code})"
+                authLog(Log.ERROR, msg)
+                feedLog(Log.ERROR, msg)
+                throw IOException("YouTube returned an empty response ($endpoint)")
             }
-            return JSONObject(text)
+            val json = JSONObject(text)
+            if (!anonymous && isLoggedOutResponse(json)) {
+                val summary = Account.cookieNamesSummary()
+                feedLog(
+                    Log.WARN,
+                    "InnerTube.post($endpoint): responseContext reported loggedOut=true (retryAllowed=$allowSessionExchangeRetry, cookies=$summary)",
+                )
+                if (allowSessionExchangeRetry && Account.ensureGenuineYouTubeSession(forceRefresh = true)) {
+                    feedLog(Log.INFO, "InnerTube.post($endpoint): passive session exchange succeeded; retrying request")
+                    return post(endpoint, body, anonymous = false, allowSessionExchangeRetry = false)
+                }
+                val refusedMsg = "InnerTube.post($endpoint): YouTube returned loggedOut=true even after session check (cookies=$summary)"
+                authLog(Log.ERROR, refusedMsg)
+                feedLog(Log.ERROR, refusedMsg)
+                throw YouTubeRefusedException(401)
+            }
+            return json
         }
     }
 
     private fun logEmptyBrowse(source: String, root: JSONObject) {
         val topKeys = root.keys().asSequence().toList().joinToString(",")
         val alerts = root.optJSONArray("alerts")?.toString()?.take(300)
+        val loggedOut = isLoggedOutResponse(root)
+        val nudge = parseFeedNudgeMessage(root)
         val contents = root.optJSONObject("contents")?.toString()?.take(400)
             ?: root.optJSONArray("onResponseReceivedActions")?.toString()?.take(400)
             ?: root.optJSONArray("onResponseReceivedEndpoints")?.toString()?.take(400)
         val fallback = root.toString().take(400)
-        authLog(
-            Log.WARN,
-            "$source returned 0 videos (topKeys=[$topKeys], alerts=$alerts, preview=${contents ?: fallback})",
-        )
+        val msg = "$source returned 0 videos (loggedOut=$loggedOut, hasUsableYT=${Account.hasUsableYouTubeSession()}, hasVisitor=${Account.visitorData() != null}, nudge=$nudge, topKeys=[$topKeys], alerts=$alerts, preview=${contents ?: fallback})"
+        authLog(Log.WARN, msg)
+        feedLog(Log.WARN, msg)
     }
 
     // ── Reads ──────────────────────────────────────────────────────────────────
@@ -503,8 +887,14 @@ object InnerTube {
         val body = if (continuation != null) JSONObject().put("continuation", continuation) else JSONObject().put("browseId", browseId)
         val root = post("browse", body)
         val page = parseFeed(root)
-        if (page.videos.isEmpty()) logEmptyBrowse("InnerTube.browse($browseId, next=${continuation != null})", root)
-        page
+        val status = if (page.videos.isEmpty()) {
+            logEmptyBrowse("InnerTube.browse($browseId, next=${continuation != null})", root)
+            parseFeedNudgeMessage(root)
+        } else {
+            feedLog(Log.INFO, "InnerTube.browse($browseId, next=${continuation != null}) loaded ${page.videos.size} videos")
+            null
+        }
+        page.copy(statusMessage = status)
     }
 
     /**
@@ -517,8 +907,14 @@ object InnerTube {
         val root = post("browse", body)
         val page = parseFeed(root)
         val chips = if (next == null) parseHomeChips(root) else emptyList()
-        if (page.videos.isEmpty()) logEmptyBrowse("InnerTube.home(next=${next != null}, chips=${chips.size})", root)
-        if (next == null) page.copy(chips = chips) else page
+        val status = if (page.videos.isEmpty()) {
+            logEmptyBrowse("InnerTube.home(next=${next != null}, chips=${chips.size})", root)
+            parseFeedNudgeMessage(root)
+        } else {
+            feedLog(Log.INFO, "InnerTube.home(next=${next != null}, chips=${chips.size}) loaded ${page.videos.size} videos")
+            null
+        }
+        if (next == null) page.copy(chips = chips, statusMessage = status) else page.copy(statusMessage = status)
     }
 
     /**
@@ -577,8 +973,14 @@ object InnerTube {
         val body = if (next != null) JSONObject().put("continuation", next) else JSONObject().put("browseId", "FEsubscriptions")
         val root = post("browse", body)
         val page = parseSubscriptionsFeed(root)
-        if (page.videos.isEmpty()) logEmptyBrowse("InnerTube.subscriptionsFeed(next=${next != null})", root)
-        page
+        val status = if (page.videos.isEmpty()) {
+            logEmptyBrowse("InnerTube.subscriptionsFeed(next=${next != null})", root)
+            parseFeedNudgeMessage(root)
+        } else {
+            feedLog(Log.INFO, "InnerTube.subscriptionsFeed(next=${next != null}) loaded ${page.videos.size} videos")
+            null
+        }
+        page.copy(statusMessage = status)
     }
     suspend fun history(next: String? = null) = browse("FEhistory", next)
 
@@ -600,6 +1002,7 @@ object InnerTube {
             }
         }
         if (out.isEmpty()) logEmptyBrowse("InnerTube.channels", root)
+        else feedLog(Log.INFO, "InnerTube.channels loaded ${out.size} channels")
         out.values.toList()
     }
 

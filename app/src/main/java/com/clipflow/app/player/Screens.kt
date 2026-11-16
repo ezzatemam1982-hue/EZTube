@@ -123,7 +123,13 @@ fun HomeScreen(
     shortsCard: (@Composable (Modifier) -> Unit)? = null,
 ) {
     val signedIn = Account.signedIn
-    LaunchedEffect(signedIn, lib.home.waiting) { if (signedIn && lib.home.waiting) lib.home.ensureLoaded() }
+    val inHub = PlayerWindowTracker.inDownloaderHub
+    LaunchedEffect(signedIn, inHub, lib.home.waiting) {
+        if (signedIn && !inHub) lib.showHome()
+    }
+    LaunchedEffect(signedIn, lib.home.generation) {
+        if (signedIn && Account.isFallbackProfile()) Account.refreshProfileIfNeeded()
+    }
     CollapsingHeaderLayout(
         resetKey = scrollToTop to lib.home.generation,
         header = { ScreenHeader(title = stringResource(R.string.app_name), brandMark = true) { UpdateAction(); DownloadsAction(); AccountAction(onAccount) } },
@@ -176,9 +182,13 @@ fun SubscriptionsScreen(
     scrollToTop: Int = 0,
 ) {
     val signedIn = Account.signedIn
+    val inHub = PlayerWindowTracker.inDownloaderHub
     var channelQuery by rememberSaveable { mutableStateOf("") }
-    LaunchedEffect(signedIn, lib.subscriptions.waiting) {
-        if (signedIn) lib.showSubscriptions()
+    LaunchedEffect(signedIn, inHub, lib.subscriptions.waiting) {
+        if (signedIn && !inHub) lib.showSubscriptions()
+    }
+    LaunchedEffect(signedIn, lib.subscriptions.generation) {
+        if (signedIn && Account.isFallbackProfile()) Account.refreshProfileIfNeeded()
     }
     LaunchedEffect(signedIn) {
         if (!signedIn && channelQuery.isNotEmpty()) channelQuery = ""
@@ -539,8 +549,35 @@ private fun FilteredSubscriptionsContent(
             if (filteredChannels.isNotEmpty()) {
                 item(key = "channels") { ChannelRail(filteredChannels) }
             }
+            if (lib.subscriptions.error != null && visibleVideos.isNotEmpty()) {
+                item(key = "refresh-error") {
+                    FeedRefreshErrorBanner(
+                        message = lib.subscriptions.error.orEmpty(),
+                        onRetry = { lib.subscriptions.refresh(); lib.refreshChannels() },
+                    )
+                }
+            }
             when {
                 visibleVideos.isNotEmpty() -> videoCards(filteredVideos, columns, onOpen)
+                lib.subscriptions.error != null && lib.subscriptions.videos.isEmpty() -> {
+                    item(key = "filter-error") {
+                        EmptyState(
+                            icon = Icons.Rounded.CloudOff,
+                            title = stringResource(R.string.ui_feed_error_title),
+                            body = lib.subscriptions.error.orEmpty(),
+                            modifier = Modifier.fillParentMaxWidth(),
+                            action = {
+                                PillButton(
+                                    text = stringResource(R.string.ui_try_again),
+                                    onClick = {
+                                        lib.subscriptions.refresh()
+                                        lib.refreshChannels()
+                                    },
+                                )
+                            },
+                        )
+                    }
+                }
                 lib.subscriptions.loading && lib.subscriptions.videos.isEmpty() -> {
                     item(key = "filter-loading") {
                         Box(

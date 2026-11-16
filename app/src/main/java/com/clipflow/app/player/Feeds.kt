@@ -3,52 +3,66 @@ package com.clipflow.app.player
 import com.deniscerri.ytdl.BuildConfig
 import com.deniscerri.ytdl.R
 
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.Row
-import androidx.compose.ui.platform.LocalConfiguration
+import android.content.Context
+import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.VideoLibrary
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import android.content.Context
-import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONArray
 import org.json.JSONObject
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 
 /** A pageable list of videos (the account's home, subscriptions, history; a playlist; a channel's tab). */
 @Stable
@@ -62,6 +76,7 @@ class FeedState(
      * on into the recommendation stream and keeps only videos not yet shown this session.
      */
     private val freshOnRefresh: Boolean = false,
+    private val name: String = "Feed",
     private val loader: suspend (next: String?) -> FeedPage,
 ) {
     var videos by mutableStateOf<List<VideoItem>>(emptyList())
@@ -69,6 +84,9 @@ class FeedState(
     var loading by mutableStateOf(false)
         private set
     var error by mutableStateOf<String?>(null)
+        private set
+    /** Optional status message reported by YouTube when a feed has 0 items (e.g. history disabled nudge). */
+    var statusMessage by mutableStateOf<String?>(null)
         private set
     /** Bumped when a refresh lands; lists scroll back to the top on it. */
     var generation by mutableStateOf(0)
@@ -99,8 +117,16 @@ class FeedState(
 
     fun ensureLoaded() { if (!loaded && !loading) load(fresh = false, showIndicator = false) }
 
+    /** Ensures a feed returning to screen loads if never requested or retries if it failed / came back empty. */
+    fun showOrRetry() {
+        if (loading) return
+        if (!loaded || videos.isEmpty() || error != null) {
+            load(fresh = loaded, showIndicator = videos.isNotEmpty())
+        }
+    }
+
     /** The first page shown landed more than [ms] ago (false while nothing has). */
-    fun olderThan(ms: Long) = landedAt != 0L && android.os.SystemClock.elapsedRealtime() - landedAt > ms
+    fun olderThan(ms: Long) = landedAt != 0L && monotonicMs() - landedAt > ms
 
     /** Pull/button refresh: reloads what's shown, the chosen chip's feed included. */
     fun refresh(showIndicator: Boolean = true) = load(fresh = true, showIndicator = showIndicator)
@@ -111,7 +137,7 @@ class FeedState(
      */
     fun selectChip(pick: FeedChip) {
         chip = if (pick.token == null || pick.title == chip?.title) null else pick
-        videos = emptyList(); next = null
+        videos = emptyList(); next = null; statusMessage = null
         load(fresh = false, showIndicator = false)
     }
 
@@ -125,8 +151,10 @@ class FeedState(
         loading = true
         refreshing = showIndicator || videos.isNotEmpty()
         error = null
+        statusMessage = null
         job?.cancel()
         val pick = chip
+        feedLog(Log.INFO, "$name: loading feed (fresh=$fresh, current=${videos.size}, chip=${pick?.title})")
         job = scope.launch {
             val result = runCatching {
                 when {
@@ -135,18 +163,28 @@ class FeedState(
                     else -> loader(null)
                 }
             }
+            result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             if (!isActive) return@launch // a newer load (another chip) took over
             result
                 .onSuccess {
                     videos = it.videos; next = it.next; generation++
-                    landedAt = android.os.SystemClock.elapsedRealtime()
+                    statusMessage = it.statusMessage
+                    landedAt = monotonicMs()
                     if (pick == null) {
                         chips = it.chips
                         if (freshOnRefresh) it.videos.forEach { v -> shown += v.id }
                     }
+                    if (it.videos.isEmpty()) {
+                        feedLog(Log.WARN, "$name: loaded 0 videos (fresh=$fresh, chip=${pick?.title}, status=${it.statusMessage})")
+                    } else {
+                        feedLog(Log.INFO, "$name: loaded ${it.videos.size} videos (fresh=$fresh, hasMore=${it.next != null})")
+                    }
                     it.videos.take(prefetchTop).forEach { v -> StreamCache.prefetch(v.id) }
                 }
-                .onFailure { error = friendly(it) }
+                .onFailure { err ->
+                    feedLog(Log.ERROR, "$name: feed load failed (fresh=$fresh, current=${videos.size}, chip=${pick?.title})", err)
+                    error = friendly(err)
+                }
             loading = false
             refreshing = false
         }
@@ -159,6 +197,7 @@ class FeedState(
         val pick = chip
         job = scope.launch {
             val result = runCatching { loader(token) }
+            result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             if (!isActive) return@launch
             result
                 .onSuccess { page ->
@@ -168,7 +207,10 @@ class FeedState(
                     if (freshOnRefresh && pick == null) added.forEach { v -> shown += v.id }
                     next = page.next
                 }
-                .onFailure { error = friendly(it) }
+                .onFailure { err ->
+                    feedLog(Log.ERROR, "$name: loadMore failed", err)
+                    error = friendly(err)
+                }
             loading = false
         }
     }
@@ -184,26 +226,34 @@ class FeedState(
         first.videos.filter { it.id !in shown }.forEach { fresh[it.id] = it }
         var pages = 1
         while (fresh.size < FRESH_TARGET && token != null && pages < FRESH_PAGES) {
-            val page = loader(token)
+            val page = runCatching { loader(token) }
+                .onFailure { err ->
+                    if (err is CancellationException) throw err
+                    feedLog(Log.WARN, "$name: loadFresh continuation page ${pages + 1} failed", err)
+                }
+                .getOrNull() ?: break
             page.videos.filter { it.id !in shown }.forEach { fresh.putIfAbsent(it.id, it) }
             token = page.next
             pages++
         }
         if (fresh.isEmpty()) return first
-        return FeedPage(fresh.values.toList(), token, first.chips)
+        return FeedPage(fresh.values.toList(), token, first.chips, first.statusMessage)
     }
 
     fun reset() {
         job?.cancel()
         shown.clear()
-        videos = emptyList(); next = null; loaded = false; loading = false; error = null
-        chips = emptyList(); chip = null; landedAt = 0L
+        videos = emptyList(); next = null; loaded = false; loading = false; refreshing = false
+        error = null; statusMessage = null; chips = emptyList(); chip = null; landedAt = 0L
     }
 
     private companion object {
         const val FRESH_TARGET = 16
         const val FRESH_PAGES = 5
     }
+
+    private fun monotonicMs(): Long =
+        runCatching { android.os.SystemClock.elapsedRealtime() }.getOrElse { System.currentTimeMillis() }
 
     private fun friendly(t: Throwable) = when (t) {
         is NotSignedInException -> str(R.string.ui_signed_out_error)
@@ -220,9 +270,9 @@ class FeedState(
  */
 @Stable
 class LibraryData(scope: CoroutineScope, context: Context) {
-    val home = FeedState(scope, prefetchTop = 2, freshOnRefresh = true) { InnerTube.home(it) }
-    val subscriptions = FeedState(scope, prefetchTop = 2) { InnerTube.subscriptionsFeed(it) }
-    val history = FeedState(scope) { InnerTube.history(it) }
+    val home = FeedState(scope, prefetchTop = 2, freshOnRefresh = true, name = "Home") { InnerTube.home(it) }
+    val subscriptions = FeedState(scope, prefetchTop = 2, name = "Subscriptions") { InnerTube.subscriptionsFeed(it) }
+    val history = FeedState(scope, name = "History") { InnerTube.history(it) }
     private val prefs = context.getSharedPreferences(CHANNELS_PREFS, Context.MODE_PRIVATE)
     var channels by mutableStateOf(readChannels())
         private set
@@ -235,6 +285,7 @@ class LibraryData(scope: CoroutineScope, context: Context) {
         private set
     var refreshingPlaylists by mutableStateOf(false)
         private set
+    private var homeShown = false
     /** Subscriptions has been on screen since it was last (re)loaded. */
     private var subscriptionsShown = false
 
@@ -252,10 +303,14 @@ class LibraryData(scope: CoroutineScope, context: Context) {
         if (showIndicator) refreshingChannels = true
         val job = scope.launch(start = CoroutineStart.LAZY) {
             val result = runCatching { InnerTube.channels() }
+            result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             if (!isActive) return@launch
             result
                 .onSuccess { channels = it; writeChannels(it) }
-                .onFailure { if (!showIndicator) channelsJob = null } // the next look at the tab tries again
+                .onFailure { err ->
+                    feedLog(Log.ERROR, "Channels: fetch failed", err)
+                    if (!showIndicator) channelsJob = null // the next look at the tab tries again
+                }
             refreshingChannels = false
         }
         channelsJob = job
@@ -268,8 +323,11 @@ class LibraryData(scope: CoroutineScope, context: Context) {
         if (showIndicator) refreshingPlaylists = true
         val job = scope.launch(start = CoroutineStart.LAZY) {
             val result = runCatching { InnerTube.playlists() }
+            result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             if (!isActive) return@launch
-            result.onSuccess { playlists = it }
+            result
+                .onSuccess { playlists = it }
+                .onFailure { err -> feedLog(Log.ERROR, "Playlists: fetch failed", err) }
             refreshingPlaylists = false
         }
         playlistsJob = job
@@ -288,26 +346,37 @@ class LibraryData(scope: CoroutineScope, context: Context) {
         ensureChannels()
     }
 
+    /** Ensures Home loads on screen open and recovers if an earlier background fetch failed or returned empty. */
+    fun showHome() {
+        val failedOrEmpty = !home.loading && (home.error != null || home.videos.isEmpty())
+        if (!homeShown && (failedOrEmpty || home.olderThan(STALE_AHEAD_MS))) {
+            home.refresh(showIndicator = home.videos.isNotEmpty())
+        } else {
+            home.showOrRetry()
+        }
+        homeShown = true
+    }
+
     /**
      * The Subscriptions tab is on screen. A page read ahead long ago is reloaded before it's seen,
-     * and so is one whose read-ahead failed (a blip at start shouldn't greet the tab with an error).
+     * and so is one whose read-ahead failed or returned empty.
      */
     fun showSubscriptions() {
-        val failedAhead = subscriptions.error != null && subscriptions.videos.isEmpty() && !subscriptions.loading
-        if (!subscriptionsShown && (failedAhead || subscriptions.olderThan(STALE_AHEAD_MS))) {
+        val failedOrEmpty = !subscriptions.loading && (subscriptions.error != null || subscriptions.videos.isEmpty())
+        if (!subscriptionsShown && (failedOrEmpty || subscriptions.olderThan(STALE_AHEAD_MS))) {
             subscriptions.refresh(showIndicator = subscriptions.videos.isNotEmpty())
         } else {
-            subscriptions.ensureLoaded()
+            subscriptions.showOrRetry()
         }
         subscriptionsShown = true
         ensureChannels()
     }
 
-    fun playlistFeed(id: String) = FeedState(scope) { InnerTube.playlist(id, it) }
+    fun playlistFeed(id: String) = FeedState(scope, name = "Playlist($id)") { InnerTube.playlist(id, it) }
 
     fun reset() {
         home.reset(); subscriptions.reset(); history.reset()
-        channelsJob?.cancel(); channelsJob = null; subscriptionsShown = false
+        channelsJob?.cancel(); channelsJob = null; homeShown = false; subscriptionsShown = false
         playlistsJob?.cancel(); playlistsJob = null
         refreshingChannels = false; refreshingPlaylists = false
         channels = emptyList(); playlists = emptyList()
@@ -467,6 +536,11 @@ fun FeedList(
     PullToRefresh(enabled = pullToRefresh, refreshing = refreshing, onRefresh = onRefresh, topPadding = indicatorTop) {
     LazyColumn(state = list, contentPadding = contentPadding, modifier = Modifier.fillMaxSize()) {
         header()
+        if (feed.error != null && feed.videos.isNotEmpty()) {
+            item(key = "refresh-error") {
+                FeedRefreshErrorBanner(message = feed.error.orEmpty(), onRetry = onRefresh)
+            }
+        }
         videoCards(feed.videos, columns, onOpen, extra = gridExtra)
         when {
             // No keys on these trailing items: a keyed loader at index 0 makes LazyColumn
@@ -488,12 +562,50 @@ fun FeedList(
                 EmptyState(
                     icon = Icons.Rounded.VideoLibrary,
                     title = stringResource(R.string.ui_feed_empty_title),
-                    body = stringResource(R.string.ui_feed_empty_body),
+                    body = feed.statusMessage ?: stringResource(R.string.ui_feed_empty_body),
                     action = { PillButton(stringResource(R.string.ui_try_again), onRefresh) },
                 )
             }
         }
     }
+    }
+}
+
+@Composable
+internal fun FeedRefreshErrorBanner(message: String, onRetry: () -> Unit) {
+    val c = MaterialTheme.colorScheme
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(c.errorContainer)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.CloudOff,
+            contentDescription = null,
+            tint = c.onErrorContainer,
+            modifier = Modifier.size(20.dp),
+        )
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.ui_feed_error_title),
+                color = c.onErrorContainer,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp,
+            )
+            Text(
+                text = message,
+                color = c.onErrorContainer.copy(alpha = 0.85f),
+                fontSize = 12.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        PillButton(stringResource(R.string.ui_try_again), onRetry)
     }
 }
 
