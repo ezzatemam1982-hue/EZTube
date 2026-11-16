@@ -381,15 +381,16 @@ fun DownloadsAction() {
     }
 }
 
-/** Account button in the headers: the avatar when signed in, a person icon otherwise. */
+/** Account button in the headers: custom avatar / Google photo / initial when signed in, else account icon. */
 @Composable
 fun AccountAction(onClick: () -> Unit) {
     val profile = Account.profile
-    if (profile == null) {
+    val hasLocalOverride = LocalAvatarStore.mode != LocalAvatarStore.Mode.Default
+    if (profile == null && !hasLocalOverride) {
         CircleAction(Icons.Rounded.AccountCircle, stringResource(R.string.ui_sign_in), onClick)
     } else {
         Box(Modifier.size(44.dp).pressable(onClick = onClick), contentAlignment = Alignment.Center) {
-            ChannelAvatar(profile.avatar, profile.name, size = 40)
+            AccountAvatar(profile, size = 40)
         }
     }
 }

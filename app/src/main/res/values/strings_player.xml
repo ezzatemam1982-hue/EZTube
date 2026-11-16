@@ -82,6 +82,15 @@
     <string name="player_sb_short_preview">preview</string>
     <string name="player_sb_short_music_offtopic">non-music</string>
     <string name="player_sb_short_filler">filler</string>
+    <string name="player_sb_info">Category info</string>
+    <string name="player_sb_desc_sponsor">Paid promotions, product placements, or brand read-outs inside the video.</string>
+    <string name="player_sb_desc_selfpromo">Unpaid plugs for the creator\'s own merch, channel, website, or Patreon.</string>
+    <string name="player_sb_desc_interaction">Short reminders asking viewers to like, subscribe, or turn on notifications.</string>
+    <string name="player_sb_desc_intro">Opening title sequence, animation, or bumper before the main video begins.</string>
+    <string name="player_sb_desc_outro">End cards, closing credits, or subscribe screens at the end of a video.</string>
+    <string name="player_sb_desc_preview">Quick teasers or recaps summarizing what happens earlier or later in the video.</string>
+    <string name="player_sb_desc_music_offtopic">Talking, skits, or non-musical sections inside a music video or concert clip.</string>
+    <string name="player_sb_desc_filler">Off-topic jokes, tangents, or filler scenes not needed to follow the video.</string>
     <!-- What happens at a category's segments: chips in the SponsorBlock settings, four side by side. Keep very short (~6 characters). -->
     <string name="player_sb_action_skip">Skip</string>
     <string name="player_sb_action_ask">Ask</string>

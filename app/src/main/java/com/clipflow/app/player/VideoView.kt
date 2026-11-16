@@ -38,6 +38,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -83,6 +84,7 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PictureInPictureAlt
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.ZoomOutMap
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -253,23 +255,34 @@ fun VideoContent(
         burstSeconds += ((abs(moved) + 500) / 1000).toInt()
         burstTaps++
     }
-    // Stretch to fill in fullscreen (RESIZE_MODE_FILL vs RESIZE_MODE_FIT): 0 = Original aspect ratio,
-    // 1 = Stretched to fill edge-to-edge without cropping top/bottom.
-    val resizeMode = fullscreenResizeMode(state.zoomedToFill)
-    val zoomTarget = if (fullscreen && resizeMode == AspectRatioFrameLayout.RESIZE_MODE_FILL) 1f else 0f
+    var stage by remember { mutableStateOf(IntSize.Zero) }
+    val scaleSelection = state.fullscreenScale
+    val zoomTarget = if (!fullscreen) 1f else resolveFullscreenScale(
+        selection = scaleSelection,
+        stageW = stage.width.toFloat(),
+        stageH = stage.height.toFloat(),
+        aspect = state.videoAspect,
+    )
     val zoom = remember { Animatable(zoomTarget, visibilityThreshold = 0.0005f) }
     var pinching by remember { mutableStateOf(false) }
-    // Transient overlay pill showing "Stretched to fill" or "Original" on pinch or Fit/Fill tap.
-    var zoomPillFill by remember { mutableStateOf(false) }
+    // Transient overlay pill showing active mode ("Fit", "Fill", "Zoom") or live pinch multiplier ("1.4×").
+    var zoomPillMode by remember { mutableStateOf(FullscreenAspectMode.Fit) }
+    var zoomPillMultiplier by remember { mutableStateOf<Float?>(null) }
     var zoomPillSeq by remember { mutableIntStateOf(0) }
     var zoomPillShown by remember { mutableStateOf(false) }
-    fun showZoomPill(fill: Boolean) {
-        zoomPillFill = fill
+    fun showZoomModePill(mode: FullscreenAspectMode) {
+        zoomPillMode = mode
+        zoomPillMultiplier = null
         zoomPillSeq++
         zoomPillShown = true
     }
-    LaunchedEffect(zoomPillSeq) {
-        if (zoomPillSeq == 0) return@LaunchedEffect
+    fun showPinchZoomPill(multiplier: Float) {
+        zoomPillMultiplier = multiplier
+        zoomPillSeq++
+        zoomPillShown = true
+    }
+    LaunchedEffect(zoomPillSeq, pinching) {
+        if (zoomPillSeq == 0 || pinching) return@LaunchedEffect
         delay(1_500)
         zoomPillShown = false
     }
@@ -282,9 +295,8 @@ fun VideoContent(
         if (pinching) return@LaunchedEffect
         val velocity = zoomFling[0].also { zoomFling[0] = 0f }
         if (reduced || !fullscreen) zoom.snapTo(zoomTarget)
-        else zoom.animateTo(zoomTarget, spring(dampingRatio = 0.5f, stiffness = 380f, visibilityThreshold = 0.0005f), initialVelocity = velocity)
+        else zoom.animateTo(zoomTarget, spring(dampingRatio = 0.72f, stiffness = 420f, visibilityThreshold = 0.0005f), initialVelocity = velocity)
     }
-    var stage by remember { mutableStateOf(IntSize.Zero) }
     val zoomScope = rememberCoroutineScope()
     val pip = LocalPictureInPicture.current
     val view = LocalView.current
@@ -305,10 +317,10 @@ fun VideoContent(
                         event = awaitPointerEvent(PointerEventPass.Initial)
                     }
                     if (state.holdingFast || state.error != null || !currentInteractive || currentScreenLocked) return@awaitEachGesture
-                    val fill = fillScale(size.width.toFloat(), size.height.toFloat(), state.videoAspect)
-                    val from = 1f + (fill - 1f) * zoom.value
+                    val from = zoom.value.coerceAtLeast(1f)
                     var total = 1f
                     var started = false
+                    var lastRaw = from
                     val tracker = VelocityTracker1D(isDataDifferential = false)
                     try {
                         do {
@@ -321,27 +333,29 @@ fun VideoContent(
                             }
                             if (started) {
                                 event.changes.forEach { it.consume() }
-                                if (fill > 1.005f) {
-                                    val to = (stretched(from * total, fill) - 1f) / (fill - 1f)
-                                    tracker.addDataPoint(event.changes.first().uptimeMillis, to)
-                                    zoomScope.launch { zoom.snapTo(to) }
+                                lastRaw = from * total
+                                val to = interactivePinchScale(lastRaw)
+                                tracker.addDataPoint(event.changes.first().uptimeMillis, to)
+                                zoomScope.launch { zoom.snapTo(to) }
+                                if (lastRaw < MIN_PINCH_SCALE) {
+                                    showZoomModePill(FullscreenAspectMode.Fit)
+                                } else {
+                                    showPinchZoomPill(lastRaw.coerceIn(MIN_PINCH_SCALE, MAX_PINCH_SCALE))
                                 }
                             }
                             event = awaitPointerEvent(PointerEventPass.Initial)
                         } while (event.changes.count { it.pressed } >= 2)
                         if (!started) return@awaitEachGesture
-                        // Pinch out = stretch to fill (RESIZE_MODE_FILL), pinch in = Original (RESIZE_MODE_FIT).
-                        val toFill = when {
-                            total > 1f + ZoomDecide -> true
-                            total < 1f - ZoomDecide -> false
-                            else -> null
+                        val releasedScale = resolveReleasedPinchZoom(lastRaw)
+                        view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                        if (releasedScale != null) {
+                            state.applyPinchZoomScale(releasedScale)
+                            showPinchZoomPill(releasedScale)
+                        } else {
+                            state.applyPinchZoomScale(MIN_PINCH_SCALE)
+                            showZoomModePill(FullscreenAspectMode.Fit)
                         }
-                        if (toFill != null) {
-                            if (toFill != state.zoomedToFill) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                            state.setZoomedToFill(toFill)
-                            showZoomPill(toFill)
-                        }
-                        if (fill > 1.005f) zoomFling[0] = tracker.calculateVelocity().coerceIn(-ZoomFlingMax, ZoomFlingMax)
+                        zoomFling[0] = tracker.calculateVelocity().coerceIn(-ZoomFlingMax, ZoomFlingMax)
                     } finally {
                         pinching = false
                     }
@@ -415,22 +429,15 @@ fun VideoContent(
                 .fillMaxSize()
                 .aspectFit(state.videoAspect),
         ) {
-            // Stretch to fill (RESIZE_MODE_FILL): each axis stretches independently to fill the stage edge-to-edge
-            // without cropping top/bottom or sides; captions and the burst line below stay on the unstretched box.
+            // Uniform scale from the aspect-fitted video container (`Fit` = 1.0x, `Fill` = screen fill,
+            // `Zoom` = 1.25x extra crop, or pinch 1.0x..2.0x). Captions and seek bar stay unscaled.
             Box(
                 Modifier
                     .fillMaxSize()
                     .graphicsLayer {
-                        val scales = stretchScales(
-                            stageW = stage.width.toFloat(),
-                            stageH = stage.height.toFloat(),
-                            childW = size.width,
-                            childH = size.height,
-                            aspect = state.videoAspect,
-                            zoom = zoom.value,
-                        )
-                        scaleX = scales.scaleX
-                        scaleY = scales.scaleY
+                        val s = if (fullscreen) zoom.value.coerceAtLeast(0.5f) else 1f
+                        scaleX = s
+                        scaleY = s
                     }
                     .clipToBounds(),
             ) {
@@ -672,21 +679,25 @@ fun VideoContent(
                             }
                         }
                         if (fullscreen) {
-                            val filled = resizeMode == AspectRatioFrameLayout.RESIZE_MODE_FILL
+                            val mode = scaleSelection.mode
+                            val active = mode != FullscreenAspectMode.Fit || scaleSelection.pinchScale != null
                             OverlayTile(
-                                description = stringResource(if (filled) R.string.video_resize_fit else R.string.video_resize_fill),
+                                description = stringResource(fullscreenResizeLabelRes(mode)),
                                 enabled = enabled,
                                 size = 34.dp,
-                                filled = filled,
+                                filled = active,
                                 onClick = {
                                     touched()
-                                    val next = !filled
-                                    state.setZoomedToFill(next)
-                                    showZoomPill(next)
+                                    val nextMode = state.cycleFullscreenAspectMode()
+                                    showZoomModePill(nextMode)
                                 },
                             ) { ink ->
                                 Icon(
-                                    imageVector = if (filled) Icons.Rounded.AspectRatio else Icons.Rounded.FitScreen,
+                                    imageVector = when {
+                                        scaleSelection.pinchScale != null || mode == FullscreenAspectMode.Zoom -> Icons.Rounded.ZoomOutMap
+                                        mode == FullscreenAspectMode.Fill -> Icons.Rounded.AspectRatio
+                                        else -> Icons.Rounded.FitScreen
+                                    },
                                     contentDescription = null,
                                     tint = ink,
                                     modifier = Modifier.size(19.dp),
@@ -737,10 +748,12 @@ fun VideoContent(
                 label = "zoomPillTop",
             )
             ZoomModePill(
-                shown = zoomPillShown && !state.holdingFast,
-                fill = zoomPillFill,
+                shown = zoomPillShown && !state.holdingFast && !state.screenLocked,
+                mode = zoomPillMode,
+                pinchMultiplier = zoomPillMultiplier,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
+                    .zIndex(20f)
                     .windowInsetsPadding(WindowInsets.displayCutout)
                     .padding(top = pillTop),
             )
@@ -1958,8 +1971,12 @@ private fun SeekBurstPill(side: Int, seconds: Int, taps: Int, active: Boolean, f
     }
 }
 
-/** How much the picture grows to cover a [w]×[h] stage along the constrained axis when laid out to fit [aspect]. */
-private fun fillScale(w: Float, h: Float, aspect: Float): Float {
+internal const val MIN_PINCH_SCALE = 1f
+internal const val MAX_PINCH_SCALE = 2f
+internal const val ZOOM_MODE_MULTIPLIER = 1.25f
+
+/** How much the picture grows evenly to cover a [w]×[h] stage along its constrained axis when laid out at [aspect]. */
+internal fun fillScale(w: Float, h: Float, aspect: Float): Float {
     if (w <= 0f || h <= 0f || aspect <= 0f) return 1f
     val stage = w / h
     return max(stage / aspect, aspect / stage)
@@ -1974,6 +1991,27 @@ internal fun fullscreenResizeMode(fill: Boolean): Int =
 
 internal fun fullscreenResizeLabelRes(fill: Boolean): Int =
     if (fill) R.string.video_stretch_to_fill else R.string.video_resize_original
+
+internal fun fullscreenResizeLabelRes(mode: FullscreenAspectMode): Int = when (mode) {
+    FullscreenAspectMode.Fit -> R.string.video_aspect_fit
+    FullscreenAspectMode.Fill -> R.string.video_aspect_fill
+    FullscreenAspectMode.Zoom -> R.string.video_aspect_zoom
+}
+
+/** Resolves the uniform fullscreen video scale factor for Fit (1.0×), Fill, Zoom (1.25× extra crop), or active pinch. */
+internal fun resolveFullscreenScale(
+    selection: FullscreenScaleSelection,
+    stageW: Float,
+    stageH: Float,
+    aspect: Float,
+): Float {
+    selection.pinchScale?.let { return it.coerceIn(MIN_PINCH_SCALE, MAX_PINCH_SCALE) }
+    return when (selection.mode) {
+        FullscreenAspectMode.Fit -> 1f
+        FullscreenAspectMode.Fill -> fillScale(stageW, stageH, aspect)
+        FullscreenAspectMode.Zoom -> fillScale(stageW, stageH, aspect) * ZOOM_MODE_MULTIPLIER
+    }
+}
 
 /**
  * Computes independent `scaleX` / `scaleY` factors from an aspect-fitted child (`childW`×`childH`)
@@ -2016,31 +2054,36 @@ internal fun stretchScales(
     }
 }
 
-/** A pinch must change the span by this share to switch zoom (less springs back). */
-private const val ZoomDecide = 0.04f
-/** Past fill (or under the whole picture) a pinch stretches the picture at most this share further. */
+/** Past [MAX_PINCH_SCALE] or below [MIN_PINCH_SCALE], a pinch rubber-bands by at most this share further. */
 private const val ZoomStretch = 0.06f
-/** The release speed handed to the spring is capped (zoom fractions per second), so a wild flick still lands softly. */
+/** The release speed handed to the spring is capped, so a wild flick still lands softly. */
 private const val ZoomFlingMax = 8f
 
-/**
- * A pinch's scale [raw] (1 = the whole picture, [fill] = filling the stage), with a rubber band past either end:
- * at half the fingers' rate at first, easing off toward [ZoomStretch] more.
- */
-private fun stretched(raw: Float, fill: Float): Float {
+/** Interactive pinch scale clamped to [MIN_PINCH_SCALE]..[MAX_PINCH_SCALE] with soft rubber-banding at both ends. */
+internal fun interactivePinchScale(raw: Float): Float {
     fun give(over: Float) = ZoomStretch * (1f - exp(-over / (2f * ZoomStretch)))
     return when {
-        raw > fill -> fill * (1f + give(raw / fill - 1f))
-        raw < 1f -> 1f - give(1f - raw)
+        raw > MAX_PINCH_SCALE -> MAX_PINCH_SCALE * (1f + give(raw / MAX_PINCH_SCALE - 1f))
+        raw < MIN_PINCH_SCALE -> MIN_PINCH_SCALE - give(MIN_PINCH_SCALE - raw)
         else -> raw
     }
 }
 
+/** Resolves the final zoom multiplier when fingers lift; returns `null` to snap cleanly back to Fit. */
+internal fun resolveReleasedPinchZoom(raw: Float): Float? =
+    if (raw <= 1.005f) null else raw.coerceIn(MIN_PINCH_SCALE, MAX_PINCH_SCALE)
+
 /**
- * Transient glass pill at the top center confirming `"Stretched to fill"` or `"Original"` in fullscreen.
+ * Prominent transient glass pill at the top center displaying active fullscreen zoom mode
+ * (`"Fit"`, `"Fill"`, `"Zoom"`) or live pinch multiplier (`"1.4×"`).
  */
 @Composable
-private fun ZoomModePill(shown: Boolean, fill: Boolean, modifier: Modifier = Modifier) {
+private fun ZoomModePill(
+    shown: Boolean,
+    mode: FullscreenAspectMode,
+    pinchMultiplier: Float?,
+    modifier: Modifier = Modifier,
+) {
     val reduced = rememberReducedMotion()
     val alpha by animateFloatAsState(
         targetValue = if (shown) 1f else 0f,
@@ -2053,27 +2096,36 @@ private fun ZoomModePill(shown: Boolean, fill: Boolean, modifier: Modifier = Mod
         label = "zoomPillScale",
     )
     if (alpha <= 0f) return
+    val icon = when {
+        pinchMultiplier != null || mode == FullscreenAspectMode.Zoom -> Icons.Rounded.ZoomOutMap
+        mode == FullscreenAspectMode.Fill -> Icons.Rounded.AspectRatio
+        else -> Icons.Rounded.FitScreen
+    }
+    val label = pinchMultiplier?.let {
+        String.format(java.util.Locale.US, "%.1f×", it.coerceIn(MIN_PINCH_SCALE, MAX_PINCH_SCALE))
+    } ?: stringResource(fullscreenResizeLabelRes(mode))
     Row(
         modifier
             .graphicsLayer { this.alpha = alpha; scaleX = scale; scaleY = scale }
-            .height(38.dp)
+            .height(40.dp)
             .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.62f))
+            .background(Color.Black.copy(alpha = 0.74f))
+            .border(1.dp, Color.White.copy(alpha = 0.22f), CircleShape)
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = if (fill) Icons.Rounded.FitScreen else Icons.Rounded.AspectRatio,
+            imageVector = icon,
             contentDescription = null,
             tint = Color.White,
             modifier = Modifier.size(18.dp),
         )
         Spacer(Modifier.width(7.dp))
         Text(
-            text = stringResource(fullscreenResizeLabelRes(fill)),
+            text = label,
             color = Color.White,
             fontWeight = FontWeight.ExtraBold,
-            fontSize = 13.sp,
+            fontSize = 13.5.sp,
             maxLines = 1,
         )
     }

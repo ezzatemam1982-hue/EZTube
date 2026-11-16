@@ -7,6 +7,7 @@ import androidx.preference.PreferenceManager
 import com.deniscerri.ytdl.R
 import com.deniscerri.ytdl.ui.more.settings.BaseSettingsFragment
 import com.deniscerri.ytdl.ui.more.settings.SettingsRegistry
+import com.deniscerri.ytdl.util.AppPreferenceDefaults
 import com.deniscerri.ytdl.util.UiUtil
 
 class DownloadSettingsFragment : BaseSettingsFragment() {
@@ -23,6 +24,7 @@ class DownloadSettingsFragment : BaseSettingsFragment() {
         findPreference<Preference>("reset_preferences")?.setOnPreferenceClickListener {
             UiUtil.showGenericConfirmDialog(requireContext(), getString(R.string.reset), getString(R.string.reset_preferences_in_screen)) {
                 resetPreferences(editor, preferenceXMLRes)
+                AppPreferenceDefaults.applyDownloadResetDefaults(requireContext())
                 requireActivity().recreate()
                 findNavController().currentDestination?.id?.apply {
                     findNavController().popBackStack(this,true)

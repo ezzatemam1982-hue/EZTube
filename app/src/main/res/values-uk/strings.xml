@@ -631,13 +631,13 @@
     <string name="channel_master">Майстер</string>
     <string name="channel_beta">Бета</string>
     <string name="temporary_files">Тимчасові файли</string>
-    <string name="temporary_files_description">Робочі файли, що зберігаються в додатку. Тимчасові конфігурації та інші дані, пов’язані з yt-dlp.</string>
+    <string name="temporary_files_description">Робочі файли EZTube. Тимчасові конфігурації та кешовані дані завантажень.</string>
     <string name="unfinished_downloads">Незавершені завантаження</string>
     <string name="unfinished_downloads_summary">Часткові файли зупинених або невдалих завантажень зберігаються для їх подальшого відновлення</string>
     <string name="info_jsons">Інфо-JSONs</string>
-    <string name="info_jsons_summary">Збережено метадані відео, щоб yt-dlp не доводилося їх знову отримувати</string>
-    <string name="ytdlp_cache">yt-dlp кеш</string>
-    <string name="ytdlp_cache_summary">Дані, які yt-dlp повторно використовує між запусками, як-от підписи гравців YouTube</string>
+    <string name="info_jsons_summary">Збережені метадані відео, щоб EZTube не доводилося отримувати їх знову</string>
+    <string name="ytdlp_cache">Кеш рушія застосунку</string>
+    <string name="ytdlp_cache_summary">Тимчасові дані рушія, які EZTube повторно використовує між запусками</string>
     <string name="temporary_configurations">Тимчасові конфігурації</string>
     <string name="temporary_configurations_summary">Конфігурації команд, URL списки та інші короткочасні файли</string>
     <string name="downloaded_apks">Завантажено APKs</string>

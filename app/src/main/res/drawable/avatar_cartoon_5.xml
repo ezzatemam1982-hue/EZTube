@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+    <!-- Backdrop -->
+    <path
+        android:fillColor="#D1FAE5"
+        android:pathData="M0,0h96v96h-96z" />
+    <path
+        android:fillColor="#A7F3D0"
+        android:pathData="M48,14 A34,34 0 1,1 47.9,14 Z" />
+    <!-- Hijab outer silhouette -->
+    <path
+        android:fillColor="#0F766E"
+        android:pathData="M21,55 C21,26 33,17 48,17 C63,17 75,26 75,55 L78,96 L18,96 Z" />
+    <!-- Hijab drape highlight & folds -->
+    <path
+        android:fillColor="#115E59"
+        android:pathData="M24,62 Q48,74 72,62 L76,84 Q48,92 20,84 Z" />
+    <path
+        android:fillColor="#14B8A6"
+        android:pathData="M29,34 C33,24 41,21 48,21 C56,21 63,24 67,34 C61,29 55,27 48,27 C41,27 35,29 29,34 Z" />
+    <!-- Cream tunic peek -->
+    <path
+        android:fillColor="#F0FDF4"
+        android:pathData="M34,82 Q48,89 62,82 L65,96 L31,96 Z" />
+    <!-- Face opening -->
+    <path
+        android:fillColor="#F2BE99"
+        android:pathData="M31,44 C31,29 65,29 65,44 C65,58 57,66 48,66 C39,66 31,58 31,44 Z" />
+    <!-- Soft inner cap -->
+    <path
+        android:fillColor="#134E4A"
+        android:pathData="M31,37 C34,29 41,26 48,26 C55,26 62,29 65,37 C58,33 52,32 48,32 C44,32 38,33 31,37 Z" />
+    <!-- Gold hijab pin detail -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M35,66 a2.2,2.2 0 1,0 0,4.4 a2.2,2.2 0 1,0 0,-4.4 z" />
+    <!-- Eyebrows -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M36.5,41.5 Q40.5,39.5 44,41.5"
+        android:strokeColor="#3F271E"
+        android:strokeLineCap="round"
+        android:strokeWidth="2" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M52,41.5 Q55.5,39.5 59.5,41.5"
+        android:strokeColor="#3F271E"
+        android:strokeLineCap="round"
+        android:strokeWidth="2" />
+    <!-- Expressive eyes & catchlights -->
+    <path
+        android:fillColor="#1F2937"
+        android:pathData="M40.5,46 a2.6,2.9 0 1,0 0,5.8 a2.6,2.9 0 1,0 0,-5.8 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M39.8,47.2 a0.95,0.95 0 1,0 0,1.9 a0.95,0.95 0 1,0 0,-1.9 z" />
+    <path
+        android:fillColor="#1F2937"
+        android:pathData="M55.5,46 a2.6,2.9 0 1,0 0,5.8 a2.6,2.9 0 1,0 0,-5.8 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54.8,47.2 a0.95,0.95 0 1,0 0,1.9 a0.95,0.95 0 1,0 0,-1.9 z" />
+    <!-- Rosy cheeks -->
+    <path
+        android:fillColor="#FB7185"
+        android:fillAlpha="0.3"
+        android:pathData="M36.5,52 a3.5,2.2 0 1,0 0,4.4 a3.5,2.2 0 1,0 0,-4.4 z" />
+    <path
+        android:fillColor="#FB7185"
+        android:fillAlpha="0.3"
+        android:pathData="M59.5,52 a3.5,2.2 0 1,0 0,4.4 a3.5,2.2 0 1,0 0,-4.4 z" />
+    <!-- Warm gentle smile -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M42.5,56.5 Q48,61 53.5,56.5"
+        android:strokeColor="#9F1239"
+        android:strokeLineCap="round"
+        android:strokeWidth="2.1" />
+</vector>

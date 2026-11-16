@@ -613,13 +613,13 @@
     <string name="channel_master">Master</string>
     <string name="channel_beta">Beta</string>
     <string name="temporary_files">临时文件</string>
-    <string name="temporary_files_description">应用扣住的工作文件。临时配置和其他 yt-dlp 相关数据。</string>
+    <string name="temporary_files_description">EZTube 保留的工作文件。包含临时配置和缓存的下载数据。</string>
     <string name="unfinished_downloads">未完成的下载</string>
     <string name="unfinished_downloads_summary">保留的已停止或失败下载内容的部分文件，以便继续下载</string>
     <string name="info_jsons">Info-JSONs</string>
-    <string name="info_jsons_summary">保存的视频元数据，以便 yt-dlp 无需再次获取</string>
-    <string name="ytdlp_cache">yt-dlp 缓存</string>
-    <string name="ytdlp_cache_summary">yt-dlp 跨会话重用的数据，如 YouTube 播放器特征</string>
+    <string name="info_jsons_summary">已保存的视频元数据，使 EZTube 无需重新获取</string>
+    <string name="ytdlp_cache">应用引擎缓存</string>
+    <string name="ytdlp_cache_summary">EZTube 在不同会话间重复使用的临时引擎数据</string>
     <string name="temporary_configurations">临时配置</string>
     <string name="temporary_configurations_summary">命令配置、URL 列表和其他非持久性文件</string>
     <string name="downloaded_apks">已下载的 APK</string>

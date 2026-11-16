@@ -640,13 +640,13 @@
     <string name="channel_master">Master (Központi)</string>
     <string name="channel_beta">Béta</string>
     <string name="temporary_files">Ideiglenes fájlok</string>
-    <string name="temporary_files_description">Az alkalmazás által kezelt munkaállományok. Átmeneti konfigurációk és egyéb, a yt-dlp-hez kapcsolódó adatok.</string>
+    <string name="temporary_files_description">Az EZTube által kezelt munkafájlok. Átmeneti beállítások és gyorsítótárazott letöltési adatok.</string>
     <string name="unfinished_downloads">Befejezetlen letöltések</string>
     <string name="unfinished_downloads_summary">Megállított vagy megszakadt letöltések részleges fájljai, amelyek megmaradnak, hogy a letöltés folytatható legyen</string>
     <string name="info_jsons">Információs adattárolók (info_json fájlok)</string>
-    <string name="info_jsons_summary">Mentett metaadat, így a yt-dlp-nek nem kell újra lehívnia</string>
-    <string name="ytdlp_cache">yt-dlp gyorsítótár</string>
-    <string name="ytdlp_cache_summary">Olyan adatok, amelyeket a yt-dlp a futtatások között újra felhasznál – például a YouTube-lejátszó aláírásai</string>
+    <string name="info_jsons_summary">Mentett videó-metaadatok, így az EZTube-nak nem kell újra lekérnie őket</string>
+    <string name="ytdlp_cache">Alkalmazásmotor gyorsítótára</string>
+    <string name="ytdlp_cache_summary">Ideiglenes motoradatok, amelyeket az EZTube a futtatások között újra felhasznál</string>
     <string name="temporary_configurations">Ideiglenes konfigurációk</string>
     <string name="temporary_configurations_summary">Parancs konfigurációk, URL-listák és egyéb rövid életű fájlok</string>
     <string name="downloaded_apks">Letöltött APK-fájlok</string>

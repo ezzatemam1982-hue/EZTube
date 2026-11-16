@@ -215,6 +215,7 @@ class PlayerState(private val scope: CoroutineScope) {
         selectedAudioTrackId = null
         controller?.let(::clearAudioTrackOverride)
         QualityPreference.clearVideoOverride()
+        fullscreenScaleFor = null
         loading = true
         sheet = null
         comments.clearFor(item.id)
@@ -706,22 +707,70 @@ class PlayerState(private val scope: CoroutineScope) {
 
     fun toggleRememberSpeed() = PlaybackSpeed.setRemember(!PlaybackSpeed.remember, speed)
 
-    /** A pinch in fullscreen, for one video: its id and whether it fills the screen. */
-    private var zoomFor by mutableStateOf<Pair<String, Boolean>?>(null)
+    private var fullscreenScaleFor by mutableStateOf<Pair<String, FullscreenScaleSelection>?>(null)
 
-    /** Whether the current video fills the screen in fullscreen: its own pinch, else [FullscreenZoom.fill]. */
+    private fun defaultFullscreenAspectMode(): FullscreenAspectMode =
+        if (FullscreenZoom.fill) FullscreenAspectMode.Fill else FullscreenAspectMode.Fit
+
+    val fullscreenScale: FullscreenScaleSelection
+        get() = fullscreenScaleFor?.takeIf { it.first == current?.id }?.second
+            ?: FullscreenScaleSelection(mode = defaultFullscreenAspectMode())
+
+    /** Whether the current video is scaled beyond Fit (Fill, Zoom, or pinched > 1.0x). */
     val zoomedToFill: Boolean
-        get() = zoomFor?.takeIf { it.first == current?.id }?.second ?: FullscreenZoom.fill
+        get() = fullscreenScale.mode != FullscreenAspectMode.Fit || (fullscreenScale.pinchScale ?: 1f) > 1.005f
 
-    /** A pinch out ([fill]) or in: for this video only; the next one starts from the setting again. */
-    fun setZoomedToFill(fill: Boolean) {
-        zoomFor = current?.id?.let { it to fill }
+    /** Cycles fullscreen aspect ratio sequentially: Fit -> Fill -> Zoom -> Fit. */
+    fun cycleFullscreenAspectMode(): FullscreenAspectMode {
+        val next = fullscreenScale.mode.next()
+        current?.id?.let { fullscreenScaleFor = it to FullscreenScaleSelection(mode = next, pinchScale = null) }
+        return next
     }
 
-    /** The setting changed: it wins over a pinch made before, the playing video's too. */
+    /** Applies an explicit manual pinch zoom multiplier (1.0f..2.0f), or snaps back to Fit if <= 1.0f. */
+    fun applyPinchZoomScale(scale: Float) {
+        val id = current?.id ?: return
+        fullscreenScaleFor = if (scale <= 1.005f) {
+            id to FullscreenScaleSelection(mode = FullscreenAspectMode.Fit, pinchScale = null)
+        } else {
+            id to FullscreenScaleSelection(mode = fullscreenScale.mode, pinchScale = scale.coerceIn(1f, 2f))
+        }
+    }
+
+    /** Sets Fill vs Fit for this video only; the next video starts from [FullscreenZoom.fill]. */
+    fun setZoomedToFill(fill: Boolean) {
+        current?.id?.let {
+            fullscreenScaleFor = it to FullscreenScaleSelection(
+                mode = if (fill) FullscreenAspectMode.Fill else FullscreenAspectMode.Fit,
+                pinchScale = null,
+            )
+        }
+    }
+
+    /** Applies Data Saver (480p) and immediately updates the active stream if no manual quality override is active. */
+    fun setDataSaver(on: Boolean) {
+        DataSaver.set(on)
+        val item = details?.item ?: current ?: return
+        if (QualityPreference.videoOverride?.first == item.id) return
+        val player = controller ?: return
+        val position = player.currentPosition
+        val playWhenReady = player.playWhenReady
+        replaceCurrent(player, item, position)
+        player.playWhenReady = playWhenReady
+        val info = StreamCache.get(item.id) ?: return
+        details = details?.copy(
+            quality = StreamSelection.pick(
+                info,
+                QualityPreference.effectiveFor(item.id),
+                QualityPreference.maxLadderHeightFor(item.id),
+            ).playedHeight?.let { "${it}p" },
+        )
+    }
+
+    /** The setting changed: it wins over a cycle/pinch made before, the playing video's too. */
     fun setZoomFillSetting(on: Boolean) {
         FullscreenZoom.set(on)
-        zoomFor = null
+        fullscreenScaleFor = null
     }
 
     /** A finger is held on the video's right side (GitHub #11/#26/#32/#36): playing at [PlaybackSpeed.HOLD]. */
@@ -806,6 +855,7 @@ class PlayerState(private val scope: CoroutineScope) {
         selectedAudioTrackId = null
         controller?.let(::clearAudioTrackOverride)
         QualityPreference.clearVideoOverride()
+        fullscreenScaleFor = null
         controller?.run { stop(); clearMediaItems() }
         queue = emptyList()
         expanded = false
@@ -1019,5 +1069,29 @@ enum class PlayerSheet { Quality, Speed, Audio, Comments, Queue, Captions, Trans
 
 /** Comments and the transcript open as a panel inside the player (PlayerScreen), not a sheet. */
 val PlayerSheet?.isPanel: Boolean get() = this == PlayerSheet.Comments || this == PlayerSheet.Transcript
+
+/**
+ * Fullscreen aspect ratio modes cycled by tapping the player's aspect-ratio button:
+ * - [Fit]: full video frame without cropping (`1.0x`).
+ * - [Fill]: uniform zoom (`RESIZE_MODE_ZOOM` equivalent) filling the screen bounds.
+ * - [Zoom]: extra ~`1.25x` crop over [Fill] to eliminate letterboxed bars on 21:9 uploads.
+ */
+enum class FullscreenAspectMode {
+    Fit,
+    Fill,
+    Zoom;
+
+    fun next(): FullscreenAspectMode = when (this) {
+        Fit -> Fill
+        Fill -> Zoom
+        Zoom -> Fit
+    }
+}
+
+/** Active fullscreen scaling selection (preset mode plus optional manual pinch scale `1.0x..2.0x`). */
+data class FullscreenScaleSelection(
+    val mode: FullscreenAspectMode = FullscreenAspectMode.Fill,
+    val pinchScale: Float? = null,
+)
 
 private const val TAG = "ClipFlow"

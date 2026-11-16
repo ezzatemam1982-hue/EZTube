@@ -44,7 +44,7 @@
     <string name="audio">Audio</string>
     <string name="video">Video</string>
     <string name="optional">Optional</string>
-    <string name="concurrent_fragments_summary">Number of fragments of a DASH/HLS native video to download concurrently</string>
+    <string name="concurrent_fragments_summary">Recommended: 3–4. Higher values may trigger server rate-limits or high battery/RAM usage.</string>
     <string name="concurrent_fragments">Concurrent fragments</string>
     <string name="downloading">Downloading</string>
     <string name="limit_rate">Limit rate</string>
@@ -649,13 +649,13 @@
     <string name="channel_beta">Beta</string>
     <string name="ytdlp" translatable="false">yt-dlp</string>
     <string name="temporary_files">Temporary files</string>
-    <string name="temporary_files_description">Working files held by the app. Temporary configurations and other yt-dlp related data.</string>
+    <string name="temporary_files_description">Working files held by EZTube. Temporary configurations and cached download data.</string>
     <string name="unfinished_downloads">Unfinished downloads</string>
     <string name="unfinished_downloads_summary">Partial files of stopped or failed downloads, kept so they can be resumed</string>
     <string name="info_jsons">Info-JSONs</string>
-    <string name="info_jsons_summary">Saved video metadata so yt-dlp doesn\'t have to fetch it again</string>
-    <string name="ytdlp_cache">yt-dlp cache</string>
-    <string name="ytdlp_cache_summary">Data yt-dlp reuses between runs, like YouTube player signatures</string>
+    <string name="info_jsons_summary">Saved video metadata so EZTube doesn\'t have to fetch it again</string>
+    <string name="ytdlp_cache">App engine cache</string>
+    <string name="ytdlp_cache_summary">Temporary engine data EZTube reuses between runs</string>
     <string name="temporary_configurations">Temporary configurations</string>
     <string name="temporary_configurations_summary">Command configs, URL lists and other short-lived files</string>
     <string name="downloaded_apks">Downloaded APKs</string>

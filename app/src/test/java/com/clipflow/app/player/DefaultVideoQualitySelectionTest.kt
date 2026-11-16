@@ -17,6 +17,7 @@ class DefaultVideoQualitySelectionTest {
     fun resetQualityPreference() {
         QualityPreference.clearVideoOverride()
         QualityPreference.setDefault(VideoQualityMode.Auto)
+        DataSaver.set(false)
     }
 
     @Test
@@ -173,6 +174,30 @@ class DefaultVideoQualitySelectionTest {
         QualityPreference.clearVideoOverride()
         assertEquals(VideoQualityMode.Fixed(240), QualityPreference.effectiveFor("videoA"))
         assertEquals(240, QualityPreference.selectedHeightForUi("videoA", listOf(1080, 720, 480, 240, 144)))
+    }
+
+    @Test
+    fun dataSaverCapsNonOverriddenStreamsAt480pAndAllowsManualOverride() {
+        val candidates = listOf(
+            fakeVideoStream(id = "v1080", height = 1080, format = MediaFormat.MPEG_4, codec = "avc1.640028", fps = 30, bitrate = 4_000_000),
+            fakeVideoStream(id = "v720", height = 720, format = MediaFormat.MPEG_4, codec = "avc1.4d401f", fps = 30, bitrate = 2_000_000),
+            fakeVideoStream(id = "v480", height = 480, format = MediaFormat.MPEG_4, codec = "avc1.4d401e", fps = 30, bitrate = 1_000_000),
+            fakeVideoStream(id = "v360", height = 360, format = MediaFormat.MPEG_4, codec = "avc1.4d401e", fps = 30, bitrate = 600_000),
+        )
+
+        DataSaver.set(true)
+        QualityPreference.setDefault(VideoQualityMode.Highest)
+        assertEquals(VideoQualityMode.Fixed(480), QualityPreference.effectiveFor("videoA"))
+        assertEquals(480, QualityPreference.maxLadderHeightFor("videoA"))
+        assertEquals("v480", StreamSelection.selectVideoStream(candidates, QualityPreference.effectiveFor("videoA"), DataSaver.MAX_HEIGHT)?.id)
+        assertEquals("v480", StreamSelection.selectVideoStream(candidates, VideoQualityMode.Auto, DataSaver.MAX_HEIGHT)?.id)
+
+        // Manual override on an open video bypasses Data Saver for that video only
+        QualityPreference.setVideoOverride("videoA", VideoQualityMode.Fixed(1080))
+        assertEquals(VideoQualityMode.Fixed(1080), QualityPreference.effectiveFor("videoA"))
+        assertEquals(StreamSelection.MAX_HEIGHT, QualityPreference.maxLadderHeightFor("videoA"))
+        assertEquals("v1080", StreamSelection.selectVideoStream(candidates, QualityPreference.effectiveFor("videoA"), QualityPreference.maxLadderHeightFor("videoA"))?.id)
+        assertEquals(480, QualityPreference.maxLadderHeightFor("videoB"))
     }
 
     private fun fakeVideoStream(

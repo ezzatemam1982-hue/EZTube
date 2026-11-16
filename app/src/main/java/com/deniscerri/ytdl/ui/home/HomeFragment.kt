@@ -35,7 +35,11 @@ import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.view.ActionMode
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.constraintlayout.widget.ConstraintLayout
+import com.clipflow.app.player.ClipFlowPlayerTheme
+import com.clipflow.app.player.EZTubeBrandHeader
 import androidx.core.os.bundleOf
 import androidx.core.view.children
 import androidx.core.view.forEach
@@ -143,6 +147,7 @@ class HomeFragment : Fragment(), HomeAdapter.OnItemClickListener, SearchSuggesti
     private var actionMode: ActionMode? = null
     private var appBarLayout: AppBarLayout? = null
     private var materialToolbar: MaterialToolbar? = null
+    private var homeBrandHeader: ComposeView? = null
     private var loadingItems: Boolean = false
     private var queryList = mutableListOf<String>()
 
@@ -187,6 +192,9 @@ class HomeFragment : Fragment(), HomeAdapter.OnItemClickListener, SearchSuggesti
         searchView = view.findViewById(R.id.search_view)
         appBarLayout = view.findViewById(R.id.home_appbarlayout)
         materialToolbar = view.findViewById(R.id.home_toolbar)
+        homeBrandHeader = view.findViewById<ComposeView>(R.id.home_brand_header)?.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+        }
         queriesChipGroup = view.findViewById(R.id.queries)
         queriesConstraint = view.findViewById(R.id.queries_constraint)
         homeFabs = view.findViewById(R.id.home_fabs)
@@ -196,7 +204,7 @@ class HomeFragment : Fragment(), HomeAdapter.OnItemClickListener, SearchSuggesti
         playlistNameFilterScrollView = view.findViewById(R.id.playlist_selection_chips_scrollview)
         playlistNameFilterChipGroup = view.findViewById(R.id.playlist_selection_chips)
 
-        runCatching { materialToolbar!!.title = ThemeUtil.getStyledAppName(requireContext()) }
+        updateToolbarTitle()
 
         homeAdapter =
             HomeAdapter(
@@ -401,16 +409,28 @@ class HomeFragment : Fragment(), HomeAdapter.OnItemClickListener, SearchSuggesti
     private fun updateToolbarTitle() {
         val toolbar = materialToolbar ?: return
         val context = context ?: return
-        val title = SpannableStringBuilder(ThemeUtil.getStyledAppName(context))
-        if (sharedPreferences?.getBoolean("incognito", false) == true) {
-            AppCompatResources.getDrawable(context, R.drawable.ic_incognito)?.let {
-                val size = (28 * resources.displayMetrics.density).toInt()
-                it.setBounds(0, 0, size, size)
-                title.append("  ")
-                title.setSpan(ImageSpan(it, ImageSpan.ALIGN_BOTTOM), title.length - 1, title.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        toolbar.title = ""
+        val isIncognito = sharedPreferences?.getBoolean("incognito", false) == true
+        val appTitle = context.getString(R.string.app_name)
+        homeBrandHeader?.setContent {
+            ClipFlowPlayerTheme(applySystemBars = false) {
+                EZTubeBrandHeader(
+                    title = appTitle,
+                    showIncognito = isIncognito,
+                )
             }
+        } ?: run {
+            val title = SpannableStringBuilder(ThemeUtil.getStyledAppName(context))
+            if (isIncognito) {
+                AppCompatResources.getDrawable(context, R.drawable.ic_incognito)?.let {
+                    val size = (28 * resources.displayMetrics.density).toInt()
+                    it.setBounds(0, 0, size, size)
+                    title.append("  ")
+                    title.setSpan(ImageSpan(it, ImageSpan.ALIGN_BOTTOM), title.length - 1, title.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+            }
+            toolbar.title = title
         }
-        toolbar.title = title
     }
 
     override fun onResume() {

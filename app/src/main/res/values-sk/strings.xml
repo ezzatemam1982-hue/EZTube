@@ -637,13 +637,13 @@
     <string name="channel_master">Hlavná</string>
     <string name="channel_beta">Beta</string>
     <string name="temporary_files">Dočasné súbory</string>
-    <string name="temporary_files_description">Pracovné súbory uchovávané aplikáciou. Dočasné konfigurácie a ďalšie údaje súvisiace s yt-dlp.</string>
+    <string name="temporary_files_description">Pracovné súbory aplikácie EZTube. Dočasné nastavenia a údaje sťahovania vo vyrovnávacej pamäti.</string>
     <string name="unfinished_downloads">Nedokončené sťahovania</string>
     <string name="unfinished_downloads_summary">Čiastočné súbory zastavených alebo neúspešných sťahovaní, uchovávané tak, aby ich bolo možné obnoviť</string>
     <string name="info_jsons">Info-JSON</string>
-    <string name="info_jsons_summary">Uložené metadáta videí, aby ich yt-dlp nemusel znovu sťahovať</string>
-    <string name="ytdlp_cache">Vyrovnávacia pamäť yt-dlp</string>
-    <string name="ytdlp_cache_summary">Údaje, ktoré yt-dlp opätovne využíva medzi spusteniami, napríklad podpisy prehrávača YouTube</string>
+    <string name="info_jsons_summary">Uložené metadáta videí, aby ich EZTube nemusel znova načítavať</string>
+    <string name="ytdlp_cache">Vyrovnávacia pamäť jadra aplikácie</string>
+    <string name="ytdlp_cache_summary">Dočasné údaje jadra, ktoré EZTube opätovne používa medzi spusteniami</string>
     <string name="temporary_configurations">Dočasné konfigurácie</string>
     <string name="temporary_configurations_summary">Konfigurácie príkazov, zoznamy URL a iné krátkodobé súbory</string>
     <string name="downloaded_apks">Stiahnuté APK</string>

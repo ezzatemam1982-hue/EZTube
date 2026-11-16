@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
+import androidx.annotation.StringRes
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
@@ -107,7 +108,7 @@ private fun hsl(h: Float, s: Float, l: Float): Color {
 }
 
 /** A theme the user can pick, in the order they are offered. */
-data class ThemeChoice(val name: String, val hex: String, val isNew: Boolean = false)
+data class ThemeChoice(val name: String, val hex: String, val isNew: Boolean = false, @StringRes val nameRes: Int = 0)
 
 /* Stored as ordinary hex, exactly like every other seed. Storing an id such as
  * "pumpkin" would have been tidier here and wrong everywhere else: seedHex is
@@ -130,8 +131,8 @@ const val SEED_PUMPKIN   = "#B0714A"
 const val SEED_MOONSTONE = "#8A8F98"
 
 val THEME_CHOICES = listOf(
-    ThemeChoice("Cream Rose", SEED_CREAM_ROSE, isNew = true),
-    ThemeChoice("Erica", SEED_AURORA, isNew = true),
+    ThemeChoice("Cream Rose", SEED_CREAM_ROSE, isNew = true, nameRes = R.string.ui_theme_cream_rose),
+    ThemeChoice("Erica", SEED_AURORA, isNew = true, nameRes = R.string.ui_theme_erica),
     ThemeChoice("Lilac Air", SEED_LILAC_AIR, isNew = true),
     ThemeChoice("Jai",       SEED_JAI,       isNew = true),
     ThemeChoice("Pumpkin",   SEED_PUMPKIN,   isNew = true),
@@ -444,42 +445,82 @@ private fun completeLedgiiScheme(seedHex: String, cs: ColorScheme): ColorScheme 
  */
 object ThemeSettings {
     private var prefs: SharedPreferences? = null
+    private const val WALLPAPER_PREF_VALUE = ""
+    private const val KEY_V103_MIGRATED = "ez_v103_theme_defaults"
     val wallpaperAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
-    var seed by mutableStateOf<String?>(null)
+    var seed by mutableStateOf<String?>(SEED_YOUTUBE)
         private set
     /** "system", "light" or "dark". */
     var mode by mutableStateOf("system")
         private set
     /**
-     * Dark on pure black (Derek 2026-10-14), whenever the app is dark: Dark, or System at night.
-     * A switch since 2026-11-06; before that "amoled" was a fourth mode (read as dark + this).
+     * Dark on pure black whenever the app is dark: Dark, or System at night.
      */
-    var amoled by mutableStateOf(false)
+    var amoled by mutableStateOf(true)
         private set
+
+    var onChanged: (() -> Unit)? = null
+
+    fun ensureInit(context: Context) {
+        if (prefs == null) init(context.applicationContext)
+    }
 
     fun init(context: Context) {
         val p = context.getSharedPreferences("appearance", Context.MODE_PRIVATE).also { prefs = it }
-        seed = p.getString("seed", null) ?: if (wallpaperAvailable) null else SEED_CREAM_ROSE
+        if (!p.getBoolean(KEY_V103_MIGRATED, false)) {
+            seed = SEED_YOUTUBE
+            mode = "system"
+            amoled = true
+            p.edit()
+                .putString("seed", SEED_YOUTUBE)
+                .putString("mode", "system")
+                .putBoolean("amoled", true)
+                .putBoolean(KEY_V103_MIGRATED, true)
+                .apply()
+            return
+        }
+        val rawSeed = if (p.contains("seed")) p.getString("seed", SEED_YOUTUBE) else SEED_YOUTUBE
+        seed = when {
+            rawSeed == null -> if (wallpaperAvailable) null else SEED_YOUTUBE
+            rawSeed.isEmpty() -> if (wallpaperAvailable) null else SEED_YOUTUBE
+            else -> rawSeed
+        }
         val saved = p.getString("mode", "system") ?: "system"
-        amoled = p.getBoolean("amoled", saved == "amoled")
+        amoled = p.getBoolean("amoled", saved == "amoled" || !p.contains("amoled"))
         mode = if (saved == "amoled") "dark" else saved
         if (saved == "amoled") p.edit().putString("mode", mode).putBoolean("amoled", true).apply()
     }
 
     fun choose(seedHex: String?) {
-        seed = seedHex
-        prefs?.edit()?.putString("seed", seedHex)?.apply()
+        seed = if (seedHex == null && !wallpaperAvailable) SEED_YOUTUBE else seedHex
+        prefs?.edit()?.putString("seed", seed ?: WALLPAPER_PREF_VALUE)?.apply()
+        onChanged?.invoke()
     }
 
     fun chooseMode(value: String) {
         mode = value
         prefs?.edit()?.putString("mode", value)?.apply()
+        onChanged?.invoke()
     }
 
     fun chooseAmoled(on: Boolean) {
         amoled = on
         prefs?.edit()?.putBoolean("amoled", on)?.apply()
+        onChanged?.invoke()
+    }
+
+    fun resetToDefaults() {
+        seed = SEED_YOUTUBE
+        mode = "system"
+        amoled = true
+        prefs?.edit()
+            ?.putString("seed", SEED_YOUTUBE)
+            ?.putString("mode", "system")
+            ?.putBoolean("amoled", true)
+            ?.putBoolean(KEY_V103_MIGRATED, true)
+            ?.apply()
+        onChanged?.invoke()
     }
 }
 
@@ -514,8 +555,12 @@ private fun youTubeScheme(dark: Boolean): ColorScheme = if (!dark) lightColorSch
     outline = Color(0xFF717171), outlineVariant = Color(0xFF303030),
 )
 
-/** Every pickable theme: YouTube first, then Ledgii's in Ledgii's order. */
-val CLIPFLOW_THEMES = listOf(ThemeChoice("YouTube", SEED_YOUTUBE)) + THEME_CHOICES
+/** Unified selectable curated palettes shown in Appearance (with Wallpaper dynamic colors on Android 12+). */
+val CLIPFLOW_THEMES = listOf(
+    ThemeChoice("YouTube", SEED_YOUTUBE, nameRes = R.string.ui_theme_youtube),
+    ThemeChoice("Cream Rose", SEED_CREAM_ROSE, isNew = true, nameRes = R.string.ui_theme_cream_rose),
+    ThemeChoice("Erica", SEED_AURORA, isNew = true, nameRes = R.string.ui_theme_erica),
+)
 
 /** The scheme for a choice, also used to paint the theme picker's swatches. */
 fun schemeFor(context: Context, seedHex: String?, dark: Boolean): ColorScheme =
@@ -558,11 +603,11 @@ fun isDarkTheme(): Boolean = when (ThemeSettings.mode) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ClipFlowPlayerTheme(content: @Composable () -> Unit) {
+fun ClipFlowPlayerTheme(applySystemBars: Boolean = true, content: @Composable () -> Unit) {
     val dark = isDarkTheme()
     val context = LocalContext.current
     val scheme = themedScheme(context, ThemeSettings.seed, dark)
-    SystemBars(dark, scheme.surface)
+    if (applySystemBars) SystemBars(dark, scheme.surface)
     MaterialTheme(colorScheme = scheme, shapes = ExpressiveShapes, typography = Typography()) {
         CompositionLocalProvider(
             // No tap ripples anywhere: press feedback is the scale-down from Motion.kt.
@@ -570,7 +615,7 @@ fun ClipFlowPlayerTheme(content: @Composable () -> Unit) {
             // Text and icons without an explicit color follow the theme. Without this they
             // default to black, which vanished on dark surfaces (the dark-mode bug).
             LocalContentColor provides scheme.onSurface,
-            // Text in its own direction, laid out as in English (see AndroidManifest's supportsRtl).
+            // Text follows its own script direction while aligning to the layout's Start edge in both LTR and RTL.
             LocalTextStyle provides LocalTextStyle.current.merge(OwnDirectionText),
             content = content,
         )
@@ -578,18 +623,13 @@ fun ClipFlowPlayerTheme(content: @Composable () -> Unit) {
 }
 
 /**
- * The layout is the English one on every phone (supportsRtl="false", Derek, 2026-10-30: nothing
- * moves on an Arabic phone), but each text runs in its own direction (Unicode's first strong
- * letter): an Arabic title right to left, so its punctuation lands where it belongs, still
- * left-aligned like the English. Compose's default gave every text the layout's direction, so an
- * Arabic title's full stop showed at its start. Every Text here reads [LocalTextStyle] (none passes
- * a typography style); text fields set the same two fields on their own [TextStyle].
+ * Each text runs in its own Unicode direction (so LTR brand/URL tokens inside RTL titles still read
+ * naturally), while aligning with the active layout direction's Start edge (Left in LTR, Right in RTL).
  */
-internal val OwnDirectionText = TextStyle(textDirection = TextDirection.Content, textAlign = TextAlign.Left)
+internal val OwnDirectionText = TextStyle(textDirection = TextDirection.Content, textAlign = TextAlign.Start)
 
 /**
- * Whether the phone's language is written right to left (Arabic, Hebrew, Persian, Urdu…). The app's
- * layout ignores it (supportsRtl="false"), so this is read from the locale, not the layout direction.
+ * Whether the phone's language is written right to left (Arabic, Hebrew, Persian, Urdu…).
  */
 @Composable
 fun rememberRtlLanguage(): Boolean {

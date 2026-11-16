@@ -86,7 +86,32 @@ object ThemeUtil {
         }
     }
 
+    fun currentThemeSignature(): String =
+        "${com.clipflow.app.player.ThemeSettings.seed ?: "wallpaper"}|${com.clipflow.app.player.ThemeSettings.mode}|${com.clipflow.app.player.ThemeSettings.amoled}"
+
+    fun legacyIconThemeMode(): String = when (com.clipflow.app.player.ThemeSettings.mode) {
+        "light" -> "Light"
+        "dark" -> "Dark"
+        else -> "System"
+    }
+
+    fun onUnifiedThemeChanged() {
+        applyNightMode(com.clipflow.app.player.ThemeSettings.mode)
+        activities.filterNot { it.javaClass == MainActivity::class.java }.forEach {
+            it.recreate()
+        }
+    }
+
+    private fun applyNightMode(mode: String) {
+        when (mode) {
+            "light" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            "dark" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        }
+    }
+
     fun updateThemes() {
+        applyNightMode(com.clipflow.app.player.ThemeSettings.mode)
         activities.forEach {
             updateTheme(it)
             it.recreate()
@@ -94,58 +119,43 @@ object ThemeUtil {
     }
 
     fun updateTheme(activity: Activity) {
+        com.clipflow.app.player.ThemeSettings.ensureInit(activity.applicationContext)
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity)
+        val mode = com.clipflow.app.player.ThemeSettings.mode
+        applyNightMode(mode)
 
-        //update accent
-        when (sharedPreferences.getString("theme_accent","blue")) {
-            "Default" -> {
-                DynamicColors.applyToActivityIfAvailable(activity)
+        val seed = com.clipflow.app.player.ThemeSettings.seed
+        when {
+            seed == null -> {
                 activity.setTheme(R.style.BaseTheme)
+                DynamicColors.applyToActivityIfAvailable(activity)
             }
-            "blue" -> activity.setTheme(R.style.Theme_Blue)
-            "red" -> activity.setTheme(R.style.Theme_Red)
-            "green" -> activity.setTheme(R.style.Theme_Green)
-            "purple" -> activity.setTheme(R.style.Theme_Purple)
-            "yellow" -> activity.setTheme(R.style.Theme_Yellow)
-            "orange" -> activity.setTheme(R.style.Theme_Orange)
-            "monochrome" -> activity.setTheme(R.style.Theme_Monochrome)
+            seed.equals(com.clipflow.app.player.SEED_YOUTUBE, ignoreCase = true) -> {
+                activity.setTheme(R.style.Theme_YouTube)
+            }
+            seed.equals(com.clipflow.app.player.SEED_CREAM_ROSE, ignoreCase = true) -> {
+                activity.setTheme(R.style.Theme_CreamRose)
+            }
+            seed.equals(com.clipflow.app.player.SEED_AURORA, ignoreCase = true) -> {
+                activity.setTheme(R.style.Theme_Erica)
+            }
+            else -> {
+                activity.setTheme(R.style.Theme_YouTube)
+            }
         }
 
-        //high contrast theme
-        if (sharedPreferences.getBoolean("high_contrast",false)) {
+        if (com.clipflow.app.player.ThemeSettings.amoled && mode != "light") {
             activity.theme.applyStyle(R.style.Pure, true)
         }
 
-        val theme = sharedPreferences.getString("ytdlnis_theme", "System")!!
-        when (theme) {
-            "Light" -> {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-            }
-            "Dark" -> {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            }
-            // or "System"
-            else -> {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-            }
-        }
-
-
-        val iconMode = sharedPreferences.getString("ytdlnis_icon", "Default")!!
-        updateAppIcon(activity,theme, iconMode)
+        val iconMode = sharedPreferences.getString("ytdlnis_icon", "Default") ?: "Default"
+        updateAppIcon(activity, legacyIconThemeMode(), iconMode)
     }
 
     fun getThemeColor(context: Context, colorCode: Int): Int {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        val accent = sharedPreferences.getString("theme_accent", "blue")
-        return if (accent == "blue"){
-            "d43c3b".toInt(16)
-        }else{
-            val value = TypedValue()
-            context.theme.resolveAttribute(colorCode, value, true)
-            value.data
-        }
-
+        val value = TypedValue()
+        context.theme.resolveAttribute(colorCode, value, true)
+        return value.data
     }
 
     /**

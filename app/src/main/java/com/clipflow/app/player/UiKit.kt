@@ -3,6 +3,7 @@ package com.clipflow.app.player
 import com.deniscerri.ytdl.BuildConfig
 import com.deniscerri.ytdl.R
 
+import java.io.File
 import java.util.Locale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,6 +30,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.material.icons.rounded.Forward10
 import androidx.compose.material.icons.rounded.Forward30
 import androidx.compose.material.icons.rounded.Forward5
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Replay10
 import androidx.compose.material.icons.rounded.Replay30
 import androidx.compose.material.icons.rounded.Replay5
@@ -48,6 +50,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -70,11 +73,15 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
@@ -119,6 +126,7 @@ val SunnyShape = LobedShape(lobes = 8, depth = 0.05f)
 fun ScreenHeader(
     title: String,
     brandMark: Boolean = false,
+    leadingActions: (@Composable () -> Unit)? = null,
     actions: @Composable () -> Unit = {},
 ) {
     Row(
@@ -129,31 +137,100 @@ fun ScreenHeader(
             .height(44.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (brandMark) {
-            BrandMark()
-            Spacer(Modifier.width(9.dp))
+        if (leadingActions != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                leadingActions()
+                if (brandMark) {
+                    EZTubeBrandHeader(title = title)
+                } else {
+                    Text(
+                        text = title,
+                        fontFamily = RoundedHeavy,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 29.sp,
+                        letterSpacing = (-1.1).sp,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                }
+            }
+            Spacer(Modifier.weight(1f))
+        } else {
+            if (brandMark) {
+                EZTubeBrandHeader(title = title, modifier = Modifier.weight(1f))
+            } else {
+                Text(
+                    text = title,
+                    modifier = Modifier.weight(1f),
+                    fontFamily = RoundedHeavy,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 31.sp,
+                    letterSpacing = (-1.3).sp,
+                    maxLines = 1,
+                    softWrap = false,
+                )
+            }
         }
-        Text(
-            text = title,
-            modifier = Modifier.weight(1f),
-            fontFamily = RoundedHeavy,
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 31.sp,
-            letterSpacing = (-1.3).sp,
-            maxLines = 1,
-        )
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { actions() }
     }
 }
 
 @Composable
-fun BrandMark() {
+fun EZTubeBrandHeader(
+    modifier: Modifier = Modifier,
+    title: String = "EZTube",
+    iconSizeDp: Int = 34,
+    fontSize: TextUnit = 28.sp,
+    showIncognito: Boolean = false,
+) {
+    val c = MaterialTheme.colorScheme
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        BrandMark(sizeDp = iconSizeDp)
+        Spacer(Modifier.width(8.dp))
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            val wordmark = remember(title, c.primary, c.onSurface) {
+                buildAnnotatedString {
+                    if (title.startsWith("EZ", ignoreCase = true) && title.length > 2) {
+                        withStyle(SpanStyle(color = c.primary)) { append(title.substring(0, 2)) }
+                        withStyle(SpanStyle(color = c.onSurface)) { append(title.substring(2)) }
+                    } else {
+                        withStyle(SpanStyle(color = c.onSurface)) { append(title) }
+                    }
+                }
+            }
+            Text(
+                text = wordmark,
+                fontFamily = RoundedHeavy,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = fontSize,
+                letterSpacing = (-1.1).sp,
+                maxLines = 1,
+                softWrap = false,
+            )
+        }
+        if (showIncognito) {
+            Spacer(Modifier.width(6.dp))
+            Icon(
+                painter = painterResource(R.drawable.ic_incognito),
+                contentDescription = null,
+                tint = c.onSurfaceVariant,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+    }
+}
+
+@Composable
+fun BrandMark(sizeDp: Int = 34) {
     Image(
         painter = painterResource(R.drawable.ic_brand_mark),
         contentDescription = null,
         contentScale = ContentScale.Crop,
         modifier = Modifier
-            .size(34.dp)
+            .size(sizeDp.dp)
             .clip(RoundedCornerShape(10.dp)),
     )
 }
@@ -272,6 +349,99 @@ fun ChannelAvatar(url: String?, name: String, size: Int = 40) {
         )
         if (url != null) {
             AsyncImage(model = url, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(size.dp))
+        }
+    }
+}
+
+/**
+ * Circular profile avatar supporting (1) local gallery photo, (2) built-in cartoon character preset,
+ * or (3) signed-in Google profile photo when available, cleanly falling back to initial letter offline.
+ */
+@Composable
+fun AccountAvatar(profile: Profile?, size: Int = 40) {
+    val c = MaterialTheme.colorScheme
+    val mode = LocalAvatarStore.mode
+    val chosenPreset = LocalAvatarStore.preset
+    val customPath = LocalAvatarStore.customPath
+    when {
+        mode == LocalAvatarStore.Mode.Preset && chosenPreset != null -> {
+            Box(
+                modifier = Modifier
+                    .size(size.dp)
+                    .clip(CircleShape)
+                    .background(Color(chosenPreset.bgColor)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(chosenPreset.drawableRes),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(size.dp).clip(CircleShape),
+                )
+            }
+        }
+        mode == LocalAvatarStore.Mode.CustomFile && customPath != null -> {
+            Box(
+                modifier = Modifier
+                    .size(size.dp)
+                    .clip(CircleShape)
+                    .background(c.tertiaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                val initial = profile?.name?.trim()?.trimStart('@')?.take(1)?.uppercase().orEmpty()
+                if (initial.isNotEmpty()) {
+                    Text(
+                        initial,
+                        color = c.onTertiaryContainer,
+                        fontWeight = FontWeight.Black,
+                        fontSize = (size * 0.4f).sp,
+                    )
+                } else {
+                    Icon(Icons.Rounded.Person, null, tint = c.onTertiaryContainer, modifier = Modifier.size((size * 0.54f).dp))
+                }
+                AsyncImage(
+                    model = File(customPath),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(size.dp),
+                )
+            }
+        }
+        profile != null -> {
+            val normalizedUrl = LocalAvatarStore.normalizeGoogleAvatarUrl(profile.avatar)
+            Box(
+                modifier = Modifier
+                    .size(size.dp)
+                    .clip(CircleShape)
+                    .background(c.tertiaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    profile.name.trim().trimStart('@').take(1).uppercase(),
+                    color = c.onTertiaryContainer,
+                    fontWeight = FontWeight.Black,
+                    fontSize = (size * 0.4f).sp,
+                )
+                if (normalizedUrl != null) {
+                    AsyncImage(
+                        model = normalizedUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(size.dp),
+                    )
+                }
+            }
+        }
+        else -> {
+            Box(
+                modifier = Modifier
+                    .size(size.dp)
+                    .clip(CircleShape)
+                    .background(c.surfaceContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Rounded.Person, null, tint = c.primary, modifier = Modifier.size((size * 0.54f).dp))
+            }
         }
     }
 }

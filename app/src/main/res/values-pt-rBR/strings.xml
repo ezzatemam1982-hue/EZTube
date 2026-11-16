@@ -30,7 +30,7 @@
     <string name="downloading_update">Fazendo o download da nova versão</string>
     <string name="audio">Áudio</string>
     <string name="video">Vídeo</string>
-    <string name="concurrent_fragments_summary">Número de fragmentos de um vídeo nativo em DASH/HLS para download simultâneo</string>
+    <string name="concurrent_fragments_summary">Recomendado: 3–4. Valores maiores podem acionar limites do servidor ou aumentar o uso de bateria e RAM.</string>
     <string name="concurrent_fragments">Fragmentos simultâneos</string>
     <string name="downloading">Fazendo o download</string>
     <string name="limit_rate">Limitar velocidade</string>
@@ -626,13 +626,13 @@
     <string name="channel_master">Master</string>
     <string name="channel_beta">Beta</string>
     <string name="temporary_files">Arquivos temporários</string>
-    <string name="temporary_files_description">Arquivos de trabalho mantidos pelo aplicativo. Configurações temporárias e outros dados relacionados ao yt-dlp.</string>
+    <string name="temporary_files_description">Arquivos de trabalho mantidos pelo EZTube. Configurações temporárias e dados de download em cache.</string>
     <string name="unfinished_downloads">Downloads não concluídos</string>
     <string name="unfinished_downloads_summary">Arquivos parciais de downloads interrompidos ou que falharam, mantidos para que possam ser retomados</string>
     <string name="info_jsons">Info-JSONs</string>
-    <string name="info_jsons_summary">Metadados de vídeo salvos para que o yt-dlp não precise buscá-los novamente</string>
-    <string name="ytdlp_cache">Cache do yt-dlp</string>
-    <string name="ytdlp_cache_summary">Dados que o yt-dlp reutiliza entre execuções, como assinaturas do reprodutor do YouTube</string>
+    <string name="info_jsons_summary">Metadados de vídeo salvos para que o EZTube não precise buscá-los novamente</string>
+    <string name="ytdlp_cache">Cache do motor do app</string>
+    <string name="ytdlp_cache_summary">Dados temporários do motor que o EZTube reutiliza entre execuções</string>
     <string name="temporary_configurations">Configurações temporárias</string>
     <string name="temporary_configurations_summary">Configurações de comando, listas de URLs e outros arquivos de curta duração</string>
     <string name="downloaded_apks">APKs baixados</string>

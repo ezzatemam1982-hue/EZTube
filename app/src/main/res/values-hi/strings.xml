@@ -39,7 +39,7 @@
     <string name="downloading_update">नया संस्करण डाउनलोड हो रहा है</string>
     <string name="audio">संगीत</string>
     <string name="video">वीडियो</string>
-    <string name="concurrent_fragments_summary">एक साथ डाउनलोड करने के लिए DASH/HLS नेटिव वीडियो के टुकड़ों की संख्या</string>
+    <string name="concurrent_fragments_summary">अनुशंसित: 3–4। अधिक मान सर्वर दर-सीमा या अधिक बैटरी/RAM उपयोग को बढ़ा सकते हैं।</string>
     <string name="concurrent_fragments">समवर्ती टुकड़े</string>
     <string name="downloading">डाउनलोड हो रहा है</string>
     <string name="limit_rate">सीमा दर</string>
@@ -504,4 +504,8 @@
     <string name="app_icon">ऐप आइकन</string>
     <string name="show_quick_download_share_menu">शेयर मेनू में तुरंत डाउनलोड करने का विकल्प दिखाएँ</string>
     <string name="quick_download_title">डेटा न लाएं</string>
+    <string name="temporary_files_description">EZTube द्वारा रखी गई कार्य फ़ाइलें। अस्थायी कॉन्फ़िगरेशन और कैश किया गया डाउनलोड डेटा।</string>
+    <string name="info_jsons_summary">सहेजा गया वीडियो मेटाडेटा ताकि EZTube को इसे फिर से न लाना पड़े</string>
+    <string name="ytdlp_cache">ऐप इंजन कैश</string>
+    <string name="ytdlp_cache_summary">अस्थायी इंजन डेटा जिसे EZTube बार-बार उपयोग करता है</string>
 </resources>

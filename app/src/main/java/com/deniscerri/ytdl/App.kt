@@ -17,11 +17,14 @@ import com.deniscerri.ytdl.database.DBManager
 import com.deniscerri.ytdl.database.repository.ObserveSourcesRepository
 import com.deniscerri.ytdl.services.BgUtilsPoTokenGeneratorService
 import com.deniscerri.ytdl.util.ApkInstallUtil
+import com.deniscerri.ytdl.util.AppPreferenceDefaults
 import com.deniscerri.ytdl.util.BgUtilsPoTokenGeneratorUtil
 import com.deniscerri.ytdl.util.Extensions.hasReachedEnd
 import com.deniscerri.ytdl.util.NotificationUtil
 import com.deniscerri.ytdl.util.ObserveAlarmScheduler
 import com.deniscerri.ytdl.util.ThemeUtil
+import com.deniscerri.ytdl.work.background.CleanUpLeftoverDownloads
+import androidx.work.ExistingWorkPolicy
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -57,12 +60,22 @@ class App : Application(), ImageLoaderFactory {
                 createNotificationChannels()
                 initLibraries()
 
+                launch {
+                    com.deniscerri.ytdl.util.UpdateUtil(this@App).silentlyUpdateYtdlpIfDue()
+                }
+
                 val appVer = sharedPreferences.getString("version", "")!!
                 if(appVer.isEmpty() || appVer != BuildConfig.VERSION_NAME){
                     sharedPreferences.edit(commit = true){
                         putString("version", BuildConfig.VERSION_NAME)
                     }
                 }
+
+                val cleanupInterval = sharedPreferences.getString(
+                    "cleanup_leftover_downloads",
+                    CleanUpLeftoverDownloads.DEFAULT_INTERVAL
+                ).orEmpty()
+                CleanUpLeftoverDownloads.schedule(this@App, cleanupInterval, ExistingWorkPolicy.KEEP)
 
                 val db = DBManager.getInstance(this@App)
                 val scheduler = ObserveAlarmScheduler(this@App)
@@ -98,7 +111,7 @@ class App : Application(), ImageLoaderFactory {
             PreferenceManager.setDefaultValues(this, R.xml.ytdlp_update_preferences, true)
             PreferenceManager.setDefaultValues(this, R.xml.app_update_preferences, true)
             PreferenceManager.setDefaultValues(this, R.xml.advanced_preferences, true)
-            sp.edit().apply {
+            sp.edit(commit = true) {
                 putString("ytdlp_source", "stable")
                 putString("format_order", "filesize")
                 putString("format_filter", "ALL")
@@ -121,7 +134,7 @@ class App : Application(), ImageLoaderFactory {
                 putInt("spl", SPL)
             }
         }
-
+        AppPreferenceDefaults.migrateAndApply(this)
     }
 
     private fun createNotificationChannels() {

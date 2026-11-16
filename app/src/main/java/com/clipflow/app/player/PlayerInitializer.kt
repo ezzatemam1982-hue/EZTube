@@ -25,7 +25,10 @@ object PlayerInitializer {
         // The iOS client only adds HLS livestream formats; ClipFlow plays VOD, so skip that request.
         org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeStreamExtractor.setFetchIosClient(false)
         ThemeSettings.init(app)
+        ThemeSettings.onChanged = { com.deniscerri.ytdl.util.ThemeUtil.onUnifiedThemeChanged() }
         QualityPreference.init(app)
+        DataSaver.init(app)
+        com.deniscerri.ytdl.util.ThemeUtil.onUnifiedThemeChanged()
         PlaybackSpeed.init(app)
         AudioOnly.init(app)
         PlayerControls.init(app)
@@ -42,6 +45,7 @@ object PlayerInitializer {
         SavedSession.init(app)
         AuthSessionManager.init(app)
         Account.init(app)
+        LocalAvatarStore.init(app)
         AuthSessionManager.restoreCookiesToCookieManager()
         Bells.init(app)
         NewVideos.schedule(app)

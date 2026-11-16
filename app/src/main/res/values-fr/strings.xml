@@ -36,7 +36,7 @@
     <string name="downloading_update">Téléchargement de la nouvelle version</string>
     <string name="audio">Audio</string>
     <string name="video">Vidéo</string>
-    <string name="concurrent_fragments_summary">Nombre de fragments d\'une vidéo native DASH/HLS à télécharger simultanément</string>
+    <string name="concurrent_fragments_summary">Recommandé : 3–4. Des valeurs plus élevées peuvent déclencher une limitation du serveur ou accroître l\'utilisation batterie/RAM.</string>
     <string name="concurrent_fragments">Fragments simultanés</string>
     <string name="downloading">Téléchargement</string>
     <string name="limit_rate">Taux limite</string>
@@ -609,4 +609,8 @@
     <string name="clear_info_json">Effacer les infojsons</string>
     <string name="internal_plugin_ffmpeg_preset">Préréglage FFmpeg du plugin interne</string>
     <string name="internal_plugin_ffmpeg_preset_summary">Réglage par défaut utilisé par FFmpeg pour les plugins internes, tels que l\'incrustation de sous-titres, etc. La modification de ce paramètre a une incidence sur la taille finale du fichier !</string>
+    <string name="temporary_files_description">Fichiers de travail conservés par EZTube. Configurations temporaires et données de téléchargement en cache.</string>
+    <string name="info_jsons_summary">Métadonnées vidéo enregistrées pour qu\'EZTube n\'ait pas à les récupérer à nouveau</string>
+    <string name="ytdlp_cache">Cache du moteur de l\'app</string>
+    <string name="ytdlp_cache_summary">Données temporaires du moteur qu\'EZTube réutilise entre les exécutions</string>
 </resources>

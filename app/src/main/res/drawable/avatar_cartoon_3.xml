@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+    <!-- Backdrop -->
+    <path
+        android:fillColor="#FCE7F3"
+        android:pathData="M0,0h96v96h-96z" />
+    <path
+        android:fillColor="#FBCFE8"
+        android:pathData="M48,14 A34,34 0 1,1 47.9,14 Z" />
+    <!-- Long bob hair back -->
+    <path
+        android:fillColor="#7C2D12"
+        android:pathData="M24,46 C23,26 35,17 48,17 C61,17 73,26 72,46 C72,61 68,69 62,71 L34,71 C28,69 24,61 24,46 Z" />
+    <!-- Dusty rose cardigan + cream top -->
+    <path
+        android:fillColor="#BE185D"
+        android:pathData="M16,96 C19,76 31,70 48,70 C65,70 77,76 80,96 Z" />
+    <path
+        android:fillColor="#FFF1F2"
+        android:pathData="M37,70 L48,86 L59,70 Z" />
+    <!-- Neck -->
+    <path
+        android:fillColor="#F3C1A6"
+        android:pathData="M41.5,58 h13 v13 c0,4 -13,4 -13,0 z" />
+    <path
+        android:fillColor="#DDA487"
+        android:pathData="M41.5,60 Q48,65 54.5,60 L54.5,64 Q48,68 41.5,64 Z" />
+    <!-- Ears & small gold studs -->
+    <path
+        android:fillColor="#F7CBB2"
+        android:pathData="M27,46 a3.8,4.8 0 1,0 0,9.6 a3.8,4.8 0 1,0 0,-9.6 z" />
+    <path
+        android:fillColor="#F7CBB2"
+        android:pathData="M69,46 a3.8,4.8 0 1,0 0,9.6 a3.8,4.8 0 1,0 0,-9.6 z" />
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M26.5,53 a1.4,1.4 0 1,0 0,2.8 a1.4,1.4 0 1,0 0,-2.8 z" />
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M69.5,53 a1.4,1.4 0 1,0 0,2.8 a1.4,1.4 0 1,0 0,-2.8 z" />
+    <!-- Face -->
+    <path
+        android:fillColor="#FCD8C1"
+        android:pathData="M29,43 C29,28 67,28 67,43 C67,58 58,66 48,66 C38,66 29,58 29,43 Z" />
+    <!-- Soft bangs -->
+    <path
+        android:fillColor="#9A3412"
+        android:pathData="M29,39 C30,24 41,19 48,19 C57,19 66,25 67,39 C62,33 55,30 47,33 C40,35 34,35 29,39 Z" />
+    <!-- Cheeks -->
+    <path
+        android:fillColor="#FB7185"
+        android:fillAlpha="0.3"
+        android:pathData="M35.5,52.5 a3.8,2.2 0 1,0 0,4.4 a3.8,2.2 0 1,0 0,-4.4 z" />
+    <path
+        android:fillColor="#FB7185"
+        android:fillAlpha="0.3"
+        android:pathData="M60.5,52.5 a3.8,2.2 0 1,0 0,4.4 a3.8,2.2 0 1,0 0,-4.4 z" />
+    <!-- Eyes & catchlights -->
+    <path
+        android:fillColor="#1F2937"
+        android:pathData="M40,46.2 a2.4,2.7 0 1,0 0,5.4 a2.4,2.7 0 1,0 0,-5.4 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M39.3,47.2 a0.9,0.9 0 1,0 0,1.8 a0.9,0.9 0 1,0 0,-1.8 z" />
+    <path
+        android:fillColor="#1F2937"
+        android:pathData="M56,46.2 a2.4,2.7 0 1,0 0,5.4 a2.4,2.7 0 1,0 0,-5.4 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M55.3,47.2 a0.9,0.9 0 1,0 0,1.8 a0.9,0.9 0 1,0 0,-1.8 z" />
+    <!-- Round wire-frame glasses -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M39.5,48.5 m-6.5,0 a6.5,6.5 0 1,0 13,0 a6.5,6.5 0 1,0 -13,0"
+        android:strokeColor="#374151"
+        android:strokeWidth="1.9" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M56.5,48.5 m-6.5,0 a6.5,6.5 0 1,0 13,0 a6.5,6.5 0 1,0 -13,0"
+        android:strokeColor="#374151"
+        android:strokeWidth="1.9" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M46,48.2 L50,48.2 M29,47.5 L33,48.2 M63,48.2 L67,47.5"
+        android:strokeColor="#374151"
+        android:strokeLineCap="round"
+        android:strokeWidth="1.8" />
+    <!-- Gentle smile -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M43,57.5 Q48,61.5 53,57.5"
+        android:strokeColor="#9F1239"
+        android:strokeLineCap="round"
+        android:strokeWidth="2.1" />
+</vector>

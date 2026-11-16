@@ -6,35 +6,41 @@ import com.deniscerri.ytdl.R
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
+import android.text.format.Formatter
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -67,29 +73,32 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.automirrored.rounded.FormatListBulleted
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.rounded.PictureInPictureAlt
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.CleaningServices
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ClosedCaption
-import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.DataSaverOn
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.FastForward
 import androidx.compose.material.icons.rounded.Headphones
 import androidx.compose.material.icons.rounded.HighQuality
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Notifications
-import androidx.compose.material.icons.rounded.MailOutline
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.NotificationsNone
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.RadioButtonChecked
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
+import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Sensors
 import androidx.compose.material.icons.rounded.SlowMotionVideo
@@ -100,6 +109,7 @@ import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.ZoomOutMap
 import androidx.compose.material.icons.rounded.BrightnessMedium
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -109,6 +119,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -116,8 +127,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -131,14 +144,13 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.addPathNodes
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
@@ -147,6 +159,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -155,19 +168,21 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.annotation.ExperimentalCoilApi
+import coil.imageLoader
+import java.io.File
 import java.text.Normalizer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.material.icons.rounded.BugReport
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 
@@ -184,7 +199,6 @@ enum class SettingsPage(@StringRes val titleRes: Int, val icon: ImageVector) {
     Playback(R.string.settings_playback, Icons.Rounded.PlayCircle),
     Captions(R.string.captions_title, Icons.Rounded.ClosedCaption),
     SponsorBlock(R.string.settings_sponsorblock, Icons.Rounded.FastForward),
-    Shorts(R.string.ui_shorts, Icons.Rounded.SlowMotionVideo),
     Appearance(R.string.ui_appearance, Icons.Rounded.Palette),
     Language(R.string.language_title, Icons.Rounded.Translate),
     Notifications(R.string.settings_notifications, Icons.Rounded.Notifications),
@@ -198,7 +212,6 @@ private val FoldDistance = 70.dp
 private val OuterCorner = 21.dp
 private val InnerCorner = 7.dp
 private val JoinGap = 3.dp
-private const val SourceUrl = "https://github.com/ezzatemam1982-hue/EZTube"
 
 /**
  * The whole page. [active] is false while it slides away (its Back stops catching). Back goes up one
@@ -281,7 +294,7 @@ fun SettingsScreen(
         find.key = target
         FoldingPage(
             title = stringResource(shown.titleRes),
-            summary = summaryOf(shown),
+            summary = if (shown == SettingsPage.About) null else summaryOf(shown),
             scroll = scroll,
             find = find,
             findSeq = findSeq,
@@ -293,12 +306,11 @@ fun SettingsScreen(
                     SettingsPage.Playback -> PlaybackPage(player)
                     SettingsPage.Captions -> CaptionsPage()
                     SettingsPage.SponsorBlock -> SponsorBlockPage()
-                    SettingsPage.Shorts -> ShortsPage()
                     SettingsPage.Appearance -> AppearancePage()
                     SettingsPage.Language -> LanguagePage()
                     SettingsPage.Notifications -> NotificationsPage(player)
                     SettingsPage.About -> AboutPage(player)
-                    SettingsPage.Account -> AccountPage(onSignIn, onSignedOut)
+                    SettingsPage.Account -> AccountPage(player, onSignIn, onSignedOut)
                 }
             }
         }
@@ -441,9 +453,11 @@ private fun FoldingPage(
         ) {
             // In the panel the title sits near its top; the bar only appears (fades in) as the title folds into it.
             Spacer(Modifier.height(if (inPanel) 16.dp else statusTop + BarHeight))
-            Text(
-                title,
+            val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+            val measurer = rememberTextMeasurer()
+            BoxWithConstraints(
                 modifier = titleModifier
+                    .fillMaxWidth()
                     .padding(start = 4.dp, top = 6.dp)
                     .graphicsLayer {
                         val f = fold()
@@ -451,14 +465,41 @@ private fun FoldingPage(
                         val s = 1f - 0.12f * f
                         scaleX = s
                         scaleY = s
-                        transformOrigin = TransformOrigin(0f, 1f)
+                        transformOrigin = TransformOrigin(if (isRtl) 1f else 0f, 1f)
                     },
-                fontFamily = RoundedHeavy,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 38.sp,
-                lineHeight = 42.sp,
-                letterSpacing = (-1.2).sp,
-            )
+            ) {
+                val baseStyle = LocalTextStyle.current.merge(
+                    TextStyle(
+                        fontFamily = RoundedHeavy,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.9).sp,
+                        textAlign = TextAlign.Start,
+                    ),
+                )
+                val maxWidthPx = constraints.maxWidth
+                val fittedSize = remember(title, maxWidthPx, baseStyle) {
+                    var sp = 31f
+                    while (sp > 22f) {
+                        val w = measurer.measure(
+                            text = title,
+                            style = baseStyle.copy(fontSize = sp.sp),
+                            maxLines = 1,
+                            softWrap = false,
+                        ).size.width
+                        if (w <= maxWidthPx) break
+                        sp -= 1f
+                    }
+                    sp.sp
+                }
+                Text(
+                    text = title,
+                    modifier = Modifier.fillMaxWidth(),
+                    style = baseStyle.copy(fontSize = fittedSize, lineHeight = fittedSize * 1.15f),
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             if (summary != null) {
                 Text(
                     summary,
@@ -588,9 +629,18 @@ private fun FrontPage(
     onSignedOut: () -> Unit,
 ) {
     val context = LocalContext.current
-    Box(Modifier.riseIn(entered, 2)) { AccountCard(onClick = { onOpen(SettingsPage.Account) }, onSignedOut = onSignedOut) }
+    var showResetConfirm by remember { mutableStateOf(false) }
+    var showAvatarPicker by remember { mutableStateOf(false) }
+    Box(Modifier.riseIn(entered, 2)) {
+        AccountCard(
+            onClick = { onOpen(SettingsPage.Account) },
+            onAvatarClick = { showAvatarPicker = true },
+            onSignedOut = onSignedOut,
+        )
+    }
     Box(Modifier.riseIn(entered, 3)) { QuickToggles(player) }
-    Box(Modifier.padding(top = 16.dp).riseIn(entered, 4)) {
+    Column(Modifier.riseIn(entered, 4)) {
+        GroupLabel(stringResource(R.string.settings_group_downloads))
         Tile(
             icon = Icons.Rounded.Download,
             title = stringResource(R.string.settings_downloader_title),
@@ -600,7 +650,7 @@ private fun FrontPage(
     }
     Column(Modifier.riseIn(entered, 5)) {
         GroupLabel(stringResource(R.string.settings_group_watching))
-        CategoryTiles(listOf(SettingsPage.Playback, SettingsPage.Captions, SettingsPage.SponsorBlock, SettingsPage.Shorts), selected, onOpen)
+        CategoryTiles(listOf(SettingsPage.Playback, SettingsPage.Captions, SettingsPage.SponsorBlock), selected, onOpen)
     }
     Column(Modifier.riseIn(entered, 6)) {
         GroupLabel(stringResource(R.string.settings_group_look))
@@ -609,11 +659,69 @@ private fun FrontPage(
     Column(Modifier.padding(top = 24.dp).riseIn(entered, 7)) {
         CategoryTiles(listOf(SettingsPage.Notifications, SettingsPage.About), selected, onOpen)
     }
+    Box(Modifier.padding(top = 24.dp).riseIn(entered, 8)) {
+        Tile(
+            icon = Icons.Rounded.RestartAlt,
+            title = stringResource(R.string.settings_reset_title),
+            line = stringResource(R.string.settings_reset_line),
+            shape = RoundedCornerShape(OuterCorner),
+        ) { showResetConfirm = true }
+    }
+    if (showResetConfirm) {
+        AlertDialog(
+            onDismissRequest = { showResetConfirm = false },
+            title = { Text(stringResource(R.string.settings_reset_confirm_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.settings_reset_confirm_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showResetConfirm = false
+                        resetStreamingDefaults(player, context)
+                    },
+                ) {
+                    Text(stringResource(R.string.settings_reset_confirm_action), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetConfirm = false }) {
+                    Text(stringResource(R.string.ui_cancel))
+                }
+            },
+        )
+    }
+    if (showAvatarPicker) {
+        AvatarPickerSheet(
+            profile = Account.profile,
+            onDismiss = { showAvatarPicker = false },
+            onMessage = { player.actionMessage = it },
+        )
+    }
 }
 
-/** Ledgii's account card: primary container, the avatar, who's signed in, quick sign-out or chevron into Account. */
+private fun resetStreamingDefaults(player: PlayerState, context: android.content.Context) {
+    player.setDataSaver(false)
+    QualityPreference.setDefault(VideoQualityMode.Auto)
+    PlayerControls.set(true)
+    SeekStep.set(10)
+    ChaptersStayOpen.set(false)
+    AutoPip.set(true)
+    player.setZoomFillSetting(true)
+    FullscreenSwipes.turnBrightness(true)
+    FullscreenSwipes.turnVolume(true)
+    if (AudioOnly.enabled) player.setAudioOnly(false)
+    if (PlaybackSpeed.remember) player.toggleRememberSpeed()
+    PlaybackSpeed.save(1f)
+    LiveControls.set(false)
+    ShortsSetting.set(context, true)
+    CaptionSettings.resetToDefaults()
+    SponsorBlock.resetToDefaults()
+    ThemeSettings.resetToDefaults()
+    player.actionMessage = context.getString(R.string.settings_reset_done)
+}
+
+/** Ledgii's account card: primary container, tappable avatar, who's signed in, quick sign-out or chevron into Account. */
 @Composable
-private fun AccountCard(onClick: () -> Unit, onSignedOut: () -> Unit) {
+private fun AccountCard(onClick: () -> Unit, onAvatarClick: () -> Unit, onSignedOut: () -> Unit) {
     val c = MaterialTheme.colorScheme
     val profile = Account.profile
     Row(
@@ -626,11 +734,26 @@ private fun AccountCard(onClick: () -> Unit, onSignedOut: () -> Unit) {
             .padding(20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (profile != null) {
-            ChannelAvatar(profile.avatar, profile.name, size = 56)
-        } else {
-            Box(Modifier.size(56.dp).clip(CircleShape).background(c.surfaceContainer), contentAlignment = Alignment.Center) {
-                Icon(Icons.Rounded.Person, null, tint = c.primary, modifier = Modifier.size(30.dp))
+        Box(
+            modifier = Modifier.size(56.dp).pressable(onClick = onAvatarClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            AccountAvatar(profile, size = 56)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(20.dp)
+                    .clip(CircleShape)
+                    .background(c.surface)
+                    .border(1.5.dp, c.primaryContainer, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Rounded.Edit,
+                    contentDescription = stringResource(R.string.avatar_picker_cd),
+                    tint = c.onSurface,
+                    modifier = Modifier.size(11.dp),
+                )
             }
         }
         Spacer(Modifier.width(14.dp))
@@ -638,7 +761,7 @@ private fun AccountCard(onClick: () -> Unit, onSignedOut: () -> Unit) {
             Text(
                 profile?.name ?: stringResource(R.string.ui_sign_in),
                 color = c.onPrimaryContainer, fontWeight = FontWeight.Bold, fontSize = 16.sp,
-                maxLines = 1, overflow = TextOverflow.Ellipsis,
+                maxLines = 2, overflow = TextOverflow.Ellipsis,
             )
             if (profile != null) {
                 val identity = listOfNotNull(profile.email, profile.handle?.takeIf { it != profile.email }).joinToString(" · ")
@@ -647,15 +770,15 @@ private fun AccountCard(onClick: () -> Unit, onSignedOut: () -> Unit) {
                     Text(
                         identity,
                         color = c.onPrimaryContainer.copy(alpha = 0.88f), fontSize = 13.sp,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        lineHeight = 17.sp, maxLines = 2, overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
             Spacer(Modifier.height(4.dp))
             Text(
                 if (profile != null) stringResource(R.string.settings_full_sync) else stringResource(R.string.ui_account_pitch_title),
-                color = c.onPrimaryContainer.copy(alpha = 0.75f), fontSize = 12.5.sp,
-                maxLines = 1, overflow = TextOverflow.Ellipsis,
+                color = c.onPrimaryContainer.copy(alpha = 0.78f), fontSize = 12.5.sp,
+                lineHeight = 16.5.sp, maxLines = 2,
             )
         }
         if (profile != null) {
@@ -729,7 +852,7 @@ private fun QuickToggle(icon: ImageVector, label: String, on: Boolean, modifier:
         Icon(icon, null, tint = content, modifier = Modifier.size(22.dp))
         Spacer(Modifier.width(12.dp))
         Column {
-            Text(label, color = content, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(label, color = content, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 16.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(
                 stringResource(if (on) R.string.settings_on else R.string.settings_off),
                 color = content.copy(alpha = 0.75f), fontSize = 12.sp, maxLines = 1,
@@ -772,7 +895,7 @@ private fun CategoryTiles(pages: List<SettingsPage>, selected: SettingsPage?, on
 }
 
 /**
- * Ledgii's tile: an icon square, the title and a one-line summary, a chevron. [selected] (the wide page's open
+ * Ledgii's tile: an icon square, the title and summary, a chevron. [selected] (the wide page's open
  * category) turns it primary container, both tones opaque.
  */
 @Composable
@@ -811,7 +934,7 @@ private fun Tile(
             Text(title, color = content, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             if (line != null) {
                 Spacer(Modifier.height(4.dp))
-                Text(line, color = muted, fontSize = 12.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(line, color = muted, fontSize = 12.5.sp, lineHeight = 17.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
         }
         Spacer(Modifier.width(8.dp))
@@ -874,6 +997,7 @@ private fun android.content.Context.openOrSay(intent: Intent, onMessage: (String
 private fun summaryOf(page: SettingsPage): String = when (page) {
     SettingsPage.Playback -> listOfNotNull(
         if (QualityPreference.defaultMode != VideoQualityMode.Auto) defaultQualityLabel(QualityPreference.defaultMode) else null,
+        if (DataSaver.enabled) stringResource(R.string.settings_data_saver_summary) else null,
         // A TV has neither (TvPlayer): its controls are the remote's.
         if (LocalWindowLayout.current.tv) null
         else stringResource(if (PlayerControls.inBar) R.string.ui_player_controls_pill else R.string.ui_player_controls_on_video),
@@ -891,7 +1015,6 @@ private fun summaryOf(page: SettingsPage): String = when (page) {
             SponsorBlock.Category.entries.count { SponsorBlock.actionFor(it) == SponsorBlock.Action.Auto }.toString(),
             SponsorBlock.Category.entries.count { SponsorBlock.actionFor(it) == SponsorBlock.Action.Button }.toString(),
         )
-    SettingsPage.Shorts -> stringResource(if (ShortsSetting.enabled) R.string.ui_shorts_on_line else R.string.settings_off)
     SettingsPage.Appearance -> listOfNotNull(
         themeName(),
         modeLabel(ThemeSettings.mode),
@@ -903,9 +1026,8 @@ private fun summaryOf(page: SettingsPage): String = when (page) {
     }
     SettingsPage.About -> listOfNotNull(
         stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
-        stringResource(R.string.developer_name),
+        "${stringResource(R.string.developer_name)} (EZTube)",
         AppUpdate.available?.let { stringResource(R.string.settings_update_available, it.version) },
-        if (CrashLog.unshared) stringResource(R.string.settings_crash_tile) else null,
     ).joinDots()
     SettingsPage.Account -> Account.profile?.let { p -> listOfNotNull(p.name, p.email, p.handle?.takeIf { it != p.email }).joinDots() } ?: stringResource(R.string.ui_account_pitch_title)
 }
@@ -938,7 +1060,8 @@ private fun captionShowLabel(show: CaptionSettings.Show): String = when (show) {
 @Composable
 private fun themeName(): String {
     val seed = ThemeSettings.seed ?: return stringResource(R.string.ui_theme_wallpaper)
-    return CLIPFLOW_THEMES.firstOrNull { it.hex.equals(seed, ignoreCase = true) }?.name ?: seed
+    val match = CLIPFLOW_THEMES.firstOrNull { it.hex.equals(seed, ignoreCase = true) } ?: return seed
+    return if (match.nameRes != 0) stringResource(match.nameRes) else match.name
 }
 
 @Composable
@@ -968,21 +1091,23 @@ private class Entry(val page: SettingsPage, val key: String?, val title: String,
 private class Hit(val page: SettingsPage, val key: String?, val title: String, val line: String?)
 
 /** Every setting, in the app's language. Built per search; cheap. */
-private fun entries(): List<Entry> = buildList {
+private fun entries(liveSupported: Boolean): List<Entry> = buildList {
     SettingsPage.entries.forEach { add(Entry(it, null, str(it.titleRes), emptyList())) }
     val pb = SettingsPage.Playback
     add(Entry(pb, "controls", str(R.string.ui_player_controls), listOf(str(R.string.ui_player_controls_pill), str(R.string.ui_player_controls_on_video))))
     add(Entry(pb, "quality", str(R.string.settings_default_quality_title), listOf(str(R.string.video_quality_auto), str(R.string.settings_default_quality_highest), str(R.string.settings_default_quality_words))))
+    add(Entry(pb, "data_saver", str(R.string.settings_data_saver_title), listOf(str(R.string.settings_data_saver_line), "480p", "data saver")))
     add(Entry(pb, "speed", str(R.string.settings_speed_remember_title), listOf(str(R.string.settings_speed_keep), str(R.string.bar_speed_remember))))
     add(Entry(pb, "seek", str(R.string.settings_seek_step_title), listOf(str(R.string.settings_seek_step_line)) + SeekStep.choices.map { str(R.string.settings_seconds_short, it.toString()) }))
     add(Entry(pb, "chapters", str(R.string.settings_chapters_open_title), listOf(str(R.string.settings_chapters_open_line), str(R.string.bar_chapters))))
     add(Entry(pb, "pip", str(R.string.settings_auto_pip_title), listOf(str(R.string.settings_auto_pip_line))))
-    add(Entry(pb, "music", str(R.string.settings_music_normal_title), listOf(str(R.string.settings_music_normal_line))))
     add(Entry(pb, "zoom", str(R.string.settings_zoom_fill_title), listOf(str(R.string.settings_zoom_fill_on), str(R.string.settings_zoom_fill_off))))
     add(Entry(pb, "swipe_brightness", str(R.string.settings_swipe_brightness_title), listOf(str(R.string.settings_swipe_brightness_line), str(R.string.settings_swipe_words))))
     add(Entry(pb, "swipe_volume", str(R.string.settings_swipe_volume_title), listOf(str(R.string.settings_swipe_volume_line), str(R.string.settings_swipe_words))))
     add(Entry(pb, "audio", str(R.string.bar_audio_only), listOf(str(R.string.settings_audio_only_line))))
-    add(Entry(pb, "live", str(R.string.settings_live_title), listOf(str(R.string.settings_live_line), str(R.string.settings_live_words))))
+    if (liveSupported) {
+        add(Entry(pb, "live", str(R.string.settings_live_title), listOf(str(R.string.settings_live_line), str(R.string.settings_live_words))))
+    }
     val cc = SettingsPage.Captions
     add(Entry(cc, "show", str(R.string.captions_show), listOf(str(R.string.captions_show_never), str(R.string.captions_show_always))))
     add(Entry(cc, "look", str(R.string.captions_look), CaptionSettings.Look.entries.map { str(it.labelRes) }))
@@ -990,22 +1115,34 @@ private fun entries(): List<Entry> = buildList {
     add(Entry(cc, "kept", str(R.string.captions_kept_languages), emptyList()))
     val sb = SettingsPage.SponsorBlock
     add(Entry(sb, "sb", str(R.string.settings_sponsorblock), listOf(str(R.string.ui_sponsorblock_line))))
-    SponsorBlock.Category.entries.forEach { add(Entry(sb, "sb_${it.key}", it.label, listOf(str(it.shortRes)))) }
-    add(Entry(SettingsPage.Shorts, "shorts", str(R.string.ui_shorts), listOf(str(R.string.ui_shorts_on_line))))
+    SponsorBlock.Category.entries.forEach { add(Entry(sb, "sb_${it.key}", it.label, listOf(str(it.shortRes), str(it.descRes)))) }
     val ap = SettingsPage.Appearance
     add(Entry(ap, "mode", str(R.string.settings_mode), listOf(str(R.string.ui_mode_system), str(R.string.ui_mode_light), str(R.string.ui_mode_dark))))
     add(Entry(ap, "amoled", str(R.string.settings_amoled_title), listOf(str(R.string.settings_amoled_line), "AMOLED", "OLED")))
-    add(Entry(ap, "theme", str(R.string.settings_theme), listOf(str(R.string.ui_theme_wallpaper)) + CLIPFLOW_THEMES.map { it.name }))
+    add(
+        Entry(
+            ap,
+            "theme",
+            str(R.string.settings_theme),
+            listOf(str(R.string.ui_theme_wallpaper)) + CLIPFLOW_THEMES.flatMap { listOfNotNull(if (it.nameRes != 0) str(it.nameRes) else null, it.name) },
+        ),
+    )
     add(Entry(SettingsPage.Language, "lang", str(R.string.language_title), AppLanguage.choices.map { it.name } + str(R.string.language_phone)))
     val nt = SettingsPage.Notifications
     add(Entry(nt, "system", str(R.string.settings_system_notifications), listOf(str(R.string.settings_system_notifications_line))))
     Bells.on.values.forEach { ch -> ch.name?.let { add(Entry(nt, "bell_${ch.id}", it, listOf(str(R.string.settings_bell_line)))) } }
-    add(Entry(SettingsPage.Account, "account", str(if (Account.signedIn) R.string.ui_sign_out else R.string.ui_sign_in), listOfNotNull(Account.profile?.name, "Google")))
+    add(
+        Entry(
+            SettingsPage.Account,
+            "account",
+            str(if (Account.signedIn) R.string.ui_sign_out else R.string.ui_sign_in),
+            listOfNotNull(Account.profile?.name, "Google", str(R.string.avatar_picker_title)),
+        ),
+    )
     val ab = SettingsPage.About
     add(Entry(ab, "version", str(R.string.settings_version, BuildConfig.VERSION_NAME), listOf(str(R.string.settings_checking))))
     add(Entry(ab, "developer", str(R.string.developer), listOf(str(R.string.developer_name), "Ezzat Emam", "EZTube")))
-    add(Entry(ab, "crash", str(R.string.settings_crash_title), listOf(str(R.string.settings_crash_none), str(R.string.settings_crash_saved))))
-    add(Entry(ab, "source", str(R.string.settings_source), listOf(str(R.string.settings_source_line), "GitHub")))
+    add(Entry(ab, "clear_cache", str(R.string.settings_clear_cache), listOf("cache", "storage", str(R.string.settings_clear_cache_empty))))
 }
 
 /** Case and accents don't matter ("espanol" finds Español). */
@@ -1014,16 +1151,16 @@ private fun fold(s: String) = Normalizer.normalize(s, Normalizer.Form.NFD).repla
 /** Rows a TV doesn't show (PlaybackPage): never found by a search there. */
 private val PhoneOnlyRows = setOf("controls", "chapters", "pip", "zoom", "swipe_brightness", "swipe_volume", "live")
 
-private fun hits(query: String, tv: Boolean = false): List<Hit> {
+private fun hits(query: String, tv: Boolean = false, liveSupported: Boolean = false): List<Hit> {
     val q = fold(query.trim())
     if (q.isEmpty()) return emptyList()
-    return entries().filterNot { tv && it.key in PhoneOnlyRows }.mapNotNull { e ->
+    return entries(liveSupported).filterNot { tv && it.key in PhoneOnlyRows }.mapNotNull { e ->
         when {
             fold(e.title).contains(q) -> Hit(e.page, e.key, e.title, null)
             else -> e.words.firstOrNull { fold(it).contains(q) }?.let { Hit(e.page, e.key, e.title, it) }
         }
     }.let { found ->
-        // A category and its own switch share a name (SponsorBlock, Shorts): keep the switch, it's the more exact spot.
+        // A category and its own switch share a name (SponsorBlock): keep the switch, it's the more exact spot.
         found.filterNot { hit -> hit.key == null && found.any { it.key != null && it.page == hit.page && it.title == hit.title } }
     }.take(24)
 }
@@ -1031,7 +1168,9 @@ private fun hits(query: String, tv: Boolean = false): List<Hit> {
 @Composable
 private fun Results(query: String, onPick: (Hit) -> Unit) {
     val c = MaterialTheme.colorScheme
-    val found = hits(query, tv = LocalWindowLayout.current.tv)
+    val context = LocalContext.current
+    val liveSupported = remember(context) { LiveControls.supported(context) }
+    val found = hits(query, tv = LocalWindowLayout.current.tv, liveSupported = liveSupported)
     if (found.isEmpty()) {
         Text(
             stringResource(R.string.settings_no_results, query.trim()),
@@ -1179,44 +1318,128 @@ private fun <T> ChipsSetting(
     icon: ImageVector? = null,
     onPick: (T) -> Unit,
 ) {
-    val c = MaterialTheme.colorScheme
     SettingBox(key, shape) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (icon != null) {
-                IconSquare(icon)
-                Spacer(Modifier.width(14.dp))
-            }
-            Column(Modifier.weight(1f)) {
-                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                if (line != null) {
-                    Spacer(Modifier.height(3.dp))
-                    Text(line, color = c.onSurfaceVariant, fontSize = 13.sp, lineHeight = 18.sp)
-                }
-            }
-        }
+        SettingHeader(title, line, icon)
         Spacer(Modifier.height(12.dp))
         Chips(options, selected, onPick = onPick)
     }
 }
 
-/** A row of choice chips; it scrolls, as every row of chips does (#24). */
+/** A title (and line) over a fixed-column grid of equal-width choice buttons (3x2, 2x2, etc.). */
+@Composable
+private fun <T> ChipGridSetting(
+    key: String,
+    shape: Shape,
+    title: String,
+    line: String?,
+    options: List<Pair<T, String>>,
+    selected: T,
+    columns: Int,
+    icon: ImageVector? = null,
+    onPick: (T) -> Unit,
+) {
+    SettingBox(key, shape) {
+        SettingHeader(title, line, icon)
+        Spacer(Modifier.height(12.dp))
+        ChipGrid(options, selected, columns = columns, onPick = onPick)
+    }
+}
+
+@Composable
+private fun SettingHeader(title: String, line: String?, icon: ImageVector?) {
+    val c = MaterialTheme.colorScheme
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        if (icon != null) {
+            IconSquare(icon)
+            Spacer(Modifier.width(14.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            if (line != null) {
+                Spacer(Modifier.height(3.dp))
+                Text(line, color = c.onSurfaceVariant, fontSize = 13.sp, lineHeight = 18.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChipPill(
+    label: String,
+    selected: Boolean,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    centerText: Boolean = false,
+    onClick: () -> Unit,
+) {
+    val c = MaterialTheme.colorScheme
+    Box(
+        modifier = modifier
+            .pressable(enabled = enabled, onClick = onClick)
+            .clip(RoundedCornerShape(if (selected) 18.dp else 10.dp))
+            // Full primary when picked, as the quick toggles: secondaryContainer was too close to the
+            // others' tone in some themes to tell which was on (Derek).
+            .background(if (selected) c.primary else c.surfaceContainerHighest)
+            .padding(horizontal = if (centerText) 8.dp else 16.dp, vertical = 10.dp),
+        contentAlignment = if (centerText) Alignment.Center else Alignment.CenterStart,
+    ) {
+        Text(
+            text = label,
+            color = if (selected) c.onPrimary else c.onSurfaceVariant,
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp,
+            textAlign = if (centerText) TextAlign.Center else TextAlign.Start,
+            maxLines = if (centerText) 1 else 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun <T> ChipGrid(
+    options: List<Pair<T, String>>,
+    selected: T,
+    columns: Int,
+    enabled: Boolean = true,
+    onPick: (T) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        options.chunked(columns).forEach { rowOptions ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                rowOptions.forEach { (value, label) ->
+                    ChipPill(
+                        label = label,
+                        selected = value == selected,
+                        enabled = enabled,
+                        modifier = Modifier.weight(1f),
+                        centerText = true,
+                    ) { onPick(value) }
+                }
+                repeat(columns - rowOptions.size) {
+                    Spacer(Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+/** Choice chips wrapped with FlowRow so multi-line labels or many options never clip horizontally. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun <T> Chips(options: List<Pair<T, String>>, selected: T, enabled: Boolean = true, onPick: (T) -> Unit) {
-    val c = MaterialTheme.colorScheme
-    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         options.forEach { (value, label) ->
-            val on = value == selected
-            Box(
-                Modifier
-                    .pressable(enabled = enabled) { onPick(value) }
-                    .clip(RoundedCornerShape(if (on) 18.dp else 10.dp))
-                    // Full primary when picked, as the quick toggles: secondaryContainer was too close to the
-                    // others' tone in some themes to tell which was on (Derek).
-                    .background(if (on) c.primary else c.surfaceContainerHighest)
-                    .padding(horizontal = 16.dp, vertical = 9.dp),
-            ) {
-                Text(label, color = if (on) c.onPrimary else c.onSurfaceVariant, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, softWrap = false)
-            }
+            ChipPill(
+                label = label,
+                selected = value == selected,
+                enabled = enabled,
+            ) { onPick(value) }
         }
     }
 }
@@ -1254,7 +1477,9 @@ private fun Note(text: String) {
 
 @Composable
 private fun PlaybackPage(player: PlayerState) {
+    val context = LocalContext.current
     val pipSupported = LocalPictureInPicture.current?.supported != false
+    val liveSupported = remember(context) { LiveControls.supported(context) }
     // A TV (TvPlayer) has no playback pill, chapter list, picture-in-picture, pinch or live activity: only what still
     // applies there is shown.
     val tv = LocalWindowLayout.current.tv
@@ -1278,12 +1503,13 @@ private fun PlaybackPage(player: PlayerState) {
                 icon = Icons.Rounded.Tune,
             ) { PlayerControls.set(it) }
             // Its icon is the −/+ buttons' own glyph, so it changes with the pick (#36).
-            1 -> ChipsSetting(
+            1 -> ChipGridSetting(
                 "seek", shape,
                 stringResource(R.string.settings_seek_step_title),
                 stringResource(R.string.settings_seek_step_line),
                 SeekStep.choices.map { it to stringResource(R.string.settings_seconds_short, it.toString()) },
                 SeekStep.seconds,
+                columns = 3,
                 icon = seekIcon(forward = true),
             ) { SeekStep.set(it) }
             2 -> SwitchSetting(
@@ -1313,6 +1539,13 @@ private fun PlaybackPage(player: PlayerState) {
                 defaultQualityLabel(QualityPreference.defaultMode),
             ) { showQualityPicker = true }
             1 -> SwitchSetting(
+                "data_saver", shape,
+                stringResource(R.string.settings_data_saver_title),
+                stringResource(R.string.settings_data_saver_line),
+                DataSaver.enabled,
+                icon = Icons.Rounded.DataSaverOn,
+            ) { player.setDataSaver(it) }
+            2 -> SwitchSetting(
                 "speed", shape,
                 stringResource(R.string.settings_speed_remember_title),
                 if (PlaybackSpeed.remember) stringResource(R.string.settings_speed_remember_on, PlaybackSpeed.label(PlaybackSpeed.saved))
@@ -1320,13 +1553,6 @@ private fun PlaybackPage(player: PlayerState) {
                 PlaybackSpeed.remember,
                 icon = Icons.Rounded.Speed,
             ) { if (it != PlaybackSpeed.remember) player.toggleRememberSpeed() }
-            2 -> SwitchSetting(
-                "music", shape,
-                stringResource(R.string.settings_music_normal_title),
-                stringResource(R.string.settings_music_normal_line),
-                PlaybackSpeed.musicAtNormal,
-                icon = Icons.Rounded.MusicNote,
-            ) { PlaybackSpeed.chooseMusicAtNormal(it) }
             3 -> SwitchSetting(
                 "zoom", shape,
                 stringResource(R.string.settings_zoom_fill_title),
@@ -1363,9 +1589,11 @@ private fun PlaybackPage(player: PlayerState) {
             ) { FullscreenSwipes.turnVolume(it) }
         }
     }
-    Spacer(Modifier.height(14.dp))
-    // Off screen.
-    if (!tv) LiveActivitySetting(player)
+    if (!tv && liveSupported) {
+        Spacer(Modifier.height(14.dp))
+        // Off screen.
+        LiveActivitySetting(player)
+    }
     if (showQualityPicker) {
         DefaultVideoQualitySheet(
             selected = QualityPreference.defaultMode,
@@ -1495,6 +1723,7 @@ private fun LiveActivitySetting(player: PlayerState) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CaptionsPage() {
     val c = MaterialTheme.colorScheme
@@ -1509,10 +1738,11 @@ private fun CaptionsPage() {
                 CaptionSettings.Show.entries.map { it to captionShowLabel(it) },
                 CaptionSettings.show,
             ) { CaptionSettings.chooseShow(it) }
-            2 -> ChipsSetting(
+            2 -> ChipGridSetting(
                 "look", shape, stringResource(R.string.captions_look), null,
                 CaptionSettings.Look.entries.map { it to stringResource(it.labelRes) },
                 CaptionSettings.look,
+                columns = 2,
             ) { CaptionSettings.chooseLook(it) }
             3 -> ChipsSetting(
                 "size", shape, stringResource(R.string.captions_size), null,
@@ -1522,13 +1752,16 @@ private fun CaptionsPage() {
             else -> SettingBox("kept", shape) {
                 Text(stringResource(R.string.captions_kept_languages), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Spacer(Modifier.height(12.dp))
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     kept.forEach { lang ->
                         Row(
                             Modifier.clip(RoundedCornerShape(10.dp)).background(c.surfaceContainerHighest).padding(start = 14.dp, end = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(CaptionNames.language(lang), color = c.onSurfaceVariant, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, softWrap = false)
+                            Text(CaptionNames.language(lang), color = c.onSurfaceVariant, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1)
                             Box(Modifier.size(34.dp).pressable { CaptionTranslator.delete(lang) }, contentAlignment = Alignment.Center) {
                                 Icon(Icons.Rounded.Close, stringResource(R.string.captions_remove_language, CaptionNames.language(lang)), tint = c.onSurfaceVariant, modifier = Modifier.size(16.dp))
                             }
@@ -1556,11 +1789,39 @@ private fun SponsorBlockPage() {
     Box(Modifier.graphicsLayer { alpha = if (SponsorBlock.enabled) 1f else 0.4f }) {
         Joined(categories.size) { i, shape ->
             val category = categories[i]
+            var infoExpanded by rememberSaveable(category.key) { mutableStateOf(false) }
             SettingBox("sb_${category.key}", shape) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(10.dp).clip(CircleShape).background(category.color))
                     Spacer(Modifier.width(10.dp))
-                    Text(category.label, fontWeight = FontWeight.SemiBold, fontSize = 14.5.sp)
+                    Text(category.label, fontWeight = FontWeight.SemiBold, fontSize = 14.5.sp, modifier = Modifier.weight(1f))
+                    Box(
+                        Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .pressable { infoExpanded = !infoExpanded },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = if (infoExpanded) Icons.Rounded.Info else Icons.Outlined.Info,
+                            contentDescription = stringResource(R.string.player_sb_info),
+                            tint = if (infoExpanded) c.primary else c.onSurfaceVariant,
+                            modifier = Modifier.size(19.dp),
+                        )
+                    }
+                }
+                AnimatedVisibility(
+                    visible = infoExpanded,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut(),
+                ) {
+                    Text(
+                        text = stringResource(category.descRes),
+                        color = c.onSurfaceVariant,
+                        fontSize = 12.5.sp,
+                        lineHeight = 18.sp,
+                        modifier = Modifier.padding(top = 6.dp, bottom = 2.dp),
+                    )
                 }
                 Spacer(Modifier.height(10.dp))
                 Chips(
@@ -1572,19 +1833,6 @@ private fun SponsorBlockPage() {
         }
     }
     Note(stringResource(R.string.ui_sponsorblock_credit))
-}
-
-@Composable
-private fun ShortsPage() {
-    val context = LocalContext.current
-    Spacer(Modifier.height(14.dp))
-    Joined(1) { _, shape ->
-        SwitchSetting(
-            "shorts", shape, stringResource(R.string.ui_shorts),
-            stringResource(if (ShortsSetting.enabled) R.string.ui_shorts_on_line else R.string.ui_shorts_off_line),
-            ShortsSetting.enabled, icon = Icons.Rounded.SlowMotionVideo,
-        ) { ShortsSetting.set(context, it) }
-    }
 }
 
 @Composable
@@ -1618,21 +1866,27 @@ private fun AppearancePage() {
                 }
                 Spacer(Modifier.height(14.dp))
                 val wallpaper = stringResource(R.string.ui_theme_wallpaper)
+                val localizedThemes = CLIPFLOW_THEMES.map {
+                    it.hex to if (it.nameRes != 0) stringResource(it.nameRes) else it.name
+                }
                 val choices = buildList {
                     if (ThemeSettings.wallpaperAvailable) add(null to wallpaper)
-                    CLIPFLOW_THEMES.forEach { add(it.hex to it.name) }
+                    addAll(localizedThemes)
                 }
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
                     choices.forEach { (hex, name) ->
                         val selected = ThemeSettings.seed?.lowercase() == hex?.lowercase()
                         val scheme = themedScheme(context, hex, dark)
-                        Column(Modifier.width(72.dp).pressable { ThemeSettings.choose(hex) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(Modifier.weight(1f).pressable { ThemeSettings.choose(hex) }, horizontalAlignment = Alignment.CenterHorizontally) {
                             Box(
                                 Modifier
-                                    .size(56.dp)
+                                    .size(48.dp)
                                     .clip(if (selected) CookieShape else CircleShape)
                                     .background(scheme.surface)
-                                    .padding(5.dp)
+                                    .padding(4.dp)
                                     .clip(if (selected) CookieShape else CircleShape)
                                     .background(
                                         Brush.linearGradient(
@@ -1642,11 +1896,16 @@ private fun AppearancePage() {
                                     ),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                if (selected) Icon(Icons.Rounded.Check, stringResource(R.string.ui_selected), tint = scheme.onPrimary, modifier = Modifier.size(22.dp))
+                                if (selected) Icon(Icons.Rounded.Check, stringResource(R.string.ui_selected), tint = scheme.onPrimary, modifier = Modifier.size(20.dp))
                             }
                             Spacer(Modifier.height(6.dp))
                             Text(
-                                name, fontSize = 11.5.sp, maxLines = 1, softWrap = false,
+                                name,
+                                fontSize = 11.5.sp,
+                                lineHeight = 14.sp,
+                                textAlign = TextAlign.Center,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
                                 fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold,
                                 color = if (selected) c.onSurface else c.onSurfaceVariant,
                             )
@@ -1747,52 +2006,225 @@ private fun NotificationsPage(player: PlayerState) {
 }
 
 @Composable
-private fun AccountPage(onSignIn: () -> Unit, onSignedOut: () -> Unit) {
+private fun AccountPage(player: PlayerState, onSignIn: () -> Unit, onSignedOut: () -> Unit) {
     val c = MaterialTheme.colorScheme
     val profile = Account.profile
+    var showAvatarPicker by remember { mutableStateOf(false) }
     Spacer(Modifier.height(14.dp))
     if (profile == null) {
-        Joined(1) { _, shape ->
-            SettingBox("account", shape, padding = 20.dp) {
-                // The pitch's title is already the page's line, right above.
-                Text(stringResource(R.string.ui_account_pitch_body), color = c.onSurfaceVariant, fontSize = 14.sp, lineHeight = 20.sp)
-                Spacer(Modifier.height(18.dp))
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    PillButton(stringResource(R.string.ui_sign_in_with_google), onSignIn)
+        Joined(2) { i, shape ->
+            if (i == 0) {
+                SettingBox("account", shape, padding = 20.dp) {
+                    // The pitch's title is already the page's line, right above.
+                    Text(stringResource(R.string.ui_account_pitch_body), color = c.onSurfaceVariant, fontSize = 14.sp, lineHeight = 20.sp)
+                    Spacer(Modifier.height(18.dp))
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        PillButton(stringResource(R.string.ui_sign_in_with_google), onSignIn)
+                    }
+                }
+            } else {
+                LinkSetting(
+                    "avatar", shape, Icons.Rounded.PhotoLibrary,
+                    stringResource(R.string.avatar_picker_title),
+                    stringResource(R.string.avatar_picker_subtitle),
+                ) { showAvatarPicker = true }
+            }
+        }
+    } else {
+        Joined(2) { i, shape ->
+            if (i == 0) {
+                SettingBox("account", shape, padding = 20.dp) {
+                    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            modifier = Modifier.size(72.dp).pressable { showAvatarPicker = true },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            AccountAvatar(profile, size = 72)
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(c.surfaceContainerHigh)
+                                    .border(1.5.dp, c.surfaceContainer, CircleShape),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    Icons.Rounded.Edit,
+                                    contentDescription = stringResource(R.string.avatar_picker_cd),
+                                    tint = c.onSurface,
+                                    modifier = Modifier.size(13.dp),
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        Text(profile.name, fontFamily = RoundedHeavy, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, textAlign = TextAlign.Center)
+                        profile.email?.let {
+                            Spacer(Modifier.height(4.dp))
+                            Text(it, color = c.onSurfaceVariant, fontSize = 14.sp, textAlign = TextAlign.Center)
+                        }
+                        profile.handle?.takeIf { it != profile.email }?.let {
+                            Spacer(Modifier.height(2.dp))
+                            Text(it, color = c.onSurfaceVariant, fontSize = 14.sp, textAlign = TextAlign.Center)
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        Text(stringResource(R.string.settings_full_sync), color = c.primary, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+                        Spacer(Modifier.height(14.dp))
+                        TextButton(onClick = { showAvatarPicker = true }) {
+                            Icon(Icons.Rounded.PhotoLibrary, null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text(stringResource(R.string.avatar_picker_cd), fontWeight = FontWeight.SemiBold)
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        PillButton(stringResource(R.string.ui_sign_out), { Account.signOut(); onSignedOut() }, Icons.AutoMirrored.Rounded.Logout)
+                    }
+                }
+            } else {
+                SettingBox("sync", shape) {
+                    Row(verticalAlignment = Alignment.Top) {
+                        Icon(Icons.Rounded.Sync, null, tint = c.primary, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(12.dp))
+                        Text(stringResource(R.string.settings_sync_note), color = c.onSurfaceVariant, fontSize = 13.sp, lineHeight = 18.sp)
+                    }
                 }
             }
         }
-        return
     }
-    Joined(2) { i, shape ->
-        if (i == 0) {
-            SettingBox("account", shape, padding = 20.dp) {
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    ChannelAvatar(profile.avatar, profile.name, size = 72)
-                    Spacer(Modifier.height(12.dp))
-                    Text(profile.name, fontFamily = RoundedHeavy, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, textAlign = TextAlign.Center)
-                    profile.email?.let {
-                        Spacer(Modifier.height(4.dp))
-                        Text(it, color = c.onSurfaceVariant, fontSize = 14.sp, textAlign = TextAlign.Center)
-                    }
-                    profile.handle?.takeIf { it != profile.email }?.let {
-                        Spacer(Modifier.height(2.dp))
-                        Text(it, color = c.onSurfaceVariant, fontSize = 14.sp, textAlign = TextAlign.Center)
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Text(stringResource(R.string.settings_full_sync), color = c.primary, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
-                    Spacer(Modifier.height(18.dp))
-                    PillButton(stringResource(R.string.ui_sign_out), { Account.signOut(); onSignedOut() }, Icons.AutoMirrored.Rounded.Logout)
-                }
-            }
+    if (showAvatarPicker) {
+        AvatarPickerSheet(
+            profile = profile,
+            onDismiss = { showAvatarPicker = false },
+            onMessage = { player.actionMessage = it },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun AvatarPickerSheet(
+    profile: Profile?,
+    onDismiss: () -> Unit,
+    onMessage: (String) -> Unit,
+) {
+    val c = MaterialTheme.colorScheme
+    val context = LocalContext.current
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        if (LocalAvatarStore.saveGalleryUri(context, uri)) {
+            onDismiss()
         } else {
-            SettingBox("sync", shape) {
-                Row(verticalAlignment = Alignment.Top) {
-                    Icon(Icons.Rounded.Sync, null, tint = c.primary, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(12.dp))
-                    Text(stringResource(R.string.settings_sync_note), color = c.onSurfaceVariant, fontSize = 13.sp, lineHeight = 18.sp)
+            onMessage(str(R.string.avatar_picker_error))
+        }
+    }
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = c.surfaceContainerLow,
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                AccountAvatar(profile, size = 48)
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.avatar_picker_title),
+                        fontFamily = RoundedHeavy,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 20.sp,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        stringResource(R.string.avatar_picker_subtitle),
+                        color = c.onSurfaceVariant,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                    )
                 }
             }
+            Spacer(Modifier.height(18.dp))
+            Text(
+                stringResource(R.string.avatar_picker_presets),
+                color = c.primary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.5.sp,
+            )
+            Spacer(Modifier.height(10.dp))
+            val presetRows = LocalAvatarStore.Preset.entries.chunked(4)
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                presetRows.forEach { rowPresets ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        rowPresets.forEach { preset ->
+                            val selected = LocalAvatarStore.mode == LocalAvatarStore.Mode.Preset && LocalAvatarStore.preset == preset
+                            Box(
+                                modifier = Modifier.weight(1f),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(62.dp)
+                                        .clip(CircleShape)
+                                        .border(
+                                            width = if (selected) 3.dp else 1.5.dp,
+                                            color = if (selected) c.primary else c.outlineVariant,
+                                            shape = CircleShape,
+                                        )
+                                        .padding(if (selected) 4.dp else 2.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(preset.bgColor))
+                                        .pressable(pressedScale = 0.94f) {
+                                            LocalAvatarStore.selectPreset(preset)
+                                            onDismiss()
+                                        },
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Image(
+                                        painter = painterResource(preset.drawableRes),
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                    )
+                                }
+                            }
+                        }
+                        repeat(4 - rowPresets.size) {
+                            Spacer(Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(20.dp))
+            val actionCount = if (LocalAvatarStore.mode != LocalAvatarStore.Mode.Default) 2 else 1
+            Joined(actionCount) { i, shape ->
+                if (i == 0) {
+                    LinkSetting(
+                        "avatar_gallery",
+                        shape,
+                        Icons.Rounded.PhotoLibrary,
+                        stringResource(R.string.avatar_picker_gallery),
+                        stringResource(R.string.avatar_picker_subtitle),
+                    ) { galleryLauncher.launch("image/*") }
+                } else {
+                    LinkSetting(
+                        "avatar_reset",
+                        shape,
+                        Icons.Rounded.RestartAlt,
+                        stringResource(R.string.avatar_picker_reset),
+                        profile?.name ?: stringResource(R.string.settings_off),
+                    ) {
+                        LocalAvatarStore.resetToDefault()
+                        onDismiss()
+                    }
+                }
+            }
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
@@ -1801,11 +2233,20 @@ private fun AccountPage(onSignIn: () -> Unit, onSignedOut: () -> Unit) {
 private fun AboutPage(player: PlayerState) {
     val context = LocalContext.current
     var whatsNew by remember { mutableStateOf(false) }
-    Spacer(Modifier.height(14.dp))
+    var cacheBytes by remember { mutableLongStateOf(0L) }
     val scope = rememberCoroutineScope()
-    val shareTitle = stringResource(R.string.settings_crash_share)
+    LaunchedEffect(Unit) {
+        cacheBytes = withContext(Dispatchers.IO) { measureClearableCacheBytes(context) }
+    }
+    Spacer(Modifier.height(14.dp))
     val developerCredit = "${stringResource(R.string.developer_name)} (EZTube)"
-    Joined(4) { i, shape ->
+    val cacheLine = if (cacheBytes > 0L) {
+        stringResource(R.string.settings_clear_cache_line, Formatter.formatShortFileSize(context, cacheBytes))
+    } else {
+        stringResource(R.string.settings_clear_cache_empty)
+    }
+    val clearedMessage = stringResource(R.string.settings_clear_cache_done)
+    Joined(3) { i, shape ->
         when (i) {
             0 -> LinkSetting("version", shape, Icons.Rounded.SystemUpdateAlt, stringResource(R.string.settings_version, BuildConfig.VERSION_NAME), updateStatus()) {
                 if (AppUpdate.available != null) whatsNew = true else AppUpdate.checkNow()
@@ -1814,28 +2255,53 @@ private fun AboutPage(player: PlayerState) {
                 android.widget.Toast.makeText(
                     context,
                     developerCredit,
-                    android.widget.Toast.LENGTH_SHORT
+                    android.widget.Toast.LENGTH_SHORT,
                 ).show()
             }
-            2 -> {
-                val line = stringResource(if (CrashLog.newest > 0L) R.string.settings_crash_saved else R.string.settings_crash_none)
-                LinkSetting("crash", shape, Icons.Rounded.BugReport, stringResource(R.string.settings_crash_title), line) {
-                    scope.launch {
-                        val text = withContext(Dispatchers.IO) { CrashLog.report(context) }
-                        val send = Intent(Intent.ACTION_SEND).setType("text/plain")
-                            .putExtra(Intent.EXTRA_SUBJECT, "EZTube crash report")
-                            .putExtra(Intent.EXTRA_TEXT, text)
-                        context.openOrSay(Intent.createChooser(send, shareTitle)) { player.actionMessage = it }
-                        CrashLog.markShared()
-                    }
+            else -> LinkSetting("clear_cache", shape, Icons.Rounded.CleaningServices, stringResource(R.string.settings_clear_cache), cacheLine) {
+                scope.launch {
+                    val remaining = withContext(Dispatchers.IO) { clearAppTransientCaches(context) }
+                    cacheBytes = remaining
+                    player.actionMessage = clearedMessage
                 }
-            }
-            else -> LinkSetting("source", shape, Icons.Rounded.Code, stringResource(R.string.settings_source), stringResource(R.string.settings_source_line)) {
-                context.openOrSay(Intent(Intent.ACTION_VIEW, Uri.parse(SourceUrl))) { player.actionMessage = it }
             }
         }
     }
     if (whatsNew) AppUpdate.available?.let { WhatsNewSheet(it, onDismiss = { whatsNew = false }) }
+}
+
+private val PRESERVED_CACHE_ENTRIES = setOf("clipflow_yt_auth_cookies.txt", "update")
+
+private fun measureClearableCacheBytes(context: android.content.Context): Long {
+    fun dirBytes(dir: File?): Long {
+        if (dir == null || !dir.exists()) return 0L
+        if (dir.isFile) return dir.length()
+        return dir.listFiles().orEmpty().sumOf { child ->
+            if (child.name in PRESERVED_CACHE_ENTRIES) 0L else dirBytes(child)
+        }
+    }
+    return dirBytes(context.cacheDir) + dirBytes(context.codeCacheDir) + dirBytes(context.externalCacheDir)
+}
+
+@OptIn(ExperimentalCoilApi::class)
+private fun clearAppTransientCaches(context: android.content.Context): Long {
+    StreamCache.invalidateAll()
+    runCatching {
+        context.imageLoader.memoryCache?.clear()
+        context.imageLoader.diskCache?.clear()
+    }
+    fun wipeChildren(dir: File?) {
+        if (dir == null || !dir.exists()) return
+        dir.listFiles().orEmpty().forEach { child ->
+            if (child.name !in PRESERVED_CACHE_ENTRIES) {
+                runCatching { child.deleteRecursively() }
+            }
+        }
+    }
+    wipeChildren(context.cacheDir)
+    wipeChildren(context.codeCacheDir)
+    wipeChildren(context.externalCacheDir)
+    return measureClearableCacheBytes(context)
 }
 
 private tailrec fun android.content.Context.findActivity(): android.app.Activity? = when (this) {

@@ -49,7 +49,9 @@
             android:id="@+id/collapsing_toolbar"
             style="?attr/collapsingToolbarLayoutLargeStyle"
             android:layout_width="match_parent"
-            app:title="@string/settings"
+            app:title="@string/settings_downloader_title"
+            app:maxLines="1"
+            app:expandedTitleTextAppearance="@style/SettingsExpandedTitleSingleLine"
             app:layout_scrollFlags="scroll|exitUntilCollapsed|snap"
             android:layout_height="?attr/collapsingToolbarLayoutLargeSize">
 

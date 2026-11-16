@@ -235,6 +235,93 @@
         <item name="colorPrimaryInverse">@color/orange_md_theme_dark_inversePrimary</item>
     </style>
 
+    <style name="Theme.YouTube" parent="BaseTheme">
+        <item name="colorPrimary">@color/youtube_md_theme_dark_primary</item>
+        <item name="colorOnPrimary">@color/youtube_md_theme_dark_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/youtube_md_theme_dark_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/youtube_md_theme_dark_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/youtube_md_theme_dark_secondary</item>
+        <item name="colorOnSecondary">@color/youtube_md_theme_dark_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/youtube_md_theme_dark_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/youtube_md_theme_dark_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/youtube_md_theme_dark_tertiary</item>
+        <item name="colorOnTertiary">@color/youtube_md_theme_dark_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/youtube_md_theme_dark_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/youtube_md_theme_dark_onTertiaryContainer</item>
+        <item name="colorError">@color/youtube_md_theme_dark_error</item>
+        <item name="colorErrorContainer">@color/youtube_md_theme_dark_errorContainer</item>
+        <item name="colorOnError">@color/youtube_md_theme_dark_onError</item>
+        <item name="colorOnErrorContainer">@color/youtube_md_theme_dark_onErrorContainer</item>
+        <item name="android:colorBackground">@color/youtube_md_theme_dark_background</item>
+        <item name="colorOnBackground">@color/youtube_md_theme_dark_onBackground</item>
+        <item name="colorSurface">@color/youtube_md_theme_dark_surface</item>
+        <item name="colorOnSurface">@color/youtube_md_theme_dark_onSurface</item>
+        <item name="colorSurfaceVariant">@color/youtube_md_theme_dark_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/youtube_md_theme_dark_onSurfaceVariant</item>
+        <item name="colorOutline">@color/youtube_md_theme_dark_outline</item>
+        <item name="colorOnSurfaceInverse">@color/youtube_md_theme_dark_inverseOnSurface</item>
+        <item name="colorSurfaceInverse">@color/youtube_md_theme_dark_inverseSurface</item>
+        <item name="colorPrimaryInverse">@color/youtube_md_theme_dark_inversePrimary</item>
+    </style>
+
+    <style name="Theme.CreamRose" parent="BaseTheme">
+        <item name="colorPrimary">@color/cream_rose_md_theme_dark_primary</item>
+        <item name="colorOnPrimary">@color/cream_rose_md_theme_dark_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/cream_rose_md_theme_dark_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/cream_rose_md_theme_dark_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/cream_rose_md_theme_dark_secondary</item>
+        <item name="colorOnSecondary">@color/cream_rose_md_theme_dark_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/cream_rose_md_theme_dark_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/cream_rose_md_theme_dark_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/cream_rose_md_theme_dark_tertiary</item>
+        <item name="colorOnTertiary">@color/cream_rose_md_theme_dark_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/cream_rose_md_theme_dark_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/cream_rose_md_theme_dark_onTertiaryContainer</item>
+        <item name="colorError">@color/cream_rose_md_theme_dark_error</item>
+        <item name="colorErrorContainer">@color/cream_rose_md_theme_dark_errorContainer</item>
+        <item name="colorOnError">@color/cream_rose_md_theme_dark_onError</item>
+        <item name="colorOnErrorContainer">@color/cream_rose_md_theme_dark_onErrorContainer</item>
+        <item name="android:colorBackground">@color/cream_rose_md_theme_dark_background</item>
+        <item name="colorOnBackground">@color/cream_rose_md_theme_dark_onBackground</item>
+        <item name="colorSurface">@color/cream_rose_md_theme_dark_surface</item>
+        <item name="colorOnSurface">@color/cream_rose_md_theme_dark_onSurface</item>
+        <item name="colorSurfaceVariant">@color/cream_rose_md_theme_dark_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/cream_rose_md_theme_dark_onSurfaceVariant</item>
+        <item name="colorOutline">@color/cream_rose_md_theme_dark_outline</item>
+        <item name="colorOnSurfaceInverse">@color/cream_rose_md_theme_dark_inverseOnSurface</item>
+        <item name="colorSurfaceInverse">@color/cream_rose_md_theme_dark_inverseSurface</item>
+        <item name="colorPrimaryInverse">@color/cream_rose_md_theme_dark_inversePrimary</item>
+    </style>
+
+    <style name="Theme.Erica" parent="BaseTheme">
+        <item name="colorPrimary">@color/erica_md_theme_dark_primary</item>
+        <item name="colorOnPrimary">@color/erica_md_theme_dark_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/erica_md_theme_dark_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/erica_md_theme_dark_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/erica_md_theme_dark_secondary</item>
+        <item name="colorOnSecondary">@color/erica_md_theme_dark_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/erica_md_theme_dark_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/erica_md_theme_dark_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/erica_md_theme_dark_tertiary</item>
+        <item name="colorOnTertiary">@color/erica_md_theme_dark_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/erica_md_theme_dark_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/erica_md_theme_dark_onTertiaryContainer</item>
+        <item name="colorError">@color/erica_md_theme_dark_error</item>
+        <item name="colorErrorContainer">@color/erica_md_theme_dark_errorContainer</item>
+        <item name="colorOnError">@color/erica_md_theme_dark_onError</item>
+        <item name="colorOnErrorContainer">@color/erica_md_theme_dark_onErrorContainer</item>
+        <item name="android:colorBackground">@color/erica_md_theme_dark_background</item>
+        <item name="colorOnBackground">@color/erica_md_theme_dark_onBackground</item>
+        <item name="colorSurface">@color/erica_md_theme_dark_surface</item>
+        <item name="colorOnSurface">@color/erica_md_theme_dark_onSurface</item>
+        <item name="colorSurfaceVariant">@color/erica_md_theme_dark_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/erica_md_theme_dark_onSurfaceVariant</item>
+        <item name="colorOutline">@color/erica_md_theme_dark_outline</item>
+        <item name="colorOnSurfaceInverse">@color/erica_md_theme_dark_inverseOnSurface</item>
+        <item name="colorSurfaceInverse">@color/erica_md_theme_dark_inverseSurface</item>
+        <item name="colorPrimaryInverse">@color/erica_md_theme_dark_inversePrimary</item>
+    </style>
+
     <style name="Pure">
 
         <item name="android:colorBackground">@android:color/black</item>

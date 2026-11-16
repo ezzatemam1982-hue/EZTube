@@ -560,7 +560,8 @@ internal class YouTubeMediaSourceFactory(context: Context) : MediaSource.Factory
     override fun createMediaSource(mediaItem: MediaItem): MediaSource {
         val info = StreamCache.get(mediaItem.mediaId) ?: return fallback.createMediaSource(mediaItem)
         val mode = QualityPreference.effectiveFor(mediaItem.mediaId)
-        val picked = StreamSelection.pick(info, mode)
+        val maxHeight = QualityPreference.maxLadderHeightFor(mediaItem.mediaId)
+        val picked = StreamSelection.pick(info, mode, maxHeight)
         val audioGroups = StreamSelection.audioTrackGroups(info)
         val audioSource = if (audioGroups.size > 1) {
             multiAudioSource(audioGroups, info.duration, mediaItem) ?: picked.audio?.let { source(it, info.duration, mediaItem) }
@@ -569,11 +570,11 @@ internal class YouTubeMediaSourceFactory(context: Context) : MediaSource.Factory
         }
         // Auto: every quality as one adaptive set. Highest or a chosen fixed height stays pinned below.
         if (mode == VideoQualityMode.Auto && audioSource != null) {
-            val adaptive = adaptiveVideo(info, mediaItem)
+            val adaptive = adaptiveVideo(info, mediaItem, maxHeight)
             if (adaptive != null) {
                 Log.i(
                     "ClipFlow",
-                    "media source ${mediaItem.mediaId}: adaptive video ${StreamSelection.autoLadder(info).joinToString("/") { "${it.height}" }}p + " +
+                    "media source ${mediaItem.mediaId}: adaptive video ${StreamSelection.autoLadder(info, maxHeight).joinToString("/") { "${it.height}" }}p + " +
                         "${audioGroups.size} audio track(s) (default=${audioGroups.firstOrNull()?.option?.id}, itag=${picked.audio?.itag})",
                 )
                 return MergingMediaSource(true, true, adaptive, audioSource)
@@ -605,9 +606,13 @@ internal class YouTubeMediaSourceFactory(context: Context) : MediaSource.Factory
      * manifest per stream; their single representations are lifted into one set so the
      * player can start low and switch up at segment boundaries.
      */
-    private fun adaptiveVideo(info: org.schabi.newpipe.extractor.stream.StreamInfo, mediaItem: MediaItem): MediaSource? {
+    private fun adaptiveVideo(
+        info: org.schabi.newpipe.extractor.stream.StreamInfo,
+        mediaItem: MediaItem,
+        maxHeight: Int = StreamSelection.MAX_HEIGHT,
+    ): MediaSource? {
         val durationSec = info.duration.takeIf { it > 0 } ?: return null
-        val manifests = StreamSelection.autoLadder(info).mapNotNull { stream ->
+        val manifests = StreamSelection.autoLadder(info, maxHeight).mapNotNull { stream ->
             runCatching {
                 val xml = YoutubeProgressiveDashManifestCreator.fromProgressiveStreamingUrl(stream.content, stream.itagItem!!, durationSec)
                 DashManifestParser().parse(Uri.parse(stream.content), ByteArrayInputStream(xml.toByteArray()))

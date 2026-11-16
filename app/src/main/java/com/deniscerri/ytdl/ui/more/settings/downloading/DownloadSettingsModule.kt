@@ -111,35 +111,8 @@ object DownloadSettingsModule : SettingModule {
                     }
             }
             "cleanup_leftover_downloads" -> {
-                val workManager = WorkManager.getInstance(context)
-                pref.setOnPreferenceChangeListener { preference, newValue ->
-                    var nextTime : Calendar? = Calendar.getInstance()
-                    when(newValue) {
-                        "daily" ->  nextTime?.add(Calendar.DAY_OF_WEEK, 1)
-                        "weekly" -> nextTime?.add(Calendar.DAY_OF_WEEK, 7)
-                        "monthly" -> nextTime?.add(Calendar.MONTH, 1)
-                        else -> nextTime = null
-                    }
-
-                    if (nextTime == null) workManager.cancelAllWorkByTag("cleanup_leftover_downloads")
-                    else {
-                        val workConstraints = Constraints.Builder()
-                        val allowMeteredNetworks = preferences.getBoolean("metered_networks", true)
-                        if (!allowMeteredNetworks) workConstraints.setRequiredNetworkType(NetworkType.UNMETERED)
-
-                        val delay = nextTime.timeInMillis.minus(System.currentTimeMillis())
-
-                        val workRequest = OneTimeWorkRequestBuilder<CleanUpLeftoverDownloads>()
-                            .addTag("cleanup_leftover_downloads")
-                            .setConstraints(workConstraints.build())
-                            .setInitialDelay(delay, TimeUnit.MILLISECONDS)
-
-                        workManager.enqueueUniqueWork(
-                            System.currentTimeMillis().toString(),
-                            ExistingWorkPolicy.REPLACE,
-                            workRequest.build()
-                        )
-                    }
+                pref.setOnPreferenceChangeListener { _, newValue ->
+                    CleanUpLeftoverDownloads.schedule(context, (newValue as? String).orEmpty(), ExistingWorkPolicy.REPLACE)
                     host.refreshUI()
                     true
                 }

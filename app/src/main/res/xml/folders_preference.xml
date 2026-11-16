@@ -17,12 +17,14 @@
     <Preference
         android:defaultValue=""
         app:icon="@drawable/ic_terminal"
+        app:isPreferenceVisible="false"
         app:key="command_path"
         app:title="@string/command_directory" />
 
     <Preference
         android:defaultValue=""
         app:icon="@drawable/baseline_folder_24"
+        app:isPreferenceVisible="false"
         app:key="cache_path"
         app:title="@string/cache_directory" />
 
@@ -41,8 +43,9 @@
 
     <SwitchPreferenceCompat
         android:widgetLayout="@layout/preferece_material_switch"
-        app:defaultValue="true"
+        app:defaultValue="false"
         app:icon="@drawable/if_file_rename"
+        app:isPreferenceVisible="false"
         android:enabled="false"
         app:key="cache_downloads"
         app:summary="@string/cache_first_summary"
@@ -53,6 +56,7 @@
         android:widgetLayout="@layout/preferece_material_switch"
         app:defaultValue="false"
         android:icon="@drawable/baseline_save_alt_24"
+        app:isPreferenceVisible="false"
         android:key="no_part"
         app:summary="@string/no_download_fragments_summary"
         app:title="@string/no_download_fragments" />
@@ -62,6 +66,7 @@
         android:widgetLayout="@layout/preferece_material_switch"
         app:defaultValue="false"
         android:icon="@drawable/baseline_save_24"
+        app:isPreferenceVisible="false"
         android:key="keep_cache"
         app:summary="@string/keep_cache_summary"
         app:title="@string/keep_cache" />
@@ -95,6 +100,7 @@
         android:widgetLayout="@layout/preferece_material_switch"
         app:defaultValue="true"
         app:icon="@drawable/ic_cut"
+        app:isPreferenceVisible="false"
         app:key="trim_filenames"
         app:title="@string/trim_filenames" />
 
@@ -102,6 +108,7 @@
         android:widgetLayout="@layout/preferece_material_switch"
         app:defaultValue="false"
         app:icon="@drawable/if_file_rename"
+        app:isPreferenceVisible="false"
         app:key="restrict_filenames"
         app:summary="@string/restrict_filenames_summary"
         app:title="@string/restrict_filenames" />

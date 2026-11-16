@@ -99,4 +99,54 @@ class FullscreenResizeModeTest {
         assertEquals(1f, invalid.scaleX, 1e-4f)
         assertEquals(1f, invalid.scaleY, 1e-4f)
     }
+
+    @Test
+    fun threeModeAspectRatioCyclesFitFillZoomAndMapsLabels() {
+        assertEquals(FullscreenAspectMode.Fill, FullscreenAspectMode.Fit.next())
+        assertEquals(FullscreenAspectMode.Zoom, FullscreenAspectMode.Fill.next())
+        assertEquals(FullscreenAspectMode.Fit, FullscreenAspectMode.Zoom.next())
+
+        assertEquals(R.string.video_aspect_fit, fullscreenResizeLabelRes(FullscreenAspectMode.Fit))
+        assertEquals(R.string.video_aspect_fill, fullscreenResizeLabelRes(FullscreenAspectMode.Fill))
+        assertEquals(R.string.video_aspect_zoom, fullscreenResizeLabelRes(FullscreenAspectMode.Zoom))
+    }
+
+    @Test
+    fun resolveFullscreenScaleHandlesFitFillZoomAndClampedPinch() {
+        val fit = resolveFullscreenScale(FullscreenScaleSelection(FullscreenAspectMode.Fit), 2400f, 1080f, 16f / 9f)
+        assertEquals(1f, fit, 1e-4f)
+
+        val fill = resolveFullscreenScale(FullscreenScaleSelection(FullscreenAspectMode.Fill), 2400f, 1080f, 16f / 9f)
+        assertEquals(1.25f, fill, 1e-4f)
+
+        val zoom = resolveFullscreenScale(FullscreenScaleSelection(FullscreenAspectMode.Zoom), 2400f, 1080f, 16f / 9f)
+        assertEquals(1.25f * ZOOM_MODE_MULTIPLIER, zoom, 1e-4f)
+
+        val pinched = resolveFullscreenScale(
+            FullscreenScaleSelection(FullscreenAspectMode.Fill, pinchScale = 1.65f),
+            2400f,
+            1080f,
+            16f / 9f,
+        )
+        assertEquals(1.65f, pinched, 1e-4f)
+
+        val clampedMax = resolveFullscreenScale(
+            FullscreenScaleSelection(FullscreenAspectMode.Fill, pinchScale = 3.5f),
+            2400f,
+            1080f,
+            16f / 9f,
+        )
+        assertEquals(MAX_PINCH_SCALE, clampedMax, 1e-4f)
+    }
+
+    @Test
+    fun pinchZoomReleaseSnapsBelowOneBackToFitAndClampsBounds() {
+        assertEquals(null, resolveReleasedPinchZoom(0.95f))
+        assertEquals(null, resolveReleasedPinchZoom(1.00f))
+        assertEquals(1.4f, resolveReleasedPinchZoom(1.4f)!!, 1e-4f)
+        assertEquals(MAX_PINCH_SCALE, resolveReleasedPinchZoom(2.6f)!!, 1e-4f)
+
+        assertTrue(interactivePinchScale(0.8f) in 0.94f..1.0f)
+        assertTrue(interactivePinchScale(2.5f) > MAX_PINCH_SCALE)
+    }
 }

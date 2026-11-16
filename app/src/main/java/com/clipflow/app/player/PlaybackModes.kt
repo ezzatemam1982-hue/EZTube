@@ -51,15 +51,19 @@ object PlaybackSpeed {
         prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
         remember = prefs?.getBoolean(KEY_REMEMBER, false) == true
         saved = snap(prefs?.getFloat(KEY_SPEED, 1f) ?: 1f)
-        musicAtNormal = prefs?.getBoolean(KEY_MUSIC, true) != false
+        // Music always plays at 1× (locked ON for clean listening even when Keep speed is active).
+        musicAtNormal = true
+        if (prefs?.getBoolean(KEY_MUSIC, true) != true) {
+            prefs?.edit()?.putBoolean(KEY_MUSIC, true)?.apply()
+        }
     }
 
     /** What a video that has just become current starts at; [music] from [YouTube.isMusic]. */
     fun forNewVideo(music: Boolean): Float = if (remember && !(music && musicAtNormal)) saved else 1f
 
     fun chooseMusicAtNormal(on: Boolean) {
-        musicAtNormal = on
-        prefs?.edit()?.putBoolean(KEY_MUSIC, on)?.apply()
+        musicAtNormal = true
+        prefs?.edit()?.putBoolean(KEY_MUSIC, true)?.apply()
     }
 
     fun setRemember(on: Boolean, current: Float) {
@@ -104,6 +108,37 @@ object PlaybackSpeed {
         val index = QUICK_SPEEDS.indexOfFirst { abs(it - current) < STEP / 2 }
         return if (index >= 0) QUICK_SPEEDS[(index + 1) % QUICK_SPEEDS.size] else QUICK_SPEEDS.first()
     }
+}
+
+/**
+ * Data Saver (480p): caps streaming playback resolution at 480p when manually enabled on mobile data.
+ * Default OFF (false) so connections start at Auto quality up to 1080p.
+ */
+object DataSaver {
+    const val MAX_HEIGHT = 480
+    private const val KEY = "data_saver_480p"
+    private var prefs: SharedPreferences? = null
+
+    var enabled by mutableStateOf(false)
+        private set
+
+    @Volatile
+    private var enabledSnapshot: Boolean = false
+
+    fun init(context: Context) {
+        prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
+        val loaded = prefs?.getBoolean(KEY, false) == true
+        enabled = loaded
+        enabledSnapshot = loaded
+    }
+
+    fun set(on: Boolean) {
+        enabled = on
+        enabledSnapshot = on
+        prefs?.edit()?.putBoolean(KEY, on)?.apply()
+    }
+
+    fun snapshot(): Boolean = enabledSnapshot
 }
 
 /**
@@ -204,18 +239,18 @@ object ChaptersStayOpen {
 
 /**
  * Picture-in-picture by itself (#42): leaving the app (Home, Recents, another app) while a video plays
- * turns it into the floating window. Off by default (Derek): background play is audio only then.
+ * turns it into the floating window. Enabled by default in EZTube.
  */
 object AutoPip {
     private const val KEY = "auto_pip"
     private var prefs: SharedPreferences? = null
 
-    var on by mutableStateOf(false)
+    var on by mutableStateOf(true)
         private set
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
-        on = prefs?.getBoolean(KEY, false) == true
+        on = prefs?.getBoolean(KEY, true) != false
     }
 
     fun set(value: Boolean) {
@@ -225,22 +260,20 @@ object AutoPip {
 }
 
 /**
- * Stretch to fill in fullscreen (2026-11-02, Derek; switched to RESIZE_MODE_FILL): pinch out or
- * tap Fit/Fill on the fullscreen video and it stretches edge-to-edge without cropping top/bottom;
- * pinch in and the original aspect ratio is back with black bars. A pinch only changes that video
- * ([PlayerState.zoomedToFill]); this setting (Settings › Playback) is where every video starts.
+ * Fill screen in fullscreen: scales the video uniformly to fill screen bounds (`Fill` mode)
+ * by default when entering fullscreen. Users can still cycle `Fit` -> `Fill` -> `Zoom` or pinch.
  */
 object FullscreenZoom {
     private const val KEY = "zoom_fill"
     private var prefs: SharedPreferences? = null
 
-    /** True: every video fills the screen in fullscreen until pinched back. */
-    var fill by mutableStateOf(false)
+    /** True: every video fills the screen in fullscreen until cycled/pinched back. */
+    var fill by mutableStateOf(true)
         private set
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
-        fill = prefs?.getBoolean(KEY, false) == true
+        fill = prefs?.getBoolean(KEY, true) != false
     }
 
     fun set(on: Boolean) {

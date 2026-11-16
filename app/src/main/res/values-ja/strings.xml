@@ -26,7 +26,7 @@
     <string name="couldnt_find_apk">適切な APK がありませんでした</string>
     <string name="downloading_update">新しいバージョンのダウンロード</string>
     <string name="video">動画</string>
-    <string name="concurrent_fragments_summary">DASH/HLS ネイティブ動画の同時分割ダウンロード数</string>
+    <string name="concurrent_fragments_summary">推奨: 3–4。値が高すぎるとサーバーの速度制限やバッテリー・RAM消費の増加を招くことがあります。</string>
     <string name="concurrent_fragments">分割ダウンロード</string>
     <string name="downloading">ダウンロード</string>
     <string name="limit_rate">速度制限</string>
@@ -527,4 +527,8 @@
     <string name="preferred_format_size_audio">優先音声フォーマットサイズ</string>
     <string name="x_offset">Xオフセット</string>
     <string name="y_offset">Yオフセット</string>
+    <string name="temporary_files_description">EZTube が保持する作業ファイル。一時設定やキャッシュされたダウンロードデータです。</string>
+    <string name="info_jsons_summary">保存済みの動画メタデータにより、EZTube が再取得する必要がなくなります</string>
+    <string name="ytdlp_cache">アプリエンジンのキャッシュ</string>
+    <string name="ytdlp_cache_summary">実行間で EZTube が再利用する一時エンジンデータ</string>
 </resources>

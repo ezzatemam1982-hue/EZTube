@@ -28,8 +28,7 @@ class IconsSheetAdapter(val host: SettingHost) : RecyclerView.Adapter<IconsSheet
             root.setOnClickListener {
                 val preferences = androidx.preference.PreferenceManager.getDefaultSharedPreferences(host.getHostContext())
                 preferences.edit().putString("ytdlnis_icon", appIcon.activityAlias).apply()
-                val theme = preferences.getString("ytdlnis_theme", "System")!!
-                ThemeUtil.updateAppIcon(host.getHostContext(), theme,appIcon.activityAlias)
+                ThemeUtil.updateAppIcon(host.getHostContext(), ThemeUtil.legacyIconThemeMode(), appIcon.activityAlias)
                 host.refreshUI()
                 host.getHostContext().recreate()
             }

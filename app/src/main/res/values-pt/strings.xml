@@ -116,7 +116,7 @@
     <string name="swipe_gestures">Gestos deslizantes</string>
     <string name="aria2_summary">Usar aria2c como provedor de download padrão</string>
     <string name="limit_rate_summary">Taxa máxima de download (em bytes por segundo), ex. 50k ou 4.2M</string>
-    <string name="concurrent_fragments_summary">Número de fragmentos de um vídeo nativo em DASH/HLS para download simultâneo</string>
+    <string name="concurrent_fragments_summary">Recomendado: 3–4. Valores mais altos podem acionar limites do servidor ou aumentar o uso de bateria e RAM.</string>
     <string name="concurrent_fragments">Fragmentos simultâneos</string>
     <string name="sponsorblock_sponsors">Patrocinadores</string>
     <string name="sponsorblock_intro">Introdução</string>
@@ -496,4 +496,8 @@
     <string name="update_ytdlp_while_downloading">Atualizar yt-dlp durante o download</string>
     <string name="update_ytdlp_while_downloading_summary">Adicionar -U ao yt-dlp para atualizá-lo com a versão mais recente antes de fazer o download</string>
     <string name="prefer_drc_audio">Preferir DRC Audio</string>
+    <string name="temporary_files_description">Arquivos de trabalho mantidos pelo EZTube. Configurações temporárias e dados de download em cache.</string>
+    <string name="info_jsons_summary">Metadados de vídeo salvos para que o EZTube não precise buscá-los novamente</string>
+    <string name="ytdlp_cache">Cache do motor do app</string>
+    <string name="ytdlp_cache_summary">Dados temporários do motor que o EZTube reutiliza entre execuções</string>
 </resources>

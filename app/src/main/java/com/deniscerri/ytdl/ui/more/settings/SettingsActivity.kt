@@ -116,8 +116,9 @@ class SettingsActivity : BaseActivity(), SettingHost {
         val listener =
             NavController.OnDestinationChangedListener { controller, destination, arguments ->
                 if (destination.id == R.id.mainSettingsFragment) {
-                    if (binding.collapsingToolbar.title != getString(R.string.settings)) {
-                        changeTopAppbarTitle(getString(R.string.settings), false)
+                    val hubTitle = getString(R.string.settings_downloader_title)
+                    if (binding.collapsingToolbar.title != hubTitle) {
+                        changeTopAppbarTitle(hubTitle, false)
                         settingViewModel.indexSearchSettings()
                     }
                 }

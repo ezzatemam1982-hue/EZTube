@@ -73,8 +73,20 @@
     <string name="ui_mode_dark">Dark</string>
     <!-- Theme taken from the phone's wallpaper colours; label under a 56 dp swatch, keep short (~10 characters). -->
     <string name="ui_theme_wallpaper">Wallpaper</string>
+    <string name="ui_theme_youtube">YouTube</string>
+    <string name="ui_theme_cream_rose">Cream Rose</string>
+    <string name="ui_theme_erica">Erica</string>
     <!-- Accessibility label of the check on the selected theme. -->
     <string name="ui_selected">Selected</string>
+
+    <!-- ── Profile Avatar Picker (UI-only local customization) ─────────────── -->
+    <string name="avatar_picker_title">Profile picture</string>
+    <string name="avatar_picker_subtitle">Pick a built-in avatar or choose an image from your phone</string>
+    <string name="avatar_picker_presets">Built-in avatars</string>
+    <string name="avatar_picker_gallery">Choose from gallery</string>
+    <string name="avatar_picker_reset">Use Google photo / default</string>
+    <string name="avatar_picker_cd">Change profile picture</string>
+    <string name="avatar_picker_error">Couldn\'t load that image</string>
 
     <!-- ── Sign-in ────────────────────────────────────────────────────────── -->
     <!-- Accessibility label of the X that leaves the sign-in page. -->

@@ -26,15 +26,22 @@ import java.util.concurrent.ConcurrentHashMap
  * segments for every video sharing that prefix and the match happens here.
  */
 object SponsorBlock {
-    enum class Category(val key: String, @StringRes val labelRes: Int, @StringRes val shortRes: Int, val color: Color, val defaultAction: Action) {
-        Sponsor("sponsor", R.string.player_sb_sponsor, R.string.player_sb_short_sponsor, Color(0xFF00D400), Action.Auto),
-        SelfPromo("selfpromo", R.string.player_sb_selfpromo, R.string.player_sb_short_selfpromo, Color(0xFFFFFF00), Action.Button),
-        Interaction("interaction", R.string.player_sb_interaction, R.string.player_sb_short_interaction, Color(0xFFCC00FF), Action.Button),
-        Intro("intro", R.string.player_sb_intro, R.string.player_sb_short_intro, Color(0xFF00FFFF), Action.Mark),
-        Outro("outro", R.string.player_sb_outro, R.string.player_sb_short_outro, Color(0xFF0202ED), Action.Mark),
-        Preview("preview", R.string.player_sb_preview, R.string.player_sb_short_preview, Color(0xFF008FD6), Action.Mark),
-        MusicOffTopic("music_offtopic", R.string.player_sb_music_offtopic, R.string.player_sb_short_music_offtopic, Color(0xFFFF9900), Action.Off),
-        Filler("filler", R.string.player_sb_filler, R.string.player_sb_short_filler, Color(0xFF7300FF), Action.Off);
+    enum class Category(
+        val key: String,
+        @StringRes val labelRes: Int,
+        @StringRes val shortRes: Int,
+        @StringRes val descRes: Int,
+        val color: Color,
+        val defaultAction: Action,
+    ) {
+        Sponsor("sponsor", R.string.player_sb_sponsor, R.string.player_sb_short_sponsor, R.string.player_sb_desc_sponsor, Color(0xFF00D400), Action.Auto),
+        SelfPromo("selfpromo", R.string.player_sb_selfpromo, R.string.player_sb_short_selfpromo, R.string.player_sb_desc_selfpromo, Color(0xFFFFFF00), Action.Button),
+        Interaction("interaction", R.string.player_sb_interaction, R.string.player_sb_short_interaction, R.string.player_sb_desc_interaction, Color(0xFFCC00FF), Action.Button),
+        Intro("intro", R.string.player_sb_intro, R.string.player_sb_short_intro, R.string.player_sb_desc_intro, Color(0xFF00FFFF), Action.Mark),
+        Outro("outro", R.string.player_sb_outro, R.string.player_sb_short_outro, R.string.player_sb_desc_outro, Color(0xFF0202ED), Action.Mark),
+        Preview("preview", R.string.player_sb_preview, R.string.player_sb_short_preview, R.string.player_sb_desc_preview, Color(0xFF008FD6), Action.Mark),
+        MusicOffTopic("music_offtopic", R.string.player_sb_music_offtopic, R.string.player_sb_short_music_offtopic, R.string.player_sb_desc_music_offtopic, Color(0xFFFF9900), Action.Off),
+        Filler("filler", R.string.player_sb_filler, R.string.player_sb_short_filler, R.string.player_sb_desc_filler, Color(0xFF7300FF), Action.Off);
 
         /** The category's name in the app's language (resolved each time: the language can change). */
         val label: String get() = str(labelRes)
@@ -88,6 +95,13 @@ object SponsorBlock {
     fun setAction(category: Category, action: Action) {
         actions[category] = action
         prefs?.edit()?.putString("action_${category.key}", action.name)?.apply()
+    }
+
+    fun resetToDefaults() {
+        updateEnabled(true)
+        Category.entries.forEach { c ->
+            setAction(c, c.defaultAction)
+        }
     }
 
     // ── Segments ─────────────────────────────────────────────────────────────────

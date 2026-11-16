@@ -2,6 +2,8 @@ package com.deniscerri.ytdl.util
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.util.Log
 import androidx.preference.PreferenceManager
@@ -10,6 +12,7 @@ import com.deniscerri.ytdl.R
 import com.deniscerri.ytdl.core.RuntimeManager
 import com.deniscerri.ytdl.core.models.YTDLRequest
 import com.deniscerri.ytdl.core.packages.PackageBase.Companion.sharedClient
+import com.deniscerri.ytdl.database.DBManager
 import com.deniscerri.ytdl.database.models.GithubRelease
 import com.deniscerri.ytdl.database.models.GithubReleaseAsset
 import com.google.gson.Gson
@@ -156,6 +159,33 @@ class UpdateUtil(var context: Context) {
             }
         }
 
+    /**
+     * Checks and updates yt-dlp silently once every 24 hours on startup when network is available
+     * and no active/queued downloads are running. Never shows notifications, progress UI, or toasts.
+     */
+    suspend fun silentlyUpdateYtdlpIfDue() = withContext(Dispatchers.IO) {
+        runCatching {
+            if (!sharedPreferences.getBoolean("auto_update_ytdlp", true)) return@runCatching
+            val lastChecked = sharedPreferences.getLong(YTDLP_LAST_CHECK_KEY, 0L)
+            if (!isSilentYtdlpUpdateDue(lastChecked)) return@runCatching
+            if (!hasNetworkConnection()) return@runCatching
+            val activeOrQueued = DBManager.getInstance(context).downloadDao.getDownloadsCountByStatus(listOf("Active", "Queued"))
+            if (activeOrQueued > 0) return@runCatching
+            val res = updateYTDL()
+            if (res.status == YTDLPUpdateStatus.DONE) {
+                File(FileUtil.getInfoJsonPath(context)).deleteRecursively()
+            }
+        }
+    }
+
+    private fun hasNetworkConnection(): Boolean {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return false
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+            caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    }
+
     @SuppressLint("Range", "UnspecifiedRegisterReceiverFlag")
     suspend fun downloadReleaseApk(release: GithubRelease, onProgress: (Long) -> Unit) : Result<File> {
         return withContext(Dispatchers.IO) {
@@ -209,8 +239,12 @@ class UpdateUtil(var context: Context) {
         const val USER_AGENT = "EZTube-App"
         const val APP_LAST_CHECK_KEY = "app_last_update_check"
         const val YTDLP_LAST_CHECK_KEY = "ytdlp_last_update_check"
+        const val YTDLP_SILENT_UPDATE_INTERVAL_MS = 24L * 60L * 60L * 1000L
         var updatingYTDL = false
         var updatingApp = false
+
+        internal fun isSilentYtdlpUpdateDue(lastCheckedMs: Long, nowMs: Long = System.currentTimeMillis()): Boolean =
+            lastCheckedMs <= 0L || (nowMs - lastCheckedMs) >= YTDLP_SILENT_UPDATE_INTERVAL_MS
 
         internal fun selectNewRelease(
             releases: List<GithubRelease>,

@@ -13,10 +13,13 @@
   <string name="video_next">Next</string>
   <string name="video_fullscreen">Fullscreen</string>
   <string name="video_exit_fullscreen">Exit fullscreen</string>
-  <string name="video_resize_fill">Stretch to fill</string>
-  <string name="video_resize_fit">Fit to screen</string>
-  <string name="video_stretch_to_fill">Stretched to fill</string>
-  <string name="video_resize_original">Original</string>
+  <string name="video_resize_fill">Fill</string>
+  <string name="video_resize_fit">Fit</string>
+  <string name="video_stretch_to_fill">Fill</string>
+  <string name="video_resize_original">Fit</string>
+  <string name="video_aspect_fit">Fit</string>
+  <string name="video_aspect_fill">Fill</string>
+  <string name="video_aspect_zoom">Zoom</string>
   <string name="video_play">Play</string>
   <string name="video_pause">Pause</string>
   <!-- Accessibility label of the check mark on the chosen row of a picker. -->

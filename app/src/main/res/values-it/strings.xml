@@ -24,7 +24,7 @@
     <string name="confirm_delete_history_desc">Elimina l\'intera cronologia, in modo permanente</string>
     <string name="version">Versione</string>
     <string name="downloading_update">Download nuova versione</string>
-    <string name="concurrent_fragments_summary">Numero di frammenti di un video nativo DASH/HLS da scaricare contemporaneamente</string>
+    <string name="concurrent_fragments_summary">Consigliato: 3–4. Valori più alti possono causare limitazioni del server o un consumo elevato di batteria e RAM.</string>
     <string name="limit_rate_summary">Velocità massima di download (in byte al secondo), ad es. 50K o 4,2M</string>
     <string name="aria2_summary">Usa aria2c come downloader invece di quello predefinito</string>
     <string name="processing">In lavorazione</string>
@@ -622,13 +622,13 @@
     <string name="channel_master">Master</string>
     <string name="channel_beta">Beta</string>
     <string name="temporary_files">File temporanei</string>
-    <string name="temporary_files_description">File di lavoro conservati dall\'app. Configurazioni temporanee e altri dati relativi a yt-dlp.</string>
+    <string name="temporary_files_description">File di lavoro gestiti da EZTube. Configurazioni temporanee e dati dei download nella cache.</string>
     <string name="unfinished_downloads">Download non completati</string>
     <string name="unfinished_downloads_summary">File parziali dei download interrotti o non riusciti, conservati per poterli riprendere</string>
     <string name="info_jsons">File info JSON</string>
-    <string name="info_jsons_summary">Metadati dei video salvati, così yt-dlp non deve recuperarli di nuovo</string>
-    <string name="ytdlp_cache">Cache di yt-dlp</string>
-    <string name="ytdlp_cache_summary">Dati che yt-dlp riutilizza tra un\'esecuzione e l\'altra, come le firme del player di YouTube</string>
+    <string name="info_jsons_summary">Metadati video salvati così EZTube non deve recuperarli di nuovo</string>
+    <string name="ytdlp_cache">Cache del motore dell\'app</string>
+    <string name="ytdlp_cache_summary">Dati temporanei del motore che EZTube riutilizza tra un\'esecuzione e l\'altra</string>
     <string name="temporary_configurations">Configurazioni temporanee</string>
     <string name="temporary_configurations_summary">File di configurazione dei comandi, elenchi di URL e altri file temporanei</string>
     <string name="downloaded_apks">APK scaricati</string>

@@ -624,13 +624,13 @@
     <string name="channel_master">Master</string>
     <string name="channel_beta">Beta</string>
     <string name="temporary_files">Skedarët e përkohshëm</string>
-    <string name="temporary_files_description">Skedarë pune të mbajtur nga aplikacioni. Konfigurime të përkohshme dhe të dhëna të tjera që lidhen me yt-dlp.</string>
+    <string name="temporary_files_description">Skedarë pune të ruajtur nga EZTube. Konfigurime të përkohshme dhe të dhëna të shkarkimeve në cache.</string>
     <string name="unfinished_downloads">Shkarkime të papërfunduara</string>
     <string name="unfinished_downloads_summary">Skedarë të pjesshëm nga shkarkime të ndalura ose të dështuara, të ruajtur në mënyrë që të mund të rifillohen</string>
     <string name="info_jsons">Info-JSONet</string>
-    <string name="info_jsons_summary">Metadata të ruajtura të videove që yt-dlp të mos kërkojë përsëri</string>
-    <string name="ytdlp_cache">Memoria cache e yt-dlp</string>
-    <string name="ytdlp_cache_summary">Të dhënat që yt-dlp ripërdor midis ekzekutimeve, siç janë nënshkrimet e luajtësit të YouTube</string>
+    <string name="info_jsons_summary">Meta-të dhëna të ruajtura të videove që EZTube të mos i marrë përsëri</string>
+    <string name="ytdlp_cache">Memoria cache e motorit të aplikacionit</string>
+    <string name="ytdlp_cache_summary">Të dhëna të përkohshme të motorit që EZTube i ripërdor midis ekzekutimeve</string>
     <string name="temporary_configurations">Konfigurime të përkohshme</string>
     <string name="temporary_configurations_summary">Konfigurime komandash, lista URL-sh dhe skedarë të tjerë me jetëgjatësi të shkurtër</string>
     <string name="downloaded_apks">APK të shkarkuara</string>

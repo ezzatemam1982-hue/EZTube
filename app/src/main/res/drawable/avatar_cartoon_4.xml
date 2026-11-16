@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+    <!-- Backdrop -->
+    <path
+        android:fillColor="#FEF3C7"
+        android:pathData="M0,0h96v96h-96z" />
+    <path
+        android:fillColor="#FDE68A"
+        android:pathData="M48,14 A34,34 0 1,1 47.9,14 Z" />
+    <!-- Cobalt bomber jacket -->
+    <path
+        android:fillColor="#1D4ED8"
+        android:pathData="M16,96 C19,76 31,70 48,70 C65,70 77,76 80,96 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M41,70 L48,84 L55,70 Z" />
+    <!-- Neck -->
+    <path
+        android:fillColor="#D99B66"
+        android:pathData="M41,58 h14 v14 c0,4 -14,4 -14,0 z" />
+    <path
+        android:fillColor="#BE804B"
+        android:pathData="M41,60 Q48,65 55,60 L55,64 Q48,68 41,64 Z" />
+    <!-- Ears -->
+    <path
+        android:fillColor="#E3A672"
+        android:pathData="M27,46 a4,5 0 1,0 0,10 a4,5 0 1,0 0,-10 z" />
+    <path
+        android:fillColor="#E3A672"
+        android:pathData="M69,46 a4,5 0 1,0 0,10 a4,5 0 1,0 0,-10 z" />
+    <!-- Face -->
+    <path
+        android:fillColor="#EEB684"
+        android:pathData="M30,44 C30,28 66,28 66,44 C66,58 58,66 48,66 C38,66 30,58 30,44 Z" />
+    <!-- Spiky hair + sporty headband -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M28,40 L26,28 L35,24 L39,17 L48,21 L56,16 L60,24 L69,27 L67,40 Z" />
+    <path
+        android:fillColor="#EF4444"
+        android:pathData="M29,33 Q48,29 67,33 L67,38 Q48,34 29,38 Z" />
+    <!-- Eyebrows -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M36,42.5 Q40,40.5 44,42.5"
+        android:strokeColor="#1E293B"
+        android:strokeLineCap="round"
+        android:strokeWidth="2.1" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M52,43 Q56,41.5 60,43"
+        android:strokeColor="#1E293B"
+        android:strokeLineCap="round"
+        android:strokeWidth="2.1" />
+    <!-- Left eye + playful wink on right eye -->
+    <path
+        android:fillColor="#111827"
+        android:pathData="M40,46.5 a2.7,3 0 1,0 0,6 a2.7,3 0 1,0 0,-6 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M39.3,47.6 a0.95,0.95 0 1,0 0,1.9 a0.95,0.95 0 1,0 0,-1.9 z" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M52.5,49.5 Q56,46.5 59.5,49.5"
+        android:strokeColor="#111827"
+        android:strokeLineCap="round"
+        android:strokeWidth="2.3" />
+    <!-- Cheerful grin -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M41.5,56 Q48,62.5 55,55.5 Z" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M41.5,56 Q48,62.5 55,55.5"
+        android:strokeColor="#7C2D12"
+        android:strokeLineCap="round"
+        android:strokeWidth="1.8" />
+</vector>

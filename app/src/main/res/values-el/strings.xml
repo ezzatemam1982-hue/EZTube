@@ -624,13 +624,13 @@
     <string name="channel_master">Κύριο</string>
     <string name="channel_beta">Beta</string>
     <string name="temporary_files">Προσωρινά αρχεία</string>
-    <string name="temporary_files_description">Αρχεία εργασίας που διατηρούνται από την εφαρμογή. Προσωρινές διαμορφώσεις και άλλα δεδομένα που σχετίζονται με το yt-dlp.</string>
+    <string name="temporary_files_description">Αρχεία εργασίας του EZTube. Προσωρινές ρυθμίσεις και αποθηκευμένα δεδομένα λήψεων στην cache.</string>
     <string name="unfinished_downloads">Μη ολοκληρωμένες λήψεις</string>
     <string name="unfinished_downloads_summary">Μερικά αρχεία διακοπμένων ή αποτυχημένων λήψεων, διατηρούνται ώστε να μπορούν να συνεχιστούν</string>
     <string name="info_jsons">Info-JSONs</string>
-    <string name="info_jsons_summary">Αποθηκεύτηκαν μεταδεδομένα βίντεο, ώστε το yt-dlp να μην χρειάζεται να τα ανακτήσει ξανά</string>
-    <string name="ytdlp_cache">προσωρινή μνήμη yt-dlp</string>
-    <string name="ytdlp_cache_summary">Επαναχρησιμοποίηση δεδομένων yt-dlp μεταξύ εκτελέσεων, όπως υπογραφές προγράμματος αναπαραγωγής YouTube</string>
+    <string name="info_jsons_summary">Αποθηκευμένα μεταδεδομένα βίντεο ώστε το EZTube να μην χρειάζεται να τα ανακτήσει ξανά</string>
+    <string name="ytdlp_cache">Προσωρινή μνήμη μηχανής εφαρμογής</string>
+    <string name="ytdlp_cache_summary">Προσωρινά δεδομένα μηχανής που επαναχρησιμοποιεί το EZTube μεταξύ εκτελέσεων</string>
     <string name="temporary_configurations">Προσωρινές διαμορφώσεις</string>
     <string name="temporary_configurations_summary">Διαμορφώσεις εντολών, λίστες URL και άλλα αρχεία βραχείας διάρκειας</string>
     <string name="downloaded_apks">Ληφθέντα APK</string>

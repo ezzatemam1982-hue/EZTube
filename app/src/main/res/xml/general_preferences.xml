@@ -5,6 +5,7 @@
     <PreferenceCategory android:title="@string/appearance">
         <Preference
             android:icon="@drawable/baseline_translate_24"
+            app:isPreferenceVisible="false"
             app:key="app_language"
             app:persistent="false"
             app:summary=""
@@ -15,6 +16,7 @@
             android:entryValues="@array/themes_values"
             android:icon="@drawable/baseline_format_paint_24"
             app:defaultValue="System"
+            app:isPreferenceVisible="false"
             app:key="ytdlnis_theme"
             app:summary="@string/defaultValue"
             app:title="@string/Theme" />
@@ -31,6 +33,7 @@
             android:entryValues="@array/accents_values"
             android:icon="@drawable/baseline_color_lens_24"
             app:defaultValue="blue"
+            app:isPreferenceVisible="false"
             app:key="theme_accent"
             app:summary="Blue"
             app:title="@string/accents" />
@@ -40,6 +43,7 @@
             app:defaultValue="false"
             android:icon="@drawable/baseline_invert_colors_24"
             android:key="high_contrast"
+            app:isPreferenceVisible="false"
             app:summary="@string/pure_theme_summary"
             app:title="@string/high_contrast" />
 
@@ -188,6 +192,7 @@
             android:widgetLayout="@layout/preferece_material_switch"
             app:defaultValue="true"
             app:icon="@drawable/ic_clipboard"
+            app:isPreferenceVisible="false"
             app:key="check_clipboard_home"
             app:summary="@string/check_clipboard_home_summary"
             app:title="@string/check_clipboard_home" />
@@ -206,6 +211,7 @@
             android:entries="@array/swipe_gestures"
             android:entryValues="@array/swipe_gestures_values"
             android:defaultValue="@array/swipe_gestures_values"
+            app:isPreferenceVisible="false"
             app:summary="@string/swipe_gestures_summary"
             app:title="@string/swipe_gestures" />
 
@@ -213,6 +219,7 @@
             android:widgetLayout="@layout/preferece_material_switch"
             app:defaultValue="true"
             android:icon="@drawable/baseline_swipe_24"
+            app:isPreferenceVisible="false"
             android:key="swipe_gestures_download_card"
             app:title="@string/swipe_gestures_download_card" />
 

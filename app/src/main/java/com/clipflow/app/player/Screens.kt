@@ -132,7 +132,16 @@ fun HomeScreen(
     }
     CollapsingHeaderLayout(
         resetKey = scrollToTop to lib.home.generation,
-        header = { ScreenHeader(title = stringResource(R.string.app_name), brandMark = true) { UpdateAction(); DownloadsAction(); AccountAction(onAccount) } },
+        header = {
+            ScreenHeader(
+                title = stringResource(R.string.app_name),
+                brandMark = true,
+                leadingActions = {
+                    AccountAction(onAccount)
+                    DownloadsAction()
+                },
+            ) { UpdateAction() }
+        },
     ) { top ->
         if (signedIn) {
             val home = lib.home

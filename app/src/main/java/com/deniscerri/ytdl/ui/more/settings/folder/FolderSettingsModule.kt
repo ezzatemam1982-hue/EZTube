@@ -156,20 +156,7 @@ object FolderSettingsModule: SettingModule {
             }
             "save_subdirectory" -> {
                 pref.apply {
-                    setOnPreferenceChangeListener { _, newValue ->
-                        val list = newValue as HashSet<String>
-
-                        if (list.isEmpty()) {
-                            preferences.edit(commit = true) {
-                                putBoolean("trim_filenames", false)
-                            }
-                        }
-                        host.findPref("trim_filenames")?.apply {
-                            isEnabled = list.isEmpty()
-                            if (list.isNotEmpty()){
-                                (this as SwitchPreferenceCompat).isChecked = false
-                            }
-                        }
+                    setOnPreferenceChangeListener { _, _ ->
                         host.refreshUI()
                         true
                     }
@@ -177,7 +164,8 @@ object FolderSettingsModule: SettingModule {
             }
             "trim_filenames" -> {
                 pref.apply {
-                    isEnabled = preferences.getStringSet("save_subdirectory", setOf())!!.isEmpty()
+                    isVisible = false
+                    preferences.edit(commit = true) { putBoolean("trim_filenames", true) }
                 }
             }
             "access_all_files" -> {
@@ -200,48 +188,16 @@ object FolderSettingsModule: SettingModule {
                 }
             }
             "no_part" -> {
-                (pref as SwitchPreferenceCompat).apply {
-                    setOnPreferenceChangeListener { _, newValue ->
-                        if(newValue as Boolean){
-                            preferences.edit(commit = true) {
-                                putBoolean("keep_cache", false)
-                            }
-                        }
-                        (host.findPref("keep_cache") as? SwitchPreferenceCompat)?.apply {
-                            if (newValue) {
-                                isEnabled = false
-                                isChecked = false
-                            } else {
-                                isEnabled = true
-                            }
-                        }
-                        host.refreshUI()
-                        true
-                    }
-                }
+                pref.isVisible = false
+                preferences.edit(commit = true) { putBoolean("no_part", false) }
             }
             "keep_cache" -> {
-                (pref as SwitchPreferenceCompat).apply {
-                    val noFragments = preferences.getBoolean("no_part", false)
-                    if (noFragments) {
-                        isEnabled = false
-                        isChecked = false
-                    } else {
-                        isEnabled = true
-                    }
-                }
+                pref.isVisible = false
+                preferences.edit(commit = true) { putBoolean("keep_cache", false) }
             }
             "cache_downloads" -> {
-                (pref as SwitchPreferenceCompat).apply {
-                    if (FileUtil.hasAllFilesAccess()) {
-                        isEnabled = true
-                    } else {
-                        isEnabled = false
-                        preferences.edit(commit = true) {
-                            putBoolean(pref.key, true)
-                        }
-                    }
-                }
+                pref.isVisible = false
+                preferences.edit(commit = true) { putBoolean(pref.key, false) }
             }
             "file_name_template" -> {
                 pref.apply {

@@ -395,15 +395,15 @@ object FileUtil {
 
     fun getCachePath(context: Context) : String {
         val preference = PreferenceManager.getDefaultSharedPreferences(context).getString("cache_path", "")
-        if (!preference.isNullOrBlank()) {
+        if (!preference.isNullOrBlank() && !preference.contains("clipflow_cache", ignoreCase = true)) {
             return formatPath(preference)
         }
 
         val externalPath = context.getExternalFilesDir(null)
         return if (externalPath == null){
-            context.cacheDir.absolutePath + "/clipflow_cache/"
+            context.cacheDir.absolutePath + "/eztube_cache/"
         }else{
-            externalPath.absolutePath + "/clipflow_cache/"
+            externalPath.absolutePath + "/eztube_cache/"
         }
     }
 
@@ -454,6 +454,10 @@ object FileUtil {
     }
 
     fun getDefaultApplicationPath() : String {
+        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)?.absolutePath + File.separator + "EZTube"
+    }
+
+    fun getLegacyApplicationPath() : String {
         return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)?.absolutePath + File.separator + "ClipFlow"
     }
 

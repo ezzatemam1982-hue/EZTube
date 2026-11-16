@@ -26,7 +26,7 @@
     <string name="downloading_update">Загрузка новой версии</string>
     <string name="audio">Аудио</string>
     <string name="video">Видео</string>
-    <string name="concurrent_fragments_summary">Количество видеофрагментов DASH/HLS, загружаемых одновременно</string>
+    <string name="concurrent_fragments_summary">Рекомендуется: 3–4. Более высокие значения могут вызвать ограничения сервера или повышенный расход заряда и ОЗУ.</string>
     <string name="downloading">Скачивание</string>
     <string name="limit_rate">Ограничение скорости</string>
     <string name="processing">Обработка</string>
@@ -631,13 +631,13 @@
     <string name="channel_master">Мастер</string>
     <string name="channel_beta">Бета</string>
     <string name="temporary_files">Временные файлы</string>
-    <string name="temporary_files_description">Рабочие файлы, хранящиеся в приложении. Временные настройки и другие данные, связанные с yt-dlp.</string>
+    <string name="temporary_files_description">Рабочие файлы EZTube. Временные настройки и кэшированные данные загрузок.</string>
     <string name="unfinished_downloads">Незавершенные загрузки</string>
     <string name="unfinished_downloads_summary">Частичные файлы остановленных или неудачных загрузок сохраняются для их последующего восстановления</string>
     <string name="info_jsons">Инфо-JSONs</string>
-    <string name="info_jsons_summary">Метаданные видео сохранены, чтобы yt-dlp не пришлось заново их извлекать</string>
-    <string name="ytdlp_cache">yt-dlp кеш</string>
-    <string name="ytdlp_cache_summary">Данные, которые yt-dlp повторно использует между запусками, например, подписи YouTube-авторов</string>
+    <string name="info_jsons_summary">Сохранённые метаданные видео, чтобы EZTube не загружал их повторно</string>
+    <string name="ytdlp_cache">Кэш движка приложения</string>
+    <string name="ytdlp_cache_summary">Временные данные движка, повторно используемые EZTube между запусками</string>
     <string name="temporary_configurations">Временные конфигурации</string>
     <string name="temporary_configurations_summary">Конфигурации команд, списки URL-адресов и другие временные файлы</string>
     <string name="downloaded_apks">Загруженные APK</string>

@@ -37,7 +37,7 @@
     <string name="video">Video</string>
     <string name="couldnt_find_apk">Tidak dapat menemukan APK yang cocok</string>
     <string name="audio">Audio</string>
-    <string name="concurrent_fragments_summary">Jumlah fragmen sebuah video DASH/HLS asal untuk diunduh secara bersamaan</string>
+    <string name="concurrent_fragments_summary">Disarankan: 3–4. Nilai yang lebih tinggi dapat memicu pembatasan server atau penggunaan baterai/RAM yang tinggi.</string>
     <string name="limit_rate_summary">Laju unduhan maksimal (dalam satuan bita per detik), misalnya 50K atau 4.2M</string>
     <string name="limit_rate">Batas laju</string>
     <string name="aria2_summary">Gunakan aria2c sebagai pengunduh alih-alih pengunduh asal</string>
@@ -612,13 +612,13 @@
     <string name="channel_master">Master</string>
     <string name="channel_beta">Beta</string>
     <string name="temporary_files">Berkas sementara</string>
-    <string name="temporary_files_description">Berkas kerja yang disimpan oleh aplikasi. Konfigurasi sementara dan data terkait yt-dlp lainnya.</string>
+    <string name="temporary_files_description">Berkas kerja yang disimpan oleh EZTube. Konfigurasi sementara dan data unduhan dalam cache.</string>
     <string name="unfinished_downloads">Unduhan yang belum selesai</string>
     <string name="unfinished_downloads_summary">Berkas sebagian dari unduhan yang terhenti atau gagal, disimpan agar bisa dilanjutkan</string>
     <string name="info_jsons">Info-JSON</string>
-    <string name="info_jsons_summary">Metadata video yang tersimpan sehingga yt-dlp tidak perlu mengambilnya lagi</string>
-    <string name="ytdlp_cache">Singgahan (cache) yt-dlp</string>
-    <string name="ytdlp_cache_summary">Data yang yt-dlp gunakan kembali antar proses, misalnya tanda tangan pemutar YouTube</string>
+    <string name="info_jsons_summary">Metadata video tersimpan agar EZTube tidak perlu mengambilnya lagi</string>
+    <string name="ytdlp_cache">Cache mesin aplikasi</string>
+    <string name="ytdlp_cache_summary">Data mesin sementara yang digunakan kembali oleh EZTube antar proses</string>
     <string name="temporary_configurations">Konfigurasi sementara</string>
     <string name="temporary_configurations_summary">Konfigurasi perintah, daftar URL, dan berkas berumur pendek lainnya</string>
     <string name="downloaded_apks">APK yang terunduh</string>

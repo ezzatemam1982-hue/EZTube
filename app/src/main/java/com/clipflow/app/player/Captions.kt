@@ -312,7 +312,7 @@ object CaptionSettings {
     private const val KEY_LANGUAGE = "language"
     private var prefs: SharedPreferences? = null
 
-    var show by mutableStateOf(Show.Foreign)
+    var show by mutableStateOf(Show.Never)
         private set
     var look by mutableStateOf(Look.ClipFlow)
         private set
@@ -323,12 +323,12 @@ object CaptionSettings {
     /** The language captions are shown in when the video has it (or it can be translated into): the last picked, else the app's. */
     val language: String get() = pickedLanguage ?: appLanguage
 
-    /** The app's language (the one picked in ClipFlow, else the phone's): "When it isn't in English" compares the video's with this. */
+    /** The app's language (the one picked in EZTube, else the phone's): "When it isn't in English" compares the video's with this. */
     val appLanguage: String get() = AppLanguage.locale.language.ifBlank { "en" }
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences("captions", Context.MODE_PRIVATE)
-        show = prefs?.getString(KEY_SHOW, null)?.let { s -> Show.entries.firstOrNull { it.name == s } } ?: Show.Foreign
+        show = prefs?.getString(KEY_SHOW, null)?.let { s -> Show.entries.firstOrNull { it.name == s } } ?: Show.Never
         look = prefs?.getString(KEY_LOOK, null)?.let { s -> Look.entries.firstOrNull { it.name == s } } ?: Look.ClipFlow
         size = prefs?.getFloat(KEY_SIZE, 1f) ?: 1f
         pickedLanguage = prefs?.getString(KEY_LANGUAGE, null)
@@ -338,6 +338,12 @@ object CaptionSettings {
     fun chooseLook(value: Look) { look = value; prefs?.edit()?.putString(KEY_LOOK, value.name)?.apply() }
     fun chooseSize(value: Float) { size = value; prefs?.edit()?.putFloat(KEY_SIZE, value)?.apply() }
     fun rememberLanguage(value: String) { pickedLanguage = value; prefs?.edit()?.putString(KEY_LANGUAGE, value)?.apply() }
+
+    fun resetToDefaults() {
+        chooseShow(Show.Never)
+        chooseLook(Look.ClipFlow)
+        chooseSize(1f)
+    }
 }
 
 /** Caption files, fetched once per track and kept for the last few videos. */

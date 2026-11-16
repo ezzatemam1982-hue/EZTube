@@ -20,12 +20,11 @@ import java.util.Locale
 
 /**
  * The app's language: the phone's (default) or one picked in the account sheet. Android 13+ keeps the pick
- * itself (per-app language, also in Settings › Apps › ClipFlow › Language) and recreates the window; older
+ * itself (per-app language, also in Settings › Apps › EZTube › Language) and recreates the window; older
  * phones keep it in prefs "language" and every window is wrapped in it ([wrap]).
  *
- * YouTube is always asked in English (`hl=en`): the parsers, the movie / members-only filters and the
- * bot-check detection read its English words. ClipFlow shows everything in the app's language itself
- * ([formatCount], [displayAge], [plural]); the sign-in page follows the app's language ([webTag]).
+ * UI chrome, Settings, and YouTube InnerTube `hl`/`gl` feed parameters all follow the active locale via
+ * [innerTubeLanguageTag] and [innerTubeRegion]; the sign-in page also follows [webTag].
  */
 object AppLanguage {
     /** A language ClipFlow is translated into, named in its own language so it can be found from any other. */
@@ -64,8 +63,11 @@ object AppLanguage {
         refresh()
     }
 
-    /** Re-reads the pick: on Android 13+ it can also change in Settings › Apps › ClipFlow › Language (the window is rebuilt). */
+    val initialized: Boolean get() = ::app.isInitialized
+
+    /** Re-reads the pick: on Android 13+ it can also change in Settings › Apps › EZTube › Language. */
     fun refresh() {
+        if (!::app.isInitialized) return
         picked = if (Build.VERSION.SDK_INT >= 33) {
             app.getSystemService(LocaleManager::class.java)?.applicationLocales?.get(0)?.toLanguageTag().orEmpty()
         } else {
@@ -74,18 +76,23 @@ object AppLanguage {
         applyBelow33()
     }
 
-    /** Picks [tag] ("" = the phone's) and rebuilds [activity] in it. */
+    /** Picks [tag] ("" = the phone's) and rebuilds [activity] so both Streaming and Downloads update immediately. */
     fun pick(activity: Activity, tag: String) {
         if (tag == picked) return
         picked = tag
         if (Build.VERSION.SDK_INT >= 33) {
-            // Android recreates the window itself once the process has the new configuration.
             activity.getSystemService(LocaleManager::class.java)?.applicationLocales =
                 if (tag.isEmpty()) LocaleList.getEmptyLocaleList() else LocaleList.forLanguageTags(tag)
+            // MainActivity declares configChanges="locale", so recreate explicitly to re-inflate XML Downloads views too.
+            if (!activity.isFinishing && !activity.isDestroyed) {
+                activity.recreate()
+            }
         } else {
             app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_TAG, tag).apply()
             applyBelow33()
-            activity.recreate()
+            if (!activity.isFinishing && !activity.isDestroyed) {
+                activity.recreate()
+            }
         }
     }
 
@@ -95,13 +102,45 @@ object AppLanguage {
 
     /** The language the app is shown in right now (the pick, else the phone's). */
     val locale: Locale
-        get() = resources.configuration.locales[0] ?: Locale.getDefault()
+        get() = if (::app.isInitialized) resources.configuration.locales[0] ?: Locale.getDefault() else Locale.getDefault()
 
     /** The phone's own language, whatever was picked. */
     val phoneLocale: Locale get() = Resources.getSystem().configuration.locales[0] ?: Locale.US
 
     /** The tag for web pages a person reads (Google's sign-in page), never for anything ClipFlow parses. */
     val webTag: String get() = locale.toLanguageTag()
+
+    /** YouTube InnerTube API interface language (`hl`) synchronized with the active app locale. */
+    fun innerTubeLanguageTag(): String =
+        if (!::app.isInitialized) "en" else innerTubeLanguageTagFor(locale)
+
+    /** YouTube InnerTube API content region (`gl`), preserving phone country if picked locale has none. */
+    fun innerTubeRegion(): String =
+        if (!::app.isInitialized) "US" else innerTubeRegionFor(locale, phoneLocale)
+
+    internal fun innerTubeLanguageTagFor(loc: Locale?): String {
+        val target = loc ?: return "en"
+        return when (val lang = target.language.lowercase(Locale.ROOT)) {
+            "" -> "en"
+            "in" -> "id"
+            "iw" -> "he"
+            "ji" -> "yi"
+            "zh" -> if (target.country.equals("TW", ignoreCase = true) || target.script.equals("Hant", ignoreCase = true)) {
+                "zh-TW"
+            } else {
+                "zh-CN"
+            }
+            else -> lang
+        }
+    }
+
+    internal fun innerTubeRegionFor(loc: Locale?, fallbackLocale: Locale? = null): String {
+        val primary = loc?.country?.trim().orEmpty()
+        if (primary.isNotEmpty()) return primary.uppercase(Locale.ROOT)
+        val secondary = fallbackLocale?.country?.trim().orEmpty()
+        if (secondary.isNotEmpty()) return secondary.uppercase(Locale.ROOT)
+        return "US"
+    }
 
     /** Resources in the app's language, for code with no composition (services, workers, state objects). */
     val resources: Resources get() = pickedResources ?: app.resources

@@ -12,9 +12,10 @@ import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.core.text.BidiFormatter
+import androidx.core.text.TextDirectionHeuristicsCompat
 import androidx.core.text.layoutDirection
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -26,35 +27,19 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import com.deniscerri.ytdl.BuildConfig
 import com.deniscerri.ytdl.R
-import com.deniscerri.ytdl.database.models.BackupSettingsItem
-import com.deniscerri.ytdl.database.models.CommandTemplate
-import com.deniscerri.ytdl.database.models.CookieItem
-import com.deniscerri.ytdl.database.models.DownloadItem
-import com.deniscerri.ytdl.database.models.HistoryItem
 import com.deniscerri.ytdl.database.models.RestoreAppDataItem
-import com.deniscerri.ytdl.database.models.ResultItem
-import com.deniscerri.ytdl.database.models.SearchHistoryItem
-import com.deniscerri.ytdl.database.models.TemplateShortcut
-import com.deniscerri.ytdl.database.models.observeSources.ObserveSourcesItem
 import com.deniscerri.ytdl.database.viewmodel.SettingsViewModel
 import com.deniscerri.ytdl.util.LocaleUtil
 import com.deniscerri.ytdl.util.BackupSettingsUtil
 import com.deniscerri.ytdl.util.FileUtil
 import com.deniscerri.ytdl.util.ThemeUtil
 import com.deniscerri.ytdl.util.UiUtil
-import com.deniscerri.ytdl.util.UpdateUtil
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
-import com.google.gson.Gson
-import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.BufferedReader
-import java.io.File
-import java.io.InputStreamReader
 
 
 class MainSettingsFragment : PreferenceFragmentCompat() {
@@ -62,7 +47,6 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
     private var restore : Preference? = null
     private var backupPath : Preference? = null
 
-    private var updateUtil: UpdateUtil? = null
     private var activeDownloadCount = 0
 
     private lateinit var settingsViewModel: SettingsViewModel
@@ -96,21 +80,21 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
 
         val appearance = findPreference<Preference>("appearance")
         val separator = if (LocaleUtil.currentLocale().layoutDirection == LayoutDirection.RTL) "،" else ","
-        appearance?.summary = "${if (Build.VERSION.SDK_INT < 33) getString(R.string.language) + "$separator " else ""}${getString(R.string.Theme)}$separator ${getString(R.string.accents)}$separator ${getString(R.string.preferred_search_engine)}"
+        appearance?.summary = "${getString(R.string.app_icon)}$separator ${getString(R.string.hide_thumbnails)}$separator ${getString(R.string.preferred_search_engine)}"
         appearance?.setOnPreferenceClickListener {
             navController.navigate(R.id.action_mainSettingsFragment_to_appearanceSettingsFragment)
             true
         }
 
         val folders = findPreference<Preference>("folders")
-        folders?.summary = "${getString(R.string.music_directory)}$separator ${getString(R.string.video_directory)}$separator ${getString(R.string.command_directory)}"
+        folders?.summary = "${getString(R.string.music_directory)}$separator ${getString(R.string.video_directory)}$separator ${getString(R.string.temporary_files)}"
         folders?.setOnPreferenceClickListener {
             navController.navigate(R.id.action_mainSettingsFragment_to_folderSettingsFragment)
             true
         }
 
         val downloading = findPreference<Preference>("downloading")
-        downloading?.summary = "${getString(R.string.quick_download)}$separator ${getString(R.string.concurrent_downloads)}"
+        downloading?.summary = "${getString(R.string.concurrent_fragments)}$separator ${getString(R.string.concurrent_downloads)}"
         downloading?.setOnPreferenceClickListener {
             navController.navigate(R.id.action_mainSettingsFragment_to_downloadSettingsFragment)
             true
@@ -130,9 +114,6 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             true
         }
 
-        //about section -------------------------
-        updateUtil = UpdateUtil(requireContext())
-
         WorkManager.getInstance(requireContext()).getWorkInfosByTagLiveData("download").observe(this){
             activeDownloadCount = 0
             it.forEach {w ->
@@ -144,93 +125,6 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
         backup = findPreference("backup")
         restore = findPreference("restore")
         backupPath = findPreference("backup_path")
-
-        findPreference<Preference>("app_version")?.apply {
-            summary = BuildConfig.VERSION_NAME
-            setOnPreferenceClickListener {
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.app_version_toast, BuildConfig.VERSION_NAME),
-                    Toast.LENGTH_SHORT
-                ).show()
-                true
-            }
-        }
-
-        findPreference<Preference>("check_app_updates")?.apply {
-            setOnPreferenceClickListener {
-                lifecycleScope.launch {
-                    val v = view ?: return@launch
-                    Snackbar.make(v, R.string.checking_for_updates, Snackbar.LENGTH_SHORT).show()
-                    val res = withContext(Dispatchers.IO) {
-                        updateUtil?.tryGetNewVersion()
-                    }
-                    if (res != null && res.isSuccess) {
-                        val release = res.getOrNull()
-                        if (release != null) {
-                            val prefs = PreferenceManager.getDefaultSharedPreferences(requireContext())
-                            UiUtil.showNewAppUpdateDialog(
-                                release,
-                                requireActivity(),
-                                updateUtil!!,
-                                viewLifecycleOwner,
-                                prefs,
-                                installLauncher
-                            )
-                        } else {
-                            Snackbar.make(v, R.string.you_are_in_latest_version, Snackbar.LENGTH_SHORT).show()
-                        }
-                    } else {
-                        val msg = res?.exceptionOrNull()?.message ?: getString(R.string.you_are_in_latest_version)
-                        Snackbar.make(v, msg, Snackbar.LENGTH_SHORT).show()
-                    }
-                }
-                true
-            }
-        }
-
-        findPreference<Preference>("update_ytdlp")?.apply {
-            setOnPreferenceClickListener {
-                lifecycleScope.launch {
-                    val v = view ?: return@launch
-                    Snackbar.make(v, R.string.checking_for_updates, Snackbar.LENGTH_SHORT).show()
-                    val res = withContext(Dispatchers.IO) {
-                        runCatching {
-                            updateUtil?.updateYTDL("stable")
-                        }.getOrNull()
-                    }
-                    if (res != null) {
-                        when (res.status) {
-                            UpdateUtil.YTDLPUpdateStatus.DONE -> {
-                                Snackbar.make(v, res.message, Snackbar.LENGTH_LONG).show()
-                                withContext(Dispatchers.IO) {
-                                    File(FileUtil.getInfoJsonPath(requireContext())).deleteRecursively()
-                                }
-                            }
-                            UpdateUtil.YTDLPUpdateStatus.ALREADY_UP_TO_DATE -> {
-                                Snackbar.make(v, getString(R.string.you_are_in_latest_version), Snackbar.LENGTH_SHORT).show()
-                            }
-                            UpdateUtil.YTDLPUpdateStatus.ERROR -> {
-                                Snackbar.make(v, res.message, Snackbar.LENGTH_LONG).show()
-                            }
-                            UpdateUtil.YTDLPUpdateStatus.PROCESSING -> {
-                                Snackbar.make(v, R.string.updating, Snackbar.LENGTH_SHORT).show()
-                            }
-                        }
-                    } else {
-                        Snackbar.make(v, getString(R.string.errored), Snackbar.LENGTH_SHORT).show()
-                    }
-                }
-                true
-            }
-        }
-
-        findPreference<Preference>("developer_credit")?.apply {
-            setOnPreferenceClickListener {
-                UiUtil.copyToClipboard(summary.toString(), requireActivity())
-                true
-            }
-        }
 
         backup!!.onPreferenceClickListener =
             Preference.OnPreferenceClickListener {
@@ -313,7 +207,7 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             }
 
         backupPath?.apply {
-            summary = FileUtil.formatPath(FileUtil.getBackupPath(requireContext()))
+            summary = formatLtrPathSummary(FileUtil.formatPath(FileUtil.getBackupPath(requireContext())))
             setOnPreferenceClickListener {
                 val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
                 intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
@@ -324,6 +218,9 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             }
         }
     }
+
+    private fun formatLtrPathSummary(path: String): String =
+        BidiFormatter.getInstance(LocaleUtil.currentLocale()).unicodeWrap(path, TextDirectionHeuristicsCompat.LTR)
 
     private var backupPathResultLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -338,17 +235,11 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             }
 
             val path = result.data!!.data.toString()
-            backupPath!!.summary = FileUtil.formatPath(path)
+            backupPath!!.summary = formatLtrPathSummary(FileUtil.formatPath(path))
             editor.putString("backup_path", path)
             editor.apply()
         }
     }
-
-
-
-    private val installLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {}
 
     private var appRestoreResultLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()

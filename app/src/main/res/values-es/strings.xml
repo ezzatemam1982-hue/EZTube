@@ -32,7 +32,7 @@
     <string name="downloading_update">Descargando nueva versión</string>
     <string name="audio">Audio</string>
     <string name="video">Video</string>
-    <string name="concurrent_fragments_summary">Número de fragmentos de un video DASH/HLS nativo para descargar simultáneamente</string>
+    <string name="concurrent_fragments_summary">Recomendado: 3–4. Valores más altos pueden provocar límites del servidor o mayor uso de batería/RAM.</string>
     <string name="url">URL</string>
     <string name="new_template">Nueva plantilla</string>
     <string name="adjust_templates">Ajustar plantillas</string>
@@ -630,8 +630,8 @@
     <string name="unfinished_downloads">Descargas no terminadas</string>
     <string name="unfinished_downloads_summary">Los archivos parciales de descargas paradas o falladas han sido guardados para su continuación</string>
     <string name="info_jsons">Info-JSONs</string>
-    <string name="info_jsons_summary">Se ha guardado la metadata del vídeo para que yt-dlp no tenga que volver a buscar</string>
-    <string name="ytdlp_cache">Caché de yt-dlp</string>
+    <string name="info_jsons_summary">Metadatos del video guardados para que EZTube no tenga que obtenerlos de nuevo</string>
+    <string name="ytdlp_cache">Caché del motor de la app</string>
     <string name="temporary_configurations">Configuraciones temporales</string>
     <string name="temporary_configurations_summary">Configuraciones de comandos, listas de URLs y otros archivos de poca duración</string>
     <string name="downloaded_apks">APKs descargadas</string>
@@ -639,4 +639,6 @@
     <string name="clear_everything">Limpiar todo</string>
     <string name="clear_temporary_files_confirm">¿Eliminar %1$s número de archivos? Esto no se puede deshacer.</string>
     <string name="failed_to_fetch">No se pudo obtener</string>
+    <string name="temporary_files_description">Archivos de trabajo de EZTube. Configuraciones temporales y datos de descarga en caché.</string>
+    <string name="ytdlp_cache_summary">Datos temporales del motor que EZTube reutiliza entre ejecuciones</string>
 </resources>

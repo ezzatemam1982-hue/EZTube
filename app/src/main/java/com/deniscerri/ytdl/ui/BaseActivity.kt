@@ -1,6 +1,7 @@
 package com.deniscerri.ytdl.ui
 
 import android.Manifest
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -11,6 +12,7 @@ import android.provider.Settings
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.clipflow.app.player.AppLanguage
 import com.deniscerri.ytdl.R
 import com.deniscerri.ytdl.util.ThemeUtil
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -18,6 +20,10 @@ import com.google.android.material.elevation.SurfaceColors
 import kotlin.system.exitProcess
 
 open class BaseActivity : AppCompatActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLanguage.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeUtil.updateTheme(this)
         window.navigationBarColor = SurfaceColors.SURFACE_2.getColor(this)

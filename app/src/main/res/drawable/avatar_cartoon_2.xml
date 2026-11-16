@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+    <!-- Backdrop -->
+    <path
+        android:fillColor="#E0E7FF"
+        android:pathData="M0,0h96v96h-96z" />
+    <path
+        android:fillColor="#C7D2FE"
+        android:pathData="M48,14 A34,34 0 1,1 47.9,14 Z" />
+    <!-- Afro / curly hair volume -->
+    <path
+        android:fillColor="#1C1917"
+        android:pathData="M48,15 C36,15 26,23 25,35 C22,38 22,46 26,50 C29,56 67,56 70,50 C74,46 74,38 71,35 C70,23 60,15 48,15 Z" />
+    <!-- Sweatshirt -->
+    <path
+        android:fillColor="#6D28D9"
+        android:pathData="M16,96 C19,76 31,70 48,70 C65,70 77,76 80,96 Z" />
+    <path
+        android:fillColor="#8B5CF6"
+        android:pathData="M37,71 C41,77 55,77 59,71 L56,77 C51,80 45,80 40,77 Z" />
+    <!-- Neck & shadow -->
+    <path
+        android:fillColor="#8D5524"
+        android:pathData="M41,59 h14 v13 c0,4 -14,4 -14,0 z" />
+    <path
+        android:fillColor="#6F4118"
+        android:pathData="M41,61 Q48,66 55,61 L55,64 Q48,68 41,64 Z" />
+    <!-- Ears -->
+    <path
+        android:fillColor="#9A5F2E"
+        android:pathData="M28,46 a4,5 0 1,0 0,10 a4,5 0 1,0 0,-10 z" />
+    <path
+        android:fillColor="#9A5F2E"
+        android:pathData="M68,46 a4,5 0 1,0 0,10 a4,5 0 1,0 0,-10 z" />
+    <!-- Face -->
+    <path
+        android:fillColor="#A56936"
+        android:pathData="M30,44 C30,29 66,29 66,44 C66,58 58,66 48,66 C38,66 30,58 30,44 Z" />
+    <!-- Curly hairline puffs -->
+    <path
+        android:fillColor="#1C1917"
+        android:pathData="M31,37 C33,31 40,28 48,29 C56,28 63,31 65,37 C61,34 55,33 48,35 C41,33 35,34 31,37 Z" />
+    <!-- Mint wireless earbuds accent -->
+    <path
+        android:fillColor="#2DD4BF"
+        android:pathData="M28,49 a2.3,2.3 0 1,0 0,4.6 a2.3,2.3 0 1,0 0,-4.6 z" />
+    <path
+        android:fillColor="#2DD4BF"
+        android:pathData="M68,49 a2.3,2.3 0 1,0 0,4.6 a2.3,2.3 0 1,0 0,-4.6 z" />
+    <!-- Eyebrows -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M36,41 Q40,39.5 44,41"
+        android:strokeColor="#1C1917"
+        android:strokeLineCap="round"
+        android:strokeWidth="2.1" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M52,41 Q56,39.5 60,41"
+        android:strokeColor="#1C1917"
+        android:strokeLineCap="round"
+        android:strokeWidth="2.1" />
+    <!-- Eyes & catchlights -->
+    <path
+        android:fillColor="#111827"
+        android:pathData="M40,46 a2.7,2.9 0 1,0 0,5.8 a2.7,2.9 0 1,0 0,-5.8 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M39.3,47.1 a0.95,0.95 0 1,0 0,1.9 a0.95,0.95 0 1,0 0,-1.9 z" />
+    <path
+        android:fillColor="#111827"
+        android:pathData="M56,46 a2.7,2.9 0 1,0 0,5.8 a2.7,2.9 0 1,0 0,-5.8 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M55.3,47.1 a0.95,0.95 0 1,0 0,1.9 a0.95,0.95 0 1,0 0,-1.9 z" />
+    <!-- Nose subtle curve -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M46.5,52 Q48,54 49.5,52"
+        android:strokeColor="#7B481F"
+        android:strokeLineCap="round"
+        android:strokeWidth="1.6" />
+    <!-- Smile -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M42,57 Q48,62.5 54,57 Z" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M42,57 Q48,62.5 54,57"
+        android:strokeColor="#4A2511"
+        android:strokeLineCap="round"
+        android:strokeWidth="1.7" />
+</vector>

@@ -46,47 +46,12 @@
             android:summary="@string/automatic_backup_summary"
             app:title="@string/automatic_backup" />
 
-        <Preference
+        <com.deniscerri.ytdl.ui.more.settings.LtrPathPreference
             app:icon="@drawable/baseline_folder_24"
             android:summary=""
             app:key="backup_path"
             app:title="@string/backup_path" />
 
     </PreferenceCategory>
-
-    <PreferenceCategory android:title="@string/about" >
-        <Preference
-            app:icon="@drawable/ic_info"
-            app:key="app_version"
-            app:title="@string/app_version" />
-
-        <Preference
-            app:icon="@drawable/ic_update_app"
-            app:key="check_app_updates"
-            app:title="@string/check_app_updates" />
-
-        <Preference
-            app:icon="@drawable/ic_update"
-            app:key="update_ytdlp"
-            app:title="@string/update_ytdlp_engine" />
-
-        <Preference
-            app:icon="@drawable/baseline_person_24"
-            app:key="developer_credit"
-            app:summary="@string/developer_name"
-            app:title="@string/developer" />
-
-        <Preference
-            app:icon="@drawable/ic_license"
-            app:key="license"
-            app:summary="GNU General Public License v3.0"
-            app:title="@string/license">
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:data="https://www.gnu.org/licenses/gpl-3.0.html" />
-        </Preference>
-
-    </PreferenceCategory>
-
 
 </PreferenceScreen>

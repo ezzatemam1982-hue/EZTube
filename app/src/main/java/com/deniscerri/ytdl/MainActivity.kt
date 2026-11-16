@@ -108,6 +108,8 @@ class MainActivity : BaseActivity() {
     private var composePlayerContainer: ComposeView? = null
     private var isInDownloaderHub: Boolean = true
     private var openedHubFromStream: Boolean = false
+    private var appliedThemeSignature: String? = null
+    private var appliedLocaleTag: String? = null
 
     private val backToStreamCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
@@ -125,10 +127,6 @@ class MainActivity : BaseActivity() {
     lateinit var installLauncher: ActivityResultLauncher<Intent>
         private set
 
-    override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(AppLanguage.wrap(newBase))
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val defaultPrefs = PreferenceManager.getDefaultSharedPreferences(this)
@@ -137,6 +135,9 @@ class MainActivity : BaseActivity() {
         }
         CrashListener(this).registerExceptionHandler()
         ThemeUtil.updateTheme(this)
+        AppLanguage.refresh()
+        appliedThemeSignature = ThemeUtil.currentThemeSignature()
+        appliedLocaleTag = AppLanguage.locale.toLanguageTag()
         enableEdgeToEdge()
         window.navigationBarColor = SurfaceColors.SURFACE_2.getColor(this)
         setContentView(R.layout.activity_main)
@@ -442,6 +443,9 @@ class MainActivity : BaseActivity() {
                 }
             }
         }
+        if (appliedThemeSignature != null && appliedThemeSignature != ThemeUtil.currentThemeSignature() && !isFinishing && !isDestroyed) {
+            recreate()
+        }
     }
 
     fun closeDownloaderHub() {
@@ -533,6 +537,12 @@ class MainActivity : BaseActivity() {
         super.onResume()
         window.statusBarColor = getColor(android.R.color.transparent)
         PlayerWindowTracker.onResume(this)
+        AppLanguage.refresh()
+        val localeChanged = appliedLocaleTag != null && appliedLocaleTag != AppLanguage.locale.toLanguageTag()
+        val hubThemeChanged = isInDownloaderHub && appliedThemeSignature != null && appliedThemeSignature != ThemeUtil.currentThemeSignature()
+        if ((localeChanged || hubThemeChanged) && !isFinishing && !isDestroyed) {
+            recreate()
+        }
     }
 
     override fun onDestroy() {
@@ -650,34 +660,6 @@ class MainActivity : BaseActivity() {
         resultViewModel.checkForUpdates { //on app update found
             if (preferences.getBoolean("automatic_backup", false)) {
                 settingsViewModel.backup()
-            }
-        }
-        if (preferences.getBoolean("auto_update_ytdlp", true)){
-            CoroutineScope(SupervisorJob()).launch {
-                try {
-                    val hasActiveQueuedDownloads = DBManager.getInstance(this@MainActivity).downloadDao.getDownloadsCountByStatus(listOf("Active", "Queued")) > 0
-                    if (hasActiveQueuedDownloads) return@launch
-
-                    if (firstRun) {
-                        Snackbar.make(findViewById(R.id.frame_layout), context.getString(R.string.ytdl_updating_started), Snackbar.LENGTH_LONG).apply {
-                            anchorView = navigationBarView
-                            show()
-                        }
-                    }
-
-                    val updateRes = withContext(Dispatchers.IO) {
-                        UpdateUtil(this@MainActivity).updateYTDL()
-                    }
-
-                    if (updateRes.status == UpdateUtil.YTDLPUpdateStatus.DONE) {
-                        val version = RuntimeManager.getInstance().version(context)
-                        val message = this@MainActivity.getString(R.string.ytld_update_success) + " [${version}]"
-                        Snackbar.make(findViewById(R.id.frame_layout), message, Snackbar.LENGTH_LONG).apply {
-                            anchorView = navigationBarView
-                            show()
-                        }
-                    }
-                } catch (err: Exception) {}
             }
         }
     }

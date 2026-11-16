@@ -209,7 +209,7 @@ object YouTube {
 
     suspend fun details(id: String, wait: Boolean = true): VideoDetails = withContext(Dispatchers.IO) {
         val info = if (wait) BotCheck.retrying(id) { StreamCache.getOrLoad(id) } else BotCheck.withoutWaiting(id) { StreamCache.getOrLoad(id) }
-        val picked = StreamSelection.pick(info, QualityPreference.effectiveFor(id))
+        val picked = StreamSelection.pick(info, QualityPreference.effectiveFor(id), QualityPreference.maxLadderHeightFor(id))
         val audioTracks = StreamSelection.audioTrackGroups(info).map { it.option }
         VideoDetails(
             item = VideoItem(
@@ -574,13 +574,20 @@ object QualityPreference {
 
     fun effectiveFor(videoId: String?): VideoQualityMode {
         val ov = overrideSnapshot
-        return if (videoId != null && ov != null && ov.first == videoId) ov.second else defaultSnapshot
+        if (videoId != null && ov != null && ov.first == videoId) return ov.second
+        return applyDataSaverCap(defaultSnapshot, DataSaver.snapshot())
+    }
+
+    fun maxLadderHeightFor(videoId: String?): Int {
+        val ov = overrideSnapshot
+        val hasOverride = videoId != null && ov != null && ov.first == videoId
+        return if (!hasOverride && DataSaver.snapshot()) DataSaver.MAX_HEIGHT else StreamSelection.MAX_HEIGHT
     }
 
     /** Reactive UI helper returning the highlighted row height (null = Auto) for [videoId]. */
     fun selectedHeightForUi(videoId: String?, availableHeights: List<Int>): Int? {
         val ov = videoOverride
-        val def = defaultMode
+        val def = applyDataSaverCap(defaultMode, DataSaver.enabled)
         val mode = if (videoId != null && ov != null && ov.first == videoId) ov.second else def
         return when (mode) {
             VideoQualityMode.Auto -> null
@@ -600,10 +607,19 @@ object QualityPreference {
     }
 }
 
+internal fun applyDataSaverCap(mode: VideoQualityMode, dataSaverEnabled: Boolean): VideoQualityMode {
+    if (!dataSaverEnabled) return mode
+    return when (mode) {
+        VideoQualityMode.Auto -> VideoQualityMode.Auto
+        VideoQualityMode.Highest -> VideoQualityMode.Fixed(DataSaver.MAX_HEIGHT)
+        is VideoQualityMode.Fixed -> if (mode.height > DataSaver.MAX_HEIGHT) VideoQualityMode.Fixed(DataSaver.MAX_HEIGHT) else mode
+    }
+}
+
 /** Chooses which of YouTube's many streams to play. */
 object StreamSelection {
     /** Above this height, phones gain little and pay a lot in data. */
-    private const val MAX_HEIGHT = 1080
+    internal const val MAX_HEIGHT = 1080
 
     data class Picked(val video: VideoStream?, val audio: AudioStream?, val muxed: VideoStream?) {
         val isPlayable get() = (video != null && audio != null) || muxed != null
@@ -718,17 +734,21 @@ object StreamSelection {
         return rawName ?: languageTag ?: "Original"
     }
 
-    fun pick(info: StreamInfo, mode: VideoQualityMode = QualityPreference.defaultMode): Picked {
+    fun pick(
+        info: StreamInfo,
+        mode: VideoQualityMode = QualityPreference.defaultMode,
+        maxAutoHeight: Int = MAX_HEIGHT,
+    ): Picked {
         val candidates = info.videoOnlyStreams
             .filter { it.isUrl && it.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP && it.height > 0 }
-        val video = selectVideoStream(candidates, mode)
+        val video = selectVideoStream(candidates, mode, maxAutoHeight)
         // The original language is preferred, but ANY audio track beats none: with no
         // accepted audio the player fell back to the 360p combined stream while the label
         // still said 1080p (the blurry-video bug, 2026-10-04).
         val audio = audioTrackGroups(info).firstOrNull()?.bestStream
         val muxedAll = info.videoStreams
             .filter { it.isUrl && it.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP }
-        val muxed = selectVideoStream(muxedAll.filter { it.height > 0 }, mode) ?: muxedAll.maxByOrNull { it.height }
+        val muxed = selectVideoStream(muxedAll.filter { it.height > 0 }, mode, maxAutoHeight) ?: muxedAll.maxByOrNull { it.height }
         return Picked(video, audio, muxed)
     }
 
@@ -738,7 +758,11 @@ object StreamSelection {
         return valid.filter { it <= targetHeight }.maxOrNull() ?: valid.minOrNull()
     }
 
-    internal fun selectVideoStream(candidates: List<VideoStream>, mode: VideoQualityMode): VideoStream? {
+    internal fun selectVideoStream(
+        candidates: List<VideoStream>,
+        mode: VideoQualityMode,
+        maxAutoHeight: Int = MAX_HEIGHT,
+    ): VideoStream? {
         if (candidates.isEmpty()) return null
         // H.264 first: every device decodes it in hardware. Other MPEG-4 next, WEBM next, others last.
         fun codecRank(stream: VideoStream): Int = when {
@@ -757,7 +781,7 @@ object StreamSelection {
                 )
                 .firstOrNull()
             VideoQualityMode.Auto, is VideoQualityMode.Fixed -> {
-                val ceiling = (mode as? VideoQualityMode.Fixed)?.height ?: MAX_HEIGHT
+                val ceiling = (mode as? VideoQualityMode.Fixed)?.height ?: maxAutoHeight
                 // Play exact match if offered, else closest resolution below target, else lowest available above target.
                 (candidates.filter { it.height <= ceiling }.ifEmpty { candidates })
                     .sortedWith(
@@ -773,12 +797,10 @@ object StreamSelection {
 
     /**
      * The Auto ladder: one codec family (H.264 if offered, else VP9 — the player won't
-     * switch between codecs), one stream per height (highest frame rate wins), up to 1080p.
-     * Played as a single adaptive DASH set, so playback starts at whatever the connection
-     * can sustain immediately and climbs, like YouTube.
+     * switch between codecs), one stream per height (highest frame rate wins), up to [maxHeight].
      */
-    fun autoLadder(info: StreamInfo): List<VideoStream> {
-        val usable = info.videoOnlyStreams.filter { it.isUrl && it.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP && it.height in 1..MAX_HEIGHT && it.itagItem != null }
+    fun autoLadder(info: StreamInfo, maxHeight: Int = MAX_HEIGHT): List<VideoStream> {
+        val usable = info.videoOnlyStreams.filter { it.isUrl && it.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP && it.height in 1..maxHeight && it.itagItem != null }
         val family = usable.filter { it.codec?.startsWith("avc") == true }.ifEmpty { usable.filter { it.format == MediaFormat.WEBM } }
         return family.groupBy { it.height }
             .map { (_, sameHeight) -> sameHeight.maxBy { it.fps * 100_000L + it.bitrate } }

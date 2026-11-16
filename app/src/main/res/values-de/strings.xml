@@ -65,7 +65,7 @@
     <string name="download_notification_channel_name">Datei Downloads</string>
     <string name="you_are_in_latest_version">Du verwendest die neueste Version</string>
     <string name="downloading_update">Neuste Version wird heruntergeladen</string>
-    <string name="concurrent_fragments_summary">Anzahl der Fragmente eines nativen DASH/HLS-Videos, die gleichzeitig heruntergeladen werden sollen</string>
+    <string name="concurrent_fragments_summary">Empfohlen: 3–4. Höhere Werte können zu Server-Ratenbegrenzungen oder höherem Akku- und RAM-Verbrauch führen.</string>
     <string name="concurrent_fragments">Gleichzeitige Fragmente</string>
     <string name="limit_rate">Geschwindigkeitsbegrenzung</string>
     <string name="embed_thumb">Vorschaubilder</string>
@@ -530,4 +530,8 @@
     </plurals>
     <string name="translators">Übersetzer</string>
     <string name="translators_summary">Personen, die bei der Übersetzung dieser App auf Weblate mitgeholfen haben</string>
+    <string name="temporary_files_description">Arbeitsdateien von EZTube. Temporäre Konfigurationen und zwischengespeicherte Download-Daten.</string>
+    <string name="info_jsons_summary">Gespeicherte Video-Metadaten, damit EZTube sie nicht erneut abrufen muss</string>
+    <string name="ytdlp_cache">App-Engine-Cache</string>
+    <string name="ytdlp_cache_summary">Temporäre Engine-Daten, die EZTube zwischen Vorgängen wiederverwendet</string>
 </resources>

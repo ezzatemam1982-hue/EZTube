@@ -37,7 +37,7 @@
     ile sınırla
     <string name="audio">Ses</string>
     <string name="video">Video</string>
-    <string name="concurrent_fragments_summary">Eşzamanlı olarak indirilecek DASH/HLS yerel video parçalarının sayısı</string>
+    <string name="concurrent_fragments_summary">Önerilen: 3–4. Daha yüksek değerler sunucu hız sınırlarına veya yüksek pil/RAM kullanımına yol açabilir.</string>
     <string name="concurrent_fragments">Eşzamanlı parçalar</string>
     <string name="downloading">İndiriliyor</string>
     <string name="limit_rate">İndirme hızı sınırı</string>
@@ -624,4 +624,8 @@
     <string name="internal_plugin_ffmpeg_preset">Dahili Eklenti FFmpeg Önayarı</string>
     <string name="internal_plugin_ffmpeg_preset_summary">FFmpeg\'in altyazı yazma vb. gibi dahili eklentiler için kullandığı önayar. Bu tercihin değiştirilmesi, bitimdeki dosya boyutunu etkiler!</string>
     <string name="history_quick_action">Hızlı Ayar Butonu</string>
+    <string name="temporary_files_description">EZTube tarafından tutulan çalışma dosyaları. Geçici yapılandırmalar ve önbelleğe alınan indirme verileri.</string>
+    <string name="info_jsons_summary">EZTube\'un tekrar indirmemesi için kaydedilen video meta verileri</string>
+    <string name="ytdlp_cache">Uygulama motoru önbelleği</string>
+    <string name="ytdlp_cache_summary">EZTube\'un çalıştırmalar arasında yeniden kullandığı geçici motor verileri</string>
 </resources>

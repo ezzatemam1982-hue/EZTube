@@ -73,6 +73,7 @@ object SettingsRegistry {
 
         for (i in 0 until group.preferenceCount) {
             val p = group.getPreference(i)
+            if (!p.isVisible) continue
             // custom widgets like the update status card can't be shown as a search result
             if (p is NonSearchablePreference) continue
             if (p !is PreferenceGroup && p.title.isNullOrBlank()) continue

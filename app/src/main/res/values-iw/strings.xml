@@ -619,8 +619,8 @@
     <string name="temporary_files">קבצים זמניים</string>
     <string name="unfinished_downloads">הורדות חלקיות</string>
     <string name="unfinished_downloads_summary">קבצים חלקיים של הורדות שנעצרו או נכשלו, נשמרו כדי לאפשר להמשיך את ההורדה</string>
-    <string name="ytdlp_cache">המטמון של yt-dlp</string>
-    <string name="ytdlp_cache_summary">נתונים ש־yt-dlp עושה בהם שימוש חוזר בין ריצות, כמו חתימות נגן YouTube</string>
+    <string name="ytdlp_cache">מטמון מנוע היישום</string>
+    <string name="ytdlp_cache_summary">נתוני מנוע זמניים שבהם EZTube משתמש שוב בין הפעלות</string>
     <string name="temporary_configurations">הגדרות זמניות</string>
     <string name="downloaded_apks">קובצי APK שירדו</string>
     <string name="downloaded_apks_summary">קובצי APK שירדו לעדכוני יישומים וחבילות</string>
@@ -665,8 +665,8 @@
     <string name="update_checked_ago">נבדק ב־%1$s</string>
     <string name="update_checked_just_now">נבדק כרגע</string>
     <string name="update_not_checked_yet">לא נבדק עדיין</string>
-    <string name="temporary_files_description">קובצי עבודה שמוחזקים על ידי היישומון. הגדרות זמניות ונתוני אחרים שקשורים ב־yt-dlp.</string>
-    <string name="info_jsons_summary">נתוני העל של הסרטון נשמרו כך ש־yt-dlp לא צריך למשוך אותם שוב</string>
+    <string name="temporary_files_description">קובצי עבודה השמורים על ידי EZTube. הגדרות זמניות ונתוני הורדה במטמון.</string>
+    <string name="info_jsons_summary">מטא־נתוני וידאו שמורים כך ש־EZTube לא יצטרך למשוך אותם שוב</string>
     <string name="temporary_configurations_summary">הגדרות פקודות, רשימות כתובות וקבצים קצרי מועד אחרים</string>
     <string name="write_ytdlp_terminal">כתיבה אוטומטית של yt-dlp במסוף</string>
     <string name="clear">פינוי</string>

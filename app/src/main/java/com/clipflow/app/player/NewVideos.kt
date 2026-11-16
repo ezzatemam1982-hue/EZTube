@@ -155,21 +155,49 @@ object NewVideos {
     }
 
     private val AGE = Regex("(\\d+)\\s*(second|minute|hour|day|week|month|year)s?\\s+ago")
+    private val ARABIC_AGE_UNIT = Regex("(ثانية|ثانيتين|ثوان|ثواني|دقيقة|دقيقتين|دقائق|ساعة|ساعتين|ساعات|يوم|يومين|يومان|أيام|ايام|أسبوع|اسبوع|أسبوعين|اسبوعين|أسابيع|اسابيع|شهر|شهرين|شهور|أشهر|اشهر|سنة|سنتين|سنوات|أعوام|اعوام|عام)")
 
-    /** "3 hours ago", "Streamed 2 days ago" → how long ago in ms; null if it doesn't say. */
+    /** "3 hours ago", "Streamed 2 days ago", "قبل ٣ ساعات" → how long ago in ms; null if it doesn't say. */
     internal fun ageMs(text: String?): Long? {
-        val m = AGE.find(text?.lowercase() ?: return null) ?: return null
-        val n = m.groupValues[1].toLong()
-        val unit = when (m.groupValues[2]) {
-            "second" -> 1_000L
-            "minute" -> 60_000L
-            "hour" -> 3_600_000L
-            "day" -> 86_400_000L
-            "week" -> 7 * 86_400_000L
-            "month" -> 30 * 86_400_000L
+        val raw = text ?: return null
+        val normalized = normalizeDigitsAndMarks(raw).lowercase()
+        AGE.find(normalized)?.let { m ->
+            val n = m.groupValues[1].toLongOrNull() ?: return null
+            val unit = when (m.groupValues[2]) {
+                "second" -> 1_000L
+                "minute" -> 60_000L
+                "hour" -> 3_600_000L
+                "day" -> 86_400_000L
+                "week" -> 7 * 86_400_000L
+                "month" -> 30 * 86_400_000L
+                else -> 365 * 86_400_000L
+            }
+            return n * unit
+        }
+        val ar = ARABIC_AGE_UNIT.find(normalized)?.groupValues?.get(1) ?: return null
+        val n = Regex("\\d+").find(normalized)?.value?.toLongOrNull()
+            ?: if (ar.endsWith("ين") || ar == "يومان") 2L else 1L
+        val unit = when {
+            ar.startsWith("ثان") || ar.startsWith("ثو") -> 1_000L
+            ar.startsWith("دق") -> 60_000L
+            ar.startsWith("ساع") -> 3_600_000L
+            ar.startsWith("يوم") || ar == "أيام" || ar == "ايام" -> 86_400_000L
+            ar.contains("سبوع") || ar.contains("سابيع") -> 7 * 86_400_000L
+            ar.startsWith("شه") || ar.endsWith("شهر") -> 30 * 86_400_000L
             else -> 365 * 86_400_000L
         }
         return n * unit
+    }
+
+    private fun normalizeDigitsAndMarks(s: String): String = buildString(s.length) {
+        for (ch in s) {
+            when (ch) {
+                in '\u0660'..'\u0669' -> append(('0'.code + (ch.code - 0x0660)).toChar())
+                in '\u06F0'..'\u06F9' -> append(('0'.code + (ch.code - 0x06F0)).toChar())
+                '\u0651', '\u064E', '\u064F', '\u0650', '\u064B', '\u064C', '\u064D', '\u0652' -> Unit
+                else -> append(ch)
+            }
+        }
     }
 
     /**

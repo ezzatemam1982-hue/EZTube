@@ -807,8 +807,8 @@ object InnerTube {
                 JSONObject()
                     .put("clientName", "WEB")
                     .put("clientVersion", Account.clientVersion())
-                    .put("hl", "en")
-                    .put("gl", "US")
+                    .put("hl", AppLanguage.innerTubeLanguageTag())
+                    .put("gl", AppLanguage.innerTubeRegion())
                     .apply { Account.visitorData()?.let { put("visitorData", it) } },
             ),
         )
@@ -1028,7 +1028,7 @@ object InnerTube {
                 id = id,
                 title = meta?.optJSONObject("title")?.optString("content").orEmpty(),
                 thumbnail = obj.firstImageSource(),
-                subtitle = obj.collectStrings("text").firstOrNull { it.contains("video", ignoreCase = true) },
+                subtitle = obj.collectStrings("text").firstOrNull { isPlaylistCountText(it) },
             )
         }
         else -> null
@@ -1373,7 +1373,7 @@ object InnerTube {
             if (key != "richShelfRenderer" && key != "shelfRenderer") return@walk
             val title = shelf.text("title") ?: shelf.optJSONObject("header")?.collectStrings("content")?.firstOrNull()
             // Emptied in place: walk() goes into it next and finds nothing.
-            if (title?.trim().equals(MOST_RELEVANT, ignoreCase = true)) shelf.keys().asSequence().toList().forEach(shelf::remove)
+            if (MOST_RELEVANT_TITLES.any { title?.trim().equals(it, ignoreCase = true) }) shelf.keys().asSequence().toList().forEach(shelf::remove)
         }
         val page = parseFeed(root)
         var last = 0L
@@ -1381,7 +1381,13 @@ object InnerTube {
         return page.copy(videos = page.videos.sortedBy { ages[it.id] })
     }
 
-    private const val MOST_RELEVANT = "Most relevant"
+    private val MOST_RELEVANT_TITLES = setOf(
+        "Most relevant",
+        "الأكثر ملاءمة", "الأكثر صلة",
+        "Más relevantes", "Mais relevantes", "Plus pertinentes", "Relevanteste",
+        "Più rilevanti", "Paling relevan", "En alakalı", "Liên quan nhất",
+        "Наиболее актуальные", "सबसे प्रासंगिक", "関連性の高い順",
+    )
 
     /**
      * Home's category chips: `feedFilterChipBarRenderer` (the grid's header) → `chipCloudChipRenderer`
@@ -1390,7 +1396,7 @@ object InnerTube {
      * tapCommand.innertubeCommand.continuationCommand.token}) is read too in case Home moves to it.
      * The selected chip is the feed already shown ("All"), so its token is null. Chips that load
      * nothing by continuation (a drop-down, a link elsewhere) are left out, and so are
-     * [SKIPPED_CHIPS]. YouTube is always asked in English, so the titles are stable keys.
+     * [SKIPPED_CHIPS].
      */
     internal fun parseHomeChips(root: JSONObject): List<FeedChip> {
         val out = mutableListOf<FeedChip>()
@@ -1423,7 +1429,22 @@ object InnerTube {
      * Home chips ClipFlow can't fill: "Your custom feed" is a prompt box with no videos (Derek,
      * 6632.png), and "Live" is all live streams, which aren't played (6633.png).
      */
-    private val SKIPPED_CHIPS = listOf("Your custom feed", "Live")
+    private val SKIPPED_CHIPS = setOf(
+        "Your custom feed", "Live",
+        "موجزك المخصّص", "موجزك المخصص", "موجز الفيديو المخصص", "موجز الفيديو المخصّص",
+        "مباشر", "بث مباشر", "البث المباشر",
+        "Tu feed personalizado", "En directo", "En vivo",
+        "Seu feed personalizado", "Ao vivo",
+        "Votre flux personnalisé", "En direct",
+        "Dein persönlicher Feed",
+        "Il tuo feed personalizzato", "Dal vivo",
+        "Feed kustom Anda",
+        "Özel akışınız", "Canlı",
+        "Bảng tin tùy chỉnh của bạn", "Trực tiếp",
+        "Персонализированный фид", "Прямые трансляции", "Эфир",
+        "आपका कस्टम फ़ीड", "लाइव",
+        "カスタム フィード", "ライブ",
+    )
 
     /**
      * A channel page (its Home tab selected): `twoColumnBrowseResultsRenderer.tabs[].tabRenderer`
@@ -1438,10 +1459,15 @@ object InnerTube {
         val list = root.optJSONObject("contents")?.optJSONObject("twoColumnBrowseResultsRenderer")?.optJSONArray("tabs")
         for (i in 0 until (list?.length() ?: 0)) {
             val tab = list?.optJSONObject(i)?.optJSONObject("tabRenderer") ?: continue
-            val kind = ChannelTab.entries.firstOrNull { it.title.equals(tab.optString("title"), ignoreCase = true) } ?: continue
-            val params = tab.optJSONObject("endpoint")?.optJSONObject("browseEndpoint")?.optString("params")?.ifBlank { null } ?: continue
-            tabs.putIfAbsent(kind, params)
-            if (kind == ChannelTab.Home) homeContent = tab.optJSONObject("content")
+            val params = tab.optJSONObject("endpoint")?.optJSONObject("browseEndpoint")?.optString("params")?.ifBlank { null }
+            val kind = tabOfParams(params)
+                ?: ChannelTab.entries.firstOrNull { it.title.equals(tab.optString("title"), ignoreCase = true) }
+                ?: if (tab.optBoolean("selected") && tab.has("content")) ChannelTab.Home else null
+                ?: continue
+            if (params != null) tabs.putIfAbsent(kind, params)
+            if (kind == ChannelTab.Home || (homeContent == null && tab.optBoolean("selected") && tab.has("content"))) {
+                homeContent = tab.optJSONObject("content")
+            }
         }
         var featured: VideoItem? = null
         val shelves = mutableListOf<ChannelShelf>()
@@ -1577,11 +1603,13 @@ object InnerTube {
             if (key != "badgeViewModel") return@walk
             val text = badge.optString("badgeText")
             if (CONTENT_RATING.matches(text) ||
-                (badge.optString("badgeStyle") == "BADGE_COMMERCE" && !text.equals("Fundraiser", ignoreCase = true))
+                (badge.optString("badgeStyle") == "BADGE_COMMERCE" && !FUNDRAISER_LABELS.any { it.equals(text, ignoreCase = true) })
             ) movie = true
         }
         return movie
     }
+
+    private val FUNDRAISER_LABELS = setOf("Fundraiser", "جمع تبرعات", "حملة لجمع التبرعات")
 
     private val CONTENT_RATING = Regex("^(G|PG|PG-13|R|NC-17|NR|TV-(Y|Y7|G|PG|14|MA))$")
 
@@ -1610,36 +1638,48 @@ object InnerTube {
             thumbnail = "https://i.ytimg.com/vi/$id/hqdefault.jpg",
             avatar = avatar?.let(::absoluteUrl),
             durationSec = parseDuration(duration),
-            views = parseViews(o.text("viewCountText") ?: o.text("shortViewCountText") ?: infoRuns.firstOrNull { it.contains("view") }),
-            uploaded = o.text("publishedTimeText") ?: infoRuns.firstOrNull { it.contains("ago") },
+            views = parseViews(o.text("viewCountText") ?: o.text("shortViewCountText") ?: infoRuns.firstOrNull(::isViewsText)),
+            uploaded = o.text("publishedTimeText") ?: infoRuns.firstOrNull(::isUploadedAgeText),
             feedback = feedbackOf(o),
         )
     }
 
-    private fun parseLockup(o: JSONObject): VideoItem? {
+    internal fun parseLockup(o: JSONObject): VideoItem? {
         val id = o.optString("contentId").ifBlank { return null }
         val meta = o.optJSONObject("metadata")?.optJSONObject("lockupMetadataViewModel") ?: return null
         val title = meta.optJSONObject("title")?.optString("content")?.ifBlank { null } ?: return null
-        // metadataRows: [ [channel], [views, age] ] as text parts.
-        val parts = mutableListOf<String>()
+        // metadataRows: row 0 = [channel], row 1+ = [views, age].
+        val row0 = mutableListOf<String>()
+        val restRows = mutableListOf<String>()
         meta.optJSONObject("metadata")?.optJSONObject("contentMetadataViewModel")?.optJSONArray("metadataRows")?.let { rows ->
             for (r in 0 until rows.length()) {
                 val ps = rows.optJSONObject(r)?.optJSONArray("metadataParts") ?: continue
-                for (p in 0 until ps.length()) ps.optJSONObject(p)?.optJSONObject("text")?.optString("content")?.ifBlank { null }?.let(parts::add)
+                val target = if (r == 0) row0 else restRows
+                for (p in 0 until ps.length()) {
+                    ps.optJSONObject(p)?.optJSONObject("text")?.optString("content")?.ifBlank { null }?.let(target::add)
+                }
             }
         }
+        val allParts = row0 + restRows
+        val metricCandidates = if (restRows.isNotEmpty()) restRows else allParts
+        val viewsPart = metricCandidates.firstOrNull(::isViewsText) ?: allParts.firstOrNull(::isViewsText)
+        val uploadedPart = metricCandidates.firstOrNull(::isUploadedAgeText)
+            ?: allParts.firstOrNull(::isUploadedAgeText)
+            ?: restRows.firstOrNull { it != viewsPart && parseViews(it) < 0 }
+        val channelPart = row0.firstOrNull { !isViewsText(it) && !isUploadedAgeText(it) }
+            ?: allParts.firstOrNull { !isViewsText(it) && !isUploadedAgeText(it) }
         val avatar = meta.optJSONObject("image")?.collectStrings("url")?.firstOrNull()
         val duration = o.optJSONObject("contentImage")?.collectStrings("text")?.firstOrNull { DURATION.matches(it) }
         return VideoItem(
             id = id,
             title = title,
-            channel = parts.firstOrNull { !it.contains("view") && !it.contains("ago") }.orEmpty(),
+            channel = channelPart.orEmpty(),
             channelUrl = o.collectStrings("browseId").firstOrNull { it.startsWith("UC") }?.let { "https://www.youtube.com/channel/$it" },
             thumbnail = "https://i.ytimg.com/vi/$id/hqdefault.jpg",
             avatar = avatar?.let(::absoluteUrl),
             durationSec = parseDuration(duration),
-            views = parseViews(parts.firstOrNull { it.contains("view") }),
-            uploaded = parts.firstOrNull { it.contains("ago") },
+            views = parseViews(viewsPart),
+            uploaded = uploadedPart,
             feedback = feedbackOf(o),
         )
     }
@@ -1647,7 +1687,7 @@ object InnerTube {
     /**
      * A card's "Not interested" and "Don't recommend channel" (#16): items of its ⋮ menu that carry a
      * feedbackEndpoint — a lockup's sheet (listItemViewModel) or an older renderer's menuServiceItemRenderer.
-     * Known by YouTube's icon (NOT_INTERESTED / REMOVE), else by the English label (hl=en). Signed out, the
+     * Known by YouTube's icon (NOT_INTERESTED / REMOVE), else by the English label. Signed out, the
      * menu holds only Add to queue and Share, so cards have none.
      */
     internal fun feedbackOf(o: JSONObject): CardFeedback? {
@@ -1702,15 +1742,72 @@ object InnerTube {
         return t.split(':').fold(0L) { acc, part -> acc * 60 + (part.toLongOrNull() ?: 0) }
     }
 
-    /** "1,234,567 views", "1.2M views", "No views" → count, or -1 when unknown. */
+    /** "1,234,567 views", "1.2M views", "١٫٢ مليون مشاهدة", "No views" → count, or -1 when unknown. */
     internal fun parseViews(text: String?): Long {
-        val t = text?.lowercase()?.replace(",", "")?.trim() ?: return -1
-        if (t.startsWith("no ")) return 0
-        val m = Regex("([\\d.]+)\\s*([kmb]?)").find(t) ?: return -1
+        val cleaned = text?.let(::normalizeNumericText)?.lowercase()?.trim() ?: return -1
+        if (cleaned.isEmpty()) return -1
+        if (ZERO_VIEWS_PREFIXES.any { cleaned.startsWith(it) || cleaned == it }) return 0
+        if (cleaned.contains("مشاهدتان")) return 2
+        if (cleaned.contains("مشاهدة واحدة")) return 1
+        val normalizedNumbers = cleaned
+            .replace(Regex("(\\d)[,](?=\\d{3}\\b)"), "$1")
+            .replace(",", ".")
+            .replace(Regex("(?<=\\d)\\s+(?=\\d{3}\\b)"), "")
+        val m = VIEW_COUNT_NUMBER.find(normalizedNumbers) ?: return -1
         val n = m.groupValues[1].toDoubleOrNull() ?: return -1
-        val mult = when (m.groupValues[2]) { "k" -> 1e3; "m" -> 1e6; "b" -> 1e9; else -> 1.0 }
+        val mult = when (m.groupValues[2]) {
+            "k", "ألف", "الف", "آلاف", "тыс", "mil", "rb" -> 1e3
+            "万" -> 1e4
+            "m", "مليون", "ملايين", "mio", "mln", "млн", "jt", "tr" -> 1e6
+            "億" -> 1e8
+            "b", "bn", "مليار", "مليارات", "mrd", "млрд" -> 1e9
+            else -> 1.0
+        }
         return (n * mult).toLong()
     }
+
+    private fun isViewsText(text: String): Boolean {
+        val low = normalizeNumericText(text).lowercase()
+        return VIEWS_TOKENS.any { low.contains(it) } ||
+            ZERO_VIEWS_PREFIXES.any { low.startsWith(it) }
+    }
+
+    private fun isUploadedAgeText(text: String): Boolean {
+        val low = normalizeNumericText(text).lowercase()
+        return AGE_TOKENS.any { low.contains(it) }
+    }
+
+    private fun isPlaylistCountText(text: String): Boolean {
+        val low = normalizeNumericText(text).lowercase()
+        return PLAYLIST_COUNT_TOKENS.any { low.contains(it) }
+    }
+
+    private fun normalizeNumericText(s: String): String = buildString(s.length) {
+        for (ch in s) {
+            when (ch) {
+                in '\u0660'..'\u0669' -> append(('0'.code + (ch.code - 0x0660)).toChar())
+                in '\u06F0'..'\u06F9' -> append(('0'.code + (ch.code - 0x06F0)).toChar())
+                '\u066B' -> append('.')
+                '\u066C', '\u0651', '\u064E', '\u064F', '\u0650', '\u064B', '\u064C', '\u064D', '\u0652',
+                '\u200E', '\u200F' -> Unit
+                else -> append(ch)
+            }
+        }
+    }
+
+    private val VIEW_COUNT_NUMBER = Regex("([\\d.]+)\\s*(مليارات|مليار|ملايين|مليون|ألف|آلاف|الف|млрд|тыс|млн|mio|mln|mil|mrd|rb|jt|tr|bn|k|m|b|万|億)?")
+    private val ZERO_VIEWS_PREFIXES = setOf("no views", "بدون مشاهدات", "لا توجد مشاهدات", "بلا مشاهدات", "sin vistas", "aucune vue", "keine aufrufe")
+    private val VIEWS_TOKENS = setOf(
+        "view", "مشاهد", "vista", "visualiz", "vue", "aufruf", "visualizz", "ditonton", "görüntüleme",
+        "lượt xem", "просмотр", "व्यू", "回視聴",
+    )
+    private val AGE_TOKENS = setOf(
+        "ago", "قبل", "منذ", "hace ", "il y a", "vor ", "há ", "fa", "lalu", "önce", "trước", "назад", "पहले", "前",
+        "streamed", "premiered", "تم بثه", "تم عرضه",
+    )
+    private val PLAYLIST_COUNT_TOKENS = setOf(
+        "video", "فيديو", "مقطع", "vídeo", "vidéo", "lượt", "видео", "वीडियो", "本",
+    )
 
     private fun absoluteUrl(url: String) = if (url.startsWith("//")) "https:$url" else url
 }

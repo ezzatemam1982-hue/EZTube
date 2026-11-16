@@ -644,13 +644,13 @@
     <string name="channel_beta">சோதனை முறை</string>
     <string name="ytdlp" translatable="false">yt-dlp</string>
     <string name="temporary_files">தற்காலிகக் கோப்புகள்</string>
-    <string name="temporary_files_description">செயலியால் வைக்கப்பட்டுள்ள பணிக் கோப்புகள், தற்காலிகக் கட்டமைப்புகள் மற்றும் yt-dlp சார்ந்த பிற தரவுகள்.</string>
+    <string name="temporary_files_description">EZTube வைத்திருக்கும் பணிக் கோப்புகள், தற்காலிக அமைப்புகள் மற்றும் தேக்கக பதிவிறக்கத் தரவுகள்.</string>
     <string name="unfinished_downloads">முடியாத பதிவிறக்கங்கள்</string>
     <string name="unfinished_downloads_summary">நிறுத்தப்பட்ட அல்லது தோல்வியுற்ற பதிவிறக்கங்களின் அரைகுறைக் கோப்புகள், மீண்டும் தொடர ஏதுவாக வைக்கப்பட்டுள்ளன</string>
     <string name="info_jsons">Info-JSONகள்</string>
-    <string name="info_jsons_summary">yt-dlp மீண்டும் தரவைப் பெற வேண்டிய அவசியமில்லாமல் சேமிக்கப்பட்ட காணொளி மேல் விவரங்கள்</string>
-    <string name="ytdlp_cache">yt-dlp தேக்ககம்</string>
-    <string name="ytdlp_cache_summary">யூடியூப் இயக்கி கையொப்பங்கள் போன்ற இயக்கங்களுக்கு இடையே yt-dlp மீண்டும் பயன்படுத்தும் தரவு</string>
+    <string name="info_jsons_summary">EZTube மீண்டும் பெறத் தேவையில்லாமல் சேமிக்கப்பட்ட காணொளி மெட்டாடேட்டா</string>
+    <string name="ytdlp_cache">செயலி இயந்திரத் தேக்ககம்</string>
+    <string name="ytdlp_cache_summary">இயக்கங்களுக்கு இடையே EZTube மீண்டும் பயன்படுத்தும் தற்காலிக இயந்திரத் தரவு</string>
     <string name="temporary_configurations">தற்காலிகக் கட்டமைப்புகள்</string>
     <string name="temporary_configurations_summary">கட்டளை அமைப்புகள், பிணைப்புப் பட்டியல்கள் மற்றும் பிற குறுகிய காலக் கோப்புகள்</string>
     <string name="downloaded_apks">பதிவிறக்கிய APKகள்</string>
