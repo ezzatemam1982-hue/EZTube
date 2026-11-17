@@ -21,10 +21,38 @@ object AppPreferenceDefaults {
 
     fun migrateAndApply(context: Context) {
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        prefs.edit(commit = true) {
+        val allSwipeGestures = context.resources.getStringArray(R.array.swipe_gestures_values).toSet()
+        val needsInitialV103 = !prefs.getBoolean(KEY_V103_MIGRATED, false)
+        val needsLocks = !prefs.getBoolean("check_clipboard_home", false) ||
+            prefs.getString("label_visibility", null) != "always" ||
+            prefs.getStringSet("swipe_gesture", null) != allSwipeGestures ||
+            !prefs.getBoolean("swipe_gestures_download_card", false) ||
+            prefs.getBoolean("cache_downloads", true) ||
+            prefs.getBoolean("no_part", true) ||
+            prefs.getBoolean("keep_cache", true) ||
+            !prefs.getBoolean("trim_filenames", false) ||
+            prefs.getBoolean("restrict_filenames", true) ||
+            !prefs.getBoolean("use_cookies", false) ||
+            prefs.getBoolean("quick_download", true) ||
+            prefs.getBoolean("log_downloads", true) ||
+            prefs.getBoolean("use_alarm_for_scheduling", true)
+        val musicPath = prefs.getString("music_path", "").orEmpty()
+        val videoPath = prefs.getString("video_path", "").orEmpty()
+        val commandPath = prefs.getString("command_path", "").orEmpty()
+        val backupPath = prefs.getString("backup_path", "").orEmpty()
+        val cachePath = prefs.getString("cache_path", "").orEmpty()
+        val needsMigration = musicPath.isBlank() || isLegacyClipFlowPath(musicPath, "/Audio") ||
+            videoPath.isBlank() || isLegacyClipFlowPath(videoPath, "/Video") ||
+            commandPath.isBlank() || isLegacyClipFlowPath(commandPath, "/Command") ||
+            (backupPath.isNotBlank() && isLegacyClipFlowPath(backupPath, "/Backups")) ||
+            cachePath.contains("clipflow_cache", ignoreCase = true)
+
+        if (!needsInitialV103 && !needsLocks && !needsMigration) return
+
+        prefs.edit {
             enforceLockedPreferences(context, this)
             migrateLegacyPaths(prefs, this)
-            if (!prefs.getBoolean(KEY_V103_MIGRATED, false)) {
+            if (needsInitialV103) {
                 putString("search_engine", DEFAULT_SEARCH_ENGINE)
                 putBoolean("search_suggestions", true)
                 putInt("concurrent_fragments", DEFAULT_CONCURRENT_FRAGMENTS)

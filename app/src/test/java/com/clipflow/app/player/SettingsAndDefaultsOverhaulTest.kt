@@ -239,4 +239,30 @@ class SettingsAndDefaultsOverhaulTest {
             scope.cancel()
         }
     }
+
+    @Test
+    fun silentYtdlpStartupUpdateDelaysEightSecondsAndRunsBackgroundWrapperCleanly() {
+        assertEquals(8_000L, UpdateUtil.YTDLP_SILENT_UPDATE_DELAY_MS)
+        val computed = UpdateUtil.runAtBackgroundPriority { 42 }
+        assertEquals(42, computed)
+    }
+
+    @Test
+    fun uniqueVideoCardKeysDisambiguateDuplicateIdsDeterministically() {
+        val sample = listOf("v1", "v2", "v1", "v3", "v1", "v2").mapIndexed { idx, id ->
+            VideoItem(
+                id = id,
+                title = "Title $idx",
+                channel = "Channel",
+                channelUrl = null,
+                thumbnail = null,
+                avatar = null,
+                durationSec = 60,
+                views = 100,
+                uploaded = null,
+            )
+        }
+        assertEquals(listOf("v1", "v2", "v1#1", "v3", "v1#2", "v2#1"), uniqueVideoCardKeys(sample))
+        assertEquals(emptyList<String>(), uniqueVideoCardKeys(emptyList()))
+    }
 }

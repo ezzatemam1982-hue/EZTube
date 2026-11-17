@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
+import android.os.Process
 import android.util.Log
 import androidx.preference.PreferenceManager
 import com.deniscerri.ytdl.BuildConfig
@@ -18,6 +19,7 @@ import com.deniscerri.ytdl.database.models.GithubReleaseAsset
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import okhttp3.Request
@@ -30,7 +32,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 class UpdateUtil(var context: Context) {
     private val tag = "UpdateUtil"
-    private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+    private val sharedPreferences by lazy { PreferenceManager.getDefaultSharedPreferences(context) }
 
     private val channelMap = mapOf(
         Pair<String, RuntimeManager.UpdateChannel>("stable", RuntimeManager.UpdateChannel.STABLE),
@@ -114,66 +116,74 @@ class UpdateUtil(var context: Context) {
     }
 
     suspend fun updateYTDL(c: String? = null) : YTDLPUpdateResponse =
-        withContext(Dispatchers.IO){
-            val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-            if (updatingYTDL) {
-                return@withContext YTDLPUpdateResponse(YTDLPUpdateStatus.PROCESSING)
-            }
+        withContext(Dispatchers.IO) { updateYTDLSync(c) }
 
-            updatingYTDL = true
-
-            try {
-                val channel = if (c.isNullOrBlank()) sharedPreferences.getString("ytdlp_source", "stable") else c
-
-                val response = when(channel) {
-                    "stable", "nightly", "master" -> {
-                        val res = RuntimeManager.getInstance().updateYTDL(context, channelMap[channel]!!)
-                        if (res != RuntimeManager.UpdateStatus.DONE) {
-                            YTDLPUpdateResponse(YTDLPUpdateStatus.ALREADY_UP_TO_DATE)
-                        }else {
-                            val version = RuntimeManager.getInstance().version(context)
-                            YTDLPUpdateResponse(YTDLPUpdateStatus.DONE, "Updated yt-dlp to ${channel}@${version}")
-                        }
-                    }
-                    else -> {
-                        val request = YTDLRequest(emptyList())
-                        request.addOption("--update-to", "$channel")
-
-                        val res = RuntimeManager.getInstance().execute(request)
-                        val out = res.out.lines().last { it.isNotBlank() }
-
-                        when {
-                            out.contains("ERROR") -> YTDLPUpdateResponse(YTDLPUpdateStatus.ERROR, out)
-                            out.contains("yt-dlp is up to date") -> YTDLPUpdateResponse(YTDLPUpdateStatus.ALREADY_UP_TO_DATE, out)
-                            else -> YTDLPUpdateResponse(YTDLPUpdateStatus.DONE, out)
-                        }
-                    }
-                }
-
-                if (response.status == YTDLPUpdateStatus.DONE || response.status == YTDLPUpdateStatus.ALREADY_UP_TO_DATE) {
-                    sharedPreferences.edit().putLong(YTDLP_LAST_CHECK_KEY, System.currentTimeMillis()).apply()
-                }
-                response
-            } finally {
-                updatingYTDL = false
-            }
+    internal fun updateYTDLSync(c: String? = null): YTDLPUpdateResponse {
+        val prefs = sharedPreferences
+        if (updatingYTDL) {
+            return YTDLPUpdateResponse(YTDLPUpdateStatus.PROCESSING)
         }
 
+        updatingYTDL = true
+
+        return try {
+            val channel = if (c.isNullOrBlank()) prefs.getString("ytdlp_source", "stable") else c
+
+            val response = when(channel) {
+                "stable", "nightly", "master" -> {
+                    val res = RuntimeManager.getInstance().updateYTDL(context, channelMap[channel]!!)
+                    if (res != RuntimeManager.UpdateStatus.DONE) {
+                        YTDLPUpdateResponse(YTDLPUpdateStatus.ALREADY_UP_TO_DATE)
+                    }else {
+                        val version = RuntimeManager.getInstance().version(context)
+                        YTDLPUpdateResponse(YTDLPUpdateStatus.DONE, "Updated yt-dlp to ${channel}@${version}")
+                    }
+                }
+                else -> {
+                    val request = YTDLRequest(emptyList())
+                    request.addOption("--update-to", "$channel")
+
+                    val res = RuntimeManager.getInstance().execute(request)
+                    val out = res.out.lines().last { it.isNotBlank() }
+
+                    when {
+                        out.contains("ERROR") -> YTDLPUpdateResponse(YTDLPUpdateStatus.ERROR, out)
+                        out.contains("yt-dlp is up to date") -> YTDLPUpdateResponse(YTDLPUpdateStatus.ALREADY_UP_TO_DATE, out)
+                        else -> YTDLPUpdateResponse(YTDLPUpdateStatus.DONE, out)
+                    }
+                }
+            }
+
+            if (response.status == YTDLPUpdateStatus.DONE || response.status == YTDLPUpdateStatus.ALREADY_UP_TO_DATE) {
+                prefs.edit().putLong(YTDLP_LAST_CHECK_KEY, System.currentTimeMillis()).apply()
+            }
+            response
+        } finally {
+            updatingYTDL = false
+        }
+    }
+
     /**
-     * Checks and updates yt-dlp silently once every 24 hours on startup when network is available
-     * and no active/queued downloads are running. Never shows notifications, progress UI, or toasts.
+     * Checks and updates yt-dlp silently once every 24 hours, waiting [startupDelayMs] after initial
+     * UI rendering and running the entire check, download, and extraction on Dispatchers.IO at
+     * background thread priority so app launch and video playback stay smooth.
      */
-    suspend fun silentlyUpdateYtdlpIfDue() = withContext(Dispatchers.IO) {
-        runCatching {
-            if (!sharedPreferences.getBoolean("auto_update_ytdlp", true)) return@runCatching
-            val lastChecked = sharedPreferences.getLong(YTDLP_LAST_CHECK_KEY, 0L)
-            if (!isSilentYtdlpUpdateDue(lastChecked)) return@runCatching
-            if (!hasNetworkConnection()) return@runCatching
-            val activeOrQueued = DBManager.getInstance(context).downloadDao.getDownloadsCountByStatus(listOf("Active", "Queued"))
-            if (activeOrQueued > 0) return@runCatching
-            val res = updateYTDL()
-            if (res.status == YTDLPUpdateStatus.DONE) {
-                File(FileUtil.getInfoJsonPath(context)).deleteRecursively()
+    suspend fun silentlyUpdateYtdlpIfDue(startupDelayMs: Long = YTDLP_SILENT_UPDATE_DELAY_MS) {
+        if (startupDelayMs > 0L) delay(startupDelayMs)
+        withContext(Dispatchers.IO) {
+            runAtBackgroundPriority {
+                runCatching {
+                    if (!sharedPreferences.getBoolean("auto_update_ytdlp", true)) return@runCatching
+                    val lastChecked = sharedPreferences.getLong(YTDLP_LAST_CHECK_KEY, 0L)
+                    if (!isSilentYtdlpUpdateDue(lastChecked)) return@runCatching
+                    if (!hasNetworkConnection()) return@runCatching
+                    val activeOrQueued = DBManager.getInstance(context).downloadDao.getDownloadsCountByStatus(listOf("Active", "Queued"))
+                    if (activeOrQueued > 0) return@runCatching
+                    val res = updateYTDLSync()
+                    if (res.status == YTDLPUpdateStatus.DONE) {
+                        File(FileUtil.getInfoJsonPath(context)).deleteRecursively()
+                    }
+                }
             }
         }
     }
@@ -240,11 +250,25 @@ class UpdateUtil(var context: Context) {
         const val APP_LAST_CHECK_KEY = "app_last_update_check"
         const val YTDLP_LAST_CHECK_KEY = "ytdlp_last_update_check"
         const val YTDLP_SILENT_UPDATE_INTERVAL_MS = 24L * 60L * 60L * 1000L
+        const val YTDLP_SILENT_UPDATE_DELAY_MS = 8_000L
         var updatingYTDL = false
         var updatingApp = false
 
         internal fun isSilentYtdlpUpdateDue(lastCheckedMs: Long, nowMs: Long = System.currentTimeMillis()): Boolean =
             lastCheckedMs <= 0L || (nowMs - lastCheckedMs) >= YTDLP_SILENT_UPDATE_INTERVAL_MS
+
+        internal inline fun <T> runAtBackgroundPriority(block: () -> T): T {
+            // Keep background priority confined to one non-suspending Dispatchers.IO block and restore it in finally.
+            val prevPriority = runCatching { Process.getThreadPriority(Process.myTid()) }.getOrNull()
+            runCatching { Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND) }
+            return try {
+                block()
+            } finally {
+                if (prevPriority != null) {
+                    runCatching { Process.setThreadPriority(prevPriority) }
+                }
+            }
+        }
 
         internal fun selectNewRelease(
             releases: List<GithubRelease>,

@@ -188,8 +188,12 @@ fun ClipFlowPlayerApp() {
     val search = remember { SearchState(scope) }
     val appContext = LocalContext.current.applicationContext
     val lib = remember { LibraryData(scope, appContext) }
-    LaunchedEffect(Account.signedIn, PlayerWindowTracker.inDownloaderHub) {
-        if (Account.signedIn && !PlayerWindowTracker.inDownloaderHub) lib.warmUp()
+    val localeKey = AppLanguage.activeLocaleKey.ifEmpty { AppLanguage.innerTubeLocaleKey() }
+    LaunchedEffect(Account.signedIn, PlayerWindowTracker.inDownloaderHub, localeKey) {
+        if (Account.signedIn && !PlayerWindowTracker.inDownloaderHub) {
+            lib.syncLocale(localeKey)
+            lib.warmUp()
+        }
     }
     var signingIn by remember { mutableStateOf(false) }
     // Settings (Settings.kt): a page over the app, from the header avatar. Saveable: picking a language rebuilds the window.

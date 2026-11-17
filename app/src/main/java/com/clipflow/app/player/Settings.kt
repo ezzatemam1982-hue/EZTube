@@ -2108,12 +2108,15 @@ private fun AvatarPickerSheet(
 ) {
     val c = MaterialTheme.colorScheme
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
-        if (LocalAvatarStore.saveGalleryUri(context, uri)) {
-            onDismiss()
-        } else {
-            onMessage(str(R.string.avatar_picker_error))
+        scope.launch {
+            if (LocalAvatarStore.saveGalleryUriAsync(context, uri)) {
+                onDismiss()
+            } else {
+                onMessage(str(R.string.avatar_picker_error))
+            }
         }
     }
     ModalBottomSheet(
@@ -2154,7 +2157,7 @@ private fun AvatarPickerSheet(
                 fontSize = 13.5.sp,
             )
             Spacer(Modifier.height(10.dp))
-            val presetRows = LocalAvatarStore.Preset.entries.chunked(4)
+            val presetRows = remember { LocalAvatarStore.Preset.entries.chunked(4) }
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 presetRows.forEach { rowPresets ->
                     Row(
@@ -2229,14 +2232,37 @@ private fun AvatarPickerSheet(
     }
 }
 
+private object TransientCacheSizeStore {
+    private const val TTL_MS = 30_000L
+
+    @Volatile
+    var cachedBytes: Long? = null
+        private set
+
+    @Volatile
+    private var measuredAtMs: Long = 0L
+
+    fun isStale(nowMs: Long = android.os.SystemClock.elapsedRealtime()): Boolean =
+        cachedBytes == null || (nowMs - measuredAtMs) >= TTL_MS
+
+    fun update(bytes: Long, nowMs: Long = android.os.SystemClock.elapsedRealtime()) {
+        cachedBytes = bytes
+        measuredAtMs = nowMs
+    }
+}
+
 @Composable
 private fun AboutPage(player: PlayerState) {
     val context = LocalContext.current
     var whatsNew by remember { mutableStateOf(false) }
-    var cacheBytes by remember { mutableLongStateOf(0L) }
+    var cacheBytes by remember { mutableLongStateOf(TransientCacheSizeStore.cachedBytes ?: 0L) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
-        cacheBytes = withContext(Dispatchers.IO) { measureClearableCacheBytes(context) }
+        if (TransientCacheSizeStore.isStale()) {
+            val measured = withContext(Dispatchers.IO) { measureClearableCacheBytes(context) }
+            TransientCacheSizeStore.update(measured)
+            cacheBytes = measured
+        }
     }
     Spacer(Modifier.height(14.dp))
     val developerCredit = "${stringResource(R.string.developer_name)} (EZTube)"
@@ -2261,6 +2287,7 @@ private fun AboutPage(player: PlayerState) {
             else -> LinkSetting("clear_cache", shape, Icons.Rounded.CleaningServices, stringResource(R.string.settings_clear_cache), cacheLine) {
                 scope.launch {
                     val remaining = withContext(Dispatchers.IO) { clearAppTransientCaches(context) }
+                    TransientCacheSizeStore.update(remaining)
                     cacheBytes = remaining
                     player.actionMessage = clearedMessage
                 }
@@ -2301,7 +2328,7 @@ private fun clearAppTransientCaches(context: android.content.Context): Long {
     wipeChildren(context.cacheDir)
     wipeChildren(context.codeCacheDir)
     wipeChildren(context.externalCacheDir)
-    return measureClearableCacheBytes(context)
+    return measureClearableCacheBytes(context).also { TransientCacheSizeStore.update(it) }
 }
 
 private tailrec fun android.content.Context.findActivity(): android.app.Activity? = when (this) {

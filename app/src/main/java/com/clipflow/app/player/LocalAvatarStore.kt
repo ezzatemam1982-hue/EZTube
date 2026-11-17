@@ -8,7 +8,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.deniscerri.ytdl.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * UI-only local customization for the profile avatar badge shown in the top bar and Settings.
@@ -41,6 +47,8 @@ object LocalAvatarStore {
     private const val KEY_PRESET = "preset_id"
     private const val KEY_CUSTOM_PATH = "custom_path"
 
+    private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val verifiedFiles = ConcurrentHashMap<String, File>()
     private var prefs: SharedPreferences? = null
 
     var mode by mutableStateOf(Mode.Default)
@@ -51,15 +59,32 @@ object LocalAvatarStore {
         private set
 
     fun init(context: Context) {
-        val p = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).also { prefs = it }
+        val appContext = context.applicationContext
+        val p = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).also { prefs = it }
         val savedMode = p.getString(KEY_MODE, null)
         val savedPreset = Preset.of(p.getString(KEY_PRESET, null))
-        val savedPath = p.getString(KEY_CUSTOM_PATH, null)?.takeIf { File(it).exists() }
+        val savedPath = p.getString(KEY_CUSTOM_PATH, null)?.takeIf { it.isNotBlank() }
         when {
             savedMode == Mode.CustomFile.name && savedPath != null -> {
                 mode = Mode.CustomFile
                 preset = null
                 customPath = savedPath
+                // Validate file existence asynchronously on Dispatchers.IO instead of stalling app startup.
+                ioScope.launch {
+                    val file = File(savedPath)
+                    if (file.exists() && file.length() > 0L) {
+                        verifiedFiles[savedPath] = file
+                    } else {
+                        withContext(Dispatchers.Main.immediate) {
+                            if (mode == Mode.CustomFile && customPath == savedPath) {
+                                mode = Mode.Default
+                                preset = null
+                                customPath = null
+                            }
+                        }
+                        p.edit().remove(KEY_MODE).remove(KEY_CUSTOM_PATH).apply()
+                    }
+                }
             }
             savedMode == Mode.Preset.name && savedPreset != null -> {
                 mode = Mode.Preset
@@ -74,8 +99,35 @@ object LocalAvatarStore {
         }
     }
 
+    /** Returns an already-verified local avatar [File] without touching the filesystem. */
+    fun cachedFileFor(path: String?): File? = path?.let { verifiedFiles[it] }
+
+    /** Validates and caches a custom avatar [File] strictly on [Dispatchers.IO]. */
+    suspend fun resolveCustomFile(path: String?): File? {
+        if (path.isNullOrBlank()) return null
+        verifiedFiles[path]?.let { return it }
+        return withContext(Dispatchers.IO) {
+            val candidate = File(path).takeIf { it.exists() && it.length() > 0L }
+            if (candidate != null) {
+                verifiedFiles[path] = candidate
+            } else {
+                verifiedFiles.remove(path)
+                withContext(Dispatchers.Main.immediate) {
+                    if (mode == Mode.CustomFile && customPath == path) {
+                        mode = Mode.Default
+                        preset = null
+                        customPath = null
+                        prefs?.edit()?.remove(KEY_MODE)?.remove(KEY_CUSTOM_PATH)?.apply()
+                    }
+                }
+            }
+            candidate
+        }
+    }
+
     fun selectPreset(choice: Preset) {
-        deleteCustomFile(customPath)
+        val old = customPath
+        if (old != null) verifiedFiles.remove(old)
         mode = Mode.Preset
         preset = choice
         customPath = null
@@ -84,34 +136,52 @@ object LocalAvatarStore {
             ?.putString(KEY_PRESET, choice.id)
             ?.remove(KEY_CUSTOM_PATH)
             ?.apply()
+        deleteCustomFileAsync(old)
     }
 
-    fun saveGalleryUri(context: Context, uri: Uri): Boolean = runCatching {
-        val dir = File(context.filesDir, "avatars").apply { mkdirs() }
-        val target = File(dir, "avatar_${System.currentTimeMillis()}.img")
-        val input = context.contentResolver.openInputStream(uri) ?: return false
-        input.use { src ->
-            target.outputStream().use { dst -> src.copyTo(dst) }
+    /** Copies [uri] to internal storage strictly on [Dispatchers.IO] without stalling the Main Thread. */
+    suspend fun saveGalleryUriAsync(context: Context, uri: Uri): Boolean {
+        val appContext = context.applicationContext
+        val savedFile = withContext(Dispatchers.IO) {
+            runCatching {
+                val dir = File(appContext.filesDir, "avatars").apply { mkdirs() }
+                val target = File(dir, "avatar_${System.currentTimeMillis()}.img")
+                val input = appContext.contentResolver.openInputStream(uri) ?: return@runCatching null
+                input.use { src ->
+                    target.outputStream().use { dst -> src.copyTo(dst) }
+                }
+                if (!target.exists() || target.length() <= 0L) {
+                    target.delete()
+                    return@runCatching null
+                }
+                target
+            }.getOrNull()
+        } ?: return false
+
+        val newPath = savedFile.absolutePath
+        verifiedFiles[newPath] = savedFile
+        val old = withContext(Dispatchers.Main.immediate) {
+            val previous = customPath
+            mode = Mode.CustomFile
+            preset = null
+            customPath = newPath
+            prefs?.edit()
+                ?.putString(KEY_MODE, Mode.CustomFile.name)
+                ?.remove(KEY_PRESET)
+                ?.putString(KEY_CUSTOM_PATH, newPath)
+                ?.apply()
+            previous
         }
-        if (!target.exists() || target.length() <= 0L) {
-            target.delete()
-            return false
+        if (old != null && old != newPath) {
+            verifiedFiles.remove(old)
+            deleteCustomFileAsync(old)
         }
-        val old = customPath
-        mode = Mode.CustomFile
-        preset = null
-        customPath = target.absolutePath
-        prefs?.edit()
-            ?.putString(KEY_MODE, Mode.CustomFile.name)
-            ?.remove(KEY_PRESET)
-            ?.putString(KEY_CUSTOM_PATH, target.absolutePath)
-            ?.apply()
-        if (old != target.absolutePath) deleteCustomFile(old)
-        true
-    }.getOrDefault(false)
+        return true
+    }
 
     fun resetToDefault() {
-        deleteCustomFile(customPath)
+        val old = customPath
+        if (old != null) verifiedFiles.remove(old)
         mode = Mode.Default
         preset = null
         customPath = null
@@ -120,6 +190,7 @@ object LocalAvatarStore {
             ?.remove(KEY_PRESET)
             ?.remove(KEY_CUSTOM_PATH)
             ?.apply()
+        deleteCustomFileAsync(old)
     }
 
     fun normalizeGoogleAvatarUrl(url: String?): String? {
@@ -127,9 +198,11 @@ object LocalAvatarStore {
         return if (trimmed.startsWith("//")) "https:$trimmed" else trimmed
     }
 
-    private fun deleteCustomFile(path: String?) {
+    private fun deleteCustomFileAsync(path: String?) {
         if (!path.isNullOrBlank()) {
-            runCatching { File(path).delete() }
+            ioScope.launch {
+                runCatching { File(path).delete() }
+            }
         }
     }
 }

@@ -51,6 +51,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -73,6 +74,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -88,6 +91,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -307,8 +312,19 @@ val LocalVideoMenu = staticCompositionLocalOf<(VideoItem) -> Unit> { {} }
 
 @Composable
 fun Thumbnail(url: String?, modifier: Modifier = Modifier, radius: Int = 22) {
+    val context = LocalContext.current
+    val request = remember(context, url) {
+        url?.let {
+            ImageRequest.Builder(context)
+                .data(it)
+                .memoryCachePolicy(CachePolicy.ENABLED)
+                .diskCachePolicy(CachePolicy.ENABLED)
+                .networkCachePolicy(CachePolicy.ENABLED)
+                .build()
+        }
+    }
     AsyncImage(
-        model = url,
+        model = request,
         contentDescription = null,
         contentScale = ContentScale.Crop,
         modifier = modifier
@@ -337,18 +353,32 @@ fun DurationPill(seconds: Long, modifier: Modifier = Modifier, small: Boolean = 
 @Composable
 fun ChannelAvatar(url: String?, name: String, size: Int = 40) {
     val c = MaterialTheme.colorScheme
+    val context = LocalContext.current
+    val sizePx = with(LocalDensity.current) { size.dp.roundToPx().coerceAtLeast(1) }
+    val initial = remember(name) { name.trim().trimStart('@').take(1).uppercase() }
+    val request = remember(context, url, sizePx) {
+        url?.let {
+            ImageRequest.Builder(context)
+                .data(it)
+                .size(sizePx)
+                .memoryCachePolicy(CachePolicy.ENABLED)
+                .diskCachePolicy(CachePolicy.ENABLED)
+                .networkCachePolicy(CachePolicy.ENABLED)
+                .build()
+        }
+    }
     Box(
         modifier = Modifier.size(size.dp).clip(if (url != null) CircleShape else CookieShape).background(c.tertiaryContainer),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            name.trim().trimStart('@').take(1).uppercase(),
+            initial,
             color = c.onTertiaryContainer,
             fontWeight = FontWeight.Black,
             fontSize = (size * 0.4f).sp,
         )
-        if (url != null) {
-            AsyncImage(model = url, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(size.dp))
+        if (request != null) {
+            AsyncImage(model = request, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(size.dp))
         }
     }
 }
@@ -360,9 +390,22 @@ fun ChannelAvatar(url: String?, name: String, size: Int = 40) {
 @Composable
 fun AccountAvatar(profile: Profile?, size: Int = 40) {
     val c = MaterialTheme.colorScheme
+    val context = LocalContext.current
+    val sizePx = with(LocalDensity.current) { size.dp.roundToPx().coerceAtLeast(1) }
     val mode = LocalAvatarStore.mode
     val chosenPreset = LocalAvatarStore.preset
     val customPath = LocalAvatarStore.customPath
+    val verifiedCustomFile by produceState<File?>(
+        initialValue = if (mode == LocalAvatarStore.Mode.CustomFile) LocalAvatarStore.cachedFileFor(customPath) else null,
+        key1 = mode,
+        key2 = customPath,
+    ) {
+        value = if (mode == LocalAvatarStore.Mode.CustomFile && customPath != null) {
+            LocalAvatarStore.resolveCustomFile(customPath)
+        } else {
+            null
+        }
+    }
     when {
         mode == LocalAvatarStore.Mode.Preset && chosenPreset != null -> {
             Box(
@@ -381,6 +424,17 @@ fun AccountAvatar(profile: Profile?, size: Int = 40) {
             }
         }
         mode == LocalAvatarStore.Mode.CustomFile && customPath != null -> {
+            val fileRequest = remember(context, verifiedCustomFile, sizePx) {
+                verifiedCustomFile?.let { file ->
+                    ImageRequest.Builder(context)
+                        .data(file)
+                        .size(sizePx)
+                        .memoryCachePolicy(CachePolicy.ENABLED)
+                        .diskCachePolicy(CachePolicy.DISABLED)
+                        .crossfade(false)
+                        .build()
+                }
+            }
             Box(
                 modifier = Modifier
                     .size(size.dp)
@@ -388,7 +442,9 @@ fun AccountAvatar(profile: Profile?, size: Int = 40) {
                     .background(c.tertiaryContainer),
                 contentAlignment = Alignment.Center,
             ) {
-                val initial = profile?.name?.trim()?.trimStart('@')?.take(1)?.uppercase().orEmpty()
+                val initial = remember(profile?.name) {
+                    profile?.name?.trim()?.trimStart('@')?.take(1)?.uppercase().orEmpty()
+                }
                 if (initial.isNotEmpty()) {
                     Text(
                         initial,
@@ -399,16 +455,30 @@ fun AccountAvatar(profile: Profile?, size: Int = 40) {
                 } else {
                     Icon(Icons.Rounded.Person, null, tint = c.onTertiaryContainer, modifier = Modifier.size((size * 0.54f).dp))
                 }
-                AsyncImage(
-                    model = File(customPath),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(size.dp),
-                )
+                if (fileRequest != null) {
+                    AsyncImage(
+                        model = fileRequest,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(size.dp),
+                    )
+                }
             }
         }
         profile != null -> {
-            val normalizedUrl = LocalAvatarStore.normalizeGoogleAvatarUrl(profile.avatar)
+            val normalizedUrl = remember(profile.avatar) { LocalAvatarStore.normalizeGoogleAvatarUrl(profile.avatar) }
+            val initial = remember(profile.name) { profile.name.trim().trimStart('@').take(1).uppercase() }
+            val avatarRequest = remember(context, normalizedUrl, sizePx) {
+                normalizedUrl?.let {
+                    ImageRequest.Builder(context)
+                        .data(it)
+                        .size(sizePx)
+                        .memoryCachePolicy(CachePolicy.ENABLED)
+                        .diskCachePolicy(CachePolicy.ENABLED)
+                        .networkCachePolicy(CachePolicy.ENABLED)
+                        .build()
+                }
+            }
             Box(
                 modifier = Modifier
                     .size(size.dp)
@@ -417,14 +487,14 @@ fun AccountAvatar(profile: Profile?, size: Int = 40) {
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    profile.name.trim().trimStart('@').take(1).uppercase(),
+                    initial,
                     color = c.onTertiaryContainer,
                     fontWeight = FontWeight.Black,
                     fontSize = (size * 0.4f).sp,
                 )
-                if (normalizedUrl != null) {
+                if (avatarRequest != null) {
                     AsyncImage(
-                        model = normalizedUrl,
+                        model = avatarRequest,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.size(size.dp),
@@ -511,14 +581,14 @@ fun VideoCard(video: VideoItem, onClick: () -> Unit, modifier: Modifier = Modifi
 @Composable
 private fun CardMeta(video: VideoItem) {
     val c = MaterialTheme.colorScheme
-    val full = metaLine(video.channel, video.views, video.uploaded)
+    val full = remember(video.channel, video.views, video.uploaded) { metaLine(video.channel, video.views, video.uploaded) }
+    val rest = remember(video.views, video.uploaded) { metaLine("", video.views, video.uploaded) }
     val style = LocalTextStyle.current.merge(TextStyle(fontSize = 13.sp, fontWeight = FontWeight.SemiBold))
-    val measurer = rememberTextMeasurer()
+    val measurer = rememberTextMeasurer(cacheSize = 64)
     BoxWithConstraints {
         val fits = remember(full, style, constraints.maxWidth) {
             measurer.measure(full, style, maxLines = 1, softWrap = false).size.width <= constraints.maxWidth
         }
-        val rest = metaLine("", video.views, video.uploaded)
         val split = !fits && video.channel.isNotBlank() && rest.isNotEmpty()
         Column {
             (if (split) listOf(video.channel, rest) else listOf(full)).forEach {

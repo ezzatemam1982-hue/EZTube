@@ -1161,7 +1161,7 @@ private fun BarChaptersList(bar: PlayerBarState, player: PlayerState, gate: () -
                 .height(rowsHeight),
             verticalArrangement = Arrangement.spacedBy(ListRowGap),
         ) {
-            itemsIndexed(chapters) { index, chapter ->
+            itemsIndexed(chapters, key = { index, chapter -> "$index-${chapter.startMs}" }) { index, chapter ->
                 val selected = index == current
                 val fromBottom = (chapters.size - 1 - index).coerceAtMost(ChapterMaxRows)
                 Row(
@@ -1254,7 +1254,17 @@ private fun BarCaptionsList(bar: PlayerBarState, player: PlayerState, gate: () -
                 .height(rowsHeight),
             verticalArrangement = Arrangement.spacedBy(ListRowGap),
         ) {
-            itemsIndexed(options + null) { index, option ->
+            itemsIndexed(
+                options + null,
+                key = { index, option ->
+                    when (option) {
+                        is CaptionOption.Pick -> "pick-$index-${option.title}-${option.note.orEmpty()}"
+                        CaptionOption.More -> "more-$index"
+                        CaptionOption.Section -> "section-$index"
+                        null -> "transcript-$index"
+                    }
+                },
+            ) { index, option ->
                 val fromBottom = (options.size - index).coerceAtMost(ListMaxRows)
                 val selected = option is CaptionOption.Pick && cap.shows(option)
                 Row(

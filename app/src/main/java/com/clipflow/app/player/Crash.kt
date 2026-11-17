@@ -12,6 +12,11 @@ import android.os.SystemClock
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -44,9 +49,9 @@ object CrashLog {
     val unshared get() = newest > sharedAt
 
     fun install(context: Context) {
-        dir = File(context.filesDir, "crashes")
-        prefs = context.getSharedPreferences("crashes", Context.MODE_PRIVATE)
-        newest = files().firstOrNull()?.lastModified() ?: 0L
+        val appContext = context.applicationContext
+        dir = File(appContext.filesDir, "crashes")
+        prefs = appContext.getSharedPreferences("crashes", Context.MODE_PRIVATE)
         sharedAt = prefs.getLong(KEY_SHARED, 0L)
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
@@ -54,6 +59,14 @@ object CrashLog {
             try { write(thread, error) } catch (_: Throwable) {}
             if (previous != null) previous.uncaughtException(thread, error)
             else { Process.killProcess(Process.myPid()); exitProcess(10) }
+        }
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            val latest = files().firstOrNull()?.lastModified() ?: 0L
+            if (latest > 0L) {
+                withContext(Dispatchers.Main.immediate) {
+                    if (newest == 0L) newest = latest
+                }
+            }
         }
     }
 

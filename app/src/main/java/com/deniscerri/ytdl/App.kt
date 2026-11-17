@@ -38,11 +38,17 @@ import com.clipflow.app.player.PlayerInitializer
 
 class App : Application(), ImageLoaderFactory {
 
+    private val firstUiRendered = CompletableDeferred<Unit>()
+
+    internal fun notifyFirstUiRendered() {
+        firstUiRendered.complete(Unit)
+    }
+
     override fun onCreate() {
         super.onCreate()
         instance = this
 
-        val sharedPreferences =  PreferenceManager.getDefaultSharedPreferences(this@App)
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this@App)
         setDefaultValues()
         ThemeUtil.init(this)
 
@@ -61,12 +67,13 @@ class App : Application(), ImageLoaderFactory {
                 initLibraries()
 
                 launch {
+                    firstUiRendered.await()
                     com.deniscerri.ytdl.util.UpdateUtil(this@App).silentlyUpdateYtdlpIfDue()
                 }
 
                 val appVer = sharedPreferences.getString("version", "")!!
                 if(appVer.isEmpty() || appVer != BuildConfig.VERSION_NAME){
-                    sharedPreferences.edit(commit = true){
+                    sharedPreferences.edit {
                         putString("version", BuildConfig.VERSION_NAME)
                     }
                 }

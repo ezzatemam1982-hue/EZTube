@@ -755,7 +755,7 @@ private fun TvSidePanel(state: PlayerState, panel: TvPanel, onDone: () -> Unit, 
     ) {
         Text(title, fontFamily = RoundedHeavy, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, modifier = Modifier.padding(start = 14.dp, bottom = 14.dp))
         LazyColumn(state = list, contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            itemsIndexed(rows) { i, row ->
+            itemsIndexed(rows, key = { i, row -> "$i-${row.title}" }) { i, row ->
                 TvRow(row, Modifier.then(if (i == start) Modifier.focusRequester(first) else Modifier)) {
                     if (!closing && row.onPick()) closing = true
                 }

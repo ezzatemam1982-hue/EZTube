@@ -8,6 +8,11 @@ import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 
 /**
@@ -17,18 +22,29 @@ import org.json.JSONArray
 object SearchHistory {
     private const val KEY = "queries"
     private const val MAX = 50
+    private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    @Volatile
     private var prefs: SharedPreferences? = null
+    @Volatile
+    private var mutated = false
 
     var entries by mutableStateOf<List<String>>(emptyList())
         private set
 
     fun init(context: Context) {
-        prefs = context.getSharedPreferences("search", Context.MODE_PRIVATE)
-        val json = prefs?.getString(KEY, null) ?: return
-        entries = runCatching {
-            val array = JSONArray(json)
-            List(array.length()) { array.getString(it) }
-        }.getOrElse { emptyList() }
+        val appContext = context.applicationContext
+        mutated = false
+        ioScope.launch {
+            val p = appContext.getSharedPreferences("search", Context.MODE_PRIVATE).also { prefs = it }
+            val json = p.getString(KEY, null) ?: return@launch
+            val parsed = runCatching {
+                val array = JSONArray(json)
+                List(array.length()) { array.getString(it) }
+            }.getOrElse { emptyList() }
+            withContext(Dispatchers.Main.immediate) {
+                if (!mutated && entries.isEmpty()) entries = parsed
+            }
+        }
     }
 
     fun add(query: String) {
@@ -48,7 +64,11 @@ object SearchHistory {
     }
 
     private fun save(list: List<String>) {
-        entries = list.take(MAX)
-        prefs?.edit()?.putString(KEY, JSONArray(entries).toString())?.apply()
+        mutated = true
+        val clipped = list.take(MAX)
+        entries = clipped
+        ioScope.launch {
+            prefs?.edit()?.putString(KEY, JSONArray(clipped).toString())?.apply()
+        }
     }
 }

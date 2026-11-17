@@ -5,6 +5,7 @@ import com.deniscerri.ytdl.R
 
 import android.content.Context
 import android.net.Uri
+import android.os.Looper
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.C
@@ -21,8 +22,12 @@ import androidx.media3.exoplayer.dash.DashMediaSource
 import androidx.media3.exoplayer.dash.manifest.DashManifestParser
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.MergingMediaSource
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -63,22 +68,41 @@ object ShortsBank {
         val urls get() = listOf(video.url, audio.url)
     }
 
+    private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    @Volatile
+    private var readySignal = CompletableDeferred<Unit>()
+    @Volatile
     private var cache: SimpleCache? = null
+    @Volatile
     private var indexFile: File? = null
     private val entries = LinkedHashMap<String, Entry>()
     /** The feed's next page after the banked shorts (kept with them, so the feed carries on). */
+    @Volatile
     var next: String? = null
         private set
 
     private val upstream by lazy { OkHttpDataSource.Factory(Net.client).setUserAgent(Net.USER_AGENT) }
 
     fun init(context: Context) {
-        runCatching {
-            cache = SimpleCache(File(context.cacheDir, "shorts-bank"), NoOpCacheEvictor(), StandaloneDatabaseProvider(context))
-        }.onFailure { Log.w("ClipFlow", "shorts bank: no media cache", it) }
-        indexFile = File(context.filesDir, "shorts_bank.json")
-        load()
-        Log.i("ClipFlow", "shorts bank: ${entries.size} shorts ready from last time")
+        val appContext = context.applicationContext
+        val signal = CompletableDeferred<Unit>().also { readySignal = it }
+        ioScope.launch {
+            try {
+                runCatching {
+                    cache = SimpleCache(File(appContext.cacheDir, "shorts-bank"), NoOpCacheEvictor(), StandaloneDatabaseProvider(appContext))
+                }.onFailure { Log.w("ClipFlow", "shorts bank: no media cache", it) }
+                indexFile = File(appContext.filesDir, "shorts_bank.json")
+                load()
+                Log.i("ClipFlow", "shorts bank: ${entries.size} shorts ready from last time")
+            } finally {
+                signal.complete(Unit)
+            }
+        }
+    }
+
+    /** Suspends until background [SimpleCache] and index initialization completes. */
+    suspend fun awaitReady() {
+        readySignal.await()
     }
 
     // ── What's banked ──
@@ -197,14 +221,23 @@ object ShortsBank {
 
     private fun save() {
         val file = indexFile ?: return
-        val json = JSONObject()
-            .put("next", next)
-            .put("entries", JSONArray().apply { entries().forEach { put(it.toJson()) } })
-        runCatching {
-            val tmp = File(file.path + ".tmp")
-            tmp.writeText(json.toString())
-            tmp.renameTo(file)
-        }.onFailure { Log.w("ClipFlow", "shorts bank: couldn't save", it) }
+        val snapshot = entries()
+        val token = next
+        val writeBlock = {
+            val json = JSONObject()
+                .put("next", token)
+                .put("entries", JSONArray().apply { snapshot.forEach { put(it.toJson()) } })
+            runCatching {
+                val tmp = File(file.path + ".tmp")
+                tmp.writeText(json.toString())
+                tmp.renameTo(file)
+            }.onFailure { Log.w("ClipFlow", "shorts bank: couldn't save", it) }
+        }
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            ioScope.launch { writeBlock() }
+        } else {
+            writeBlock()
+        }
     }
 
     private fun load() {
@@ -214,10 +247,14 @@ object ShortsBank {
             val json = JSONObject(file.readText())
             next = json.optString("next").ifBlank { null }
             val list = json.optJSONArray("entries") ?: JSONArray()
+            val loaded = ArrayList<Entry>(list.length())
             for (i in 0 until list.length()) {
                 val e = entryFrom(list.getJSONObject(i)) ?: continue
                 // Only shorts whose bytes are all still there (the system may clear the cache).
-                if (complete(e)) entries[e.item.id] = e
+                if (complete(e)) loaded += e
+            }
+            synchronized(entries) {
+                loaded.forEach { e -> entries.putIfAbsent(e.item.id, e) }
             }
         }.onFailure { Log.w("ClipFlow", "shorts bank: unreadable index; starting empty", it) }
     }

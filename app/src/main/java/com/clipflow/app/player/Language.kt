@@ -55,8 +55,23 @@ object AppLanguage {
     var picked by mutableStateOf("")
         private set
 
+    /** Reactive InnerTube `(hl|gl)` key for debounced feed synchronization. */
+    var activeLocaleKey by mutableStateOf("")
+        private set
+
     /** The pick's resources below Android 13 (the Application's own don't follow it there). */
     private var pickedResources: Resources? = null
+
+    private class InnerTubeLocaleCache(val fullTag: String, val phoneTag: String, val hl: String, val gl: String) {
+        val key: String get() = "$hl|$gl"
+    }
+
+    @Volatile
+    private var initializedPicked: Boolean = false
+    @Volatile
+    private var lastAppliedBelow33Tag: String? = null
+    @Volatile
+    private var cachedInnerTubeLocale: InnerTubeLocaleCache? = null
 
     fun init(application: Application) {
         app = application
@@ -68,21 +83,33 @@ object AppLanguage {
     /** Re-reads the pick: on Android 13+ it can also change in Settings › Apps › EZTube › Language. */
     fun refresh() {
         if (!::app.isInitialized) return
-        picked = if (Build.VERSION.SDK_INT >= 33) {
+        val latest = if (Build.VERSION.SDK_INT >= 33) {
             app.getSystemService(LocaleManager::class.java)?.applicationLocales?.get(0)?.toLanguageTag().orEmpty()
         } else {
             app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_TAG, "").orEmpty()
         }
-        applyBelow33()
+        val pickedChanged = !initializedPicked || latest != picked
+        if (pickedChanged) {
+            picked = latest
+            initializedPicked = true
+            cachedInnerTubeLocale = null
+        }
+        if (Build.VERSION.SDK_INT < 33 && (pickedChanged || lastAppliedBelow33Tag != latest)) {
+            applyBelow33()
+        }
+        updateLocaleKeyCache()
     }
 
     /** Picks [tag] ("" = the phone's) and rebuilds [activity] so both Streaming and Downloads update immediately. */
     fun pick(activity: Activity, tag: String) {
         if (tag == picked) return
         picked = tag
+        initializedPicked = true
+        cachedInnerTubeLocale = null
         if (Build.VERSION.SDK_INT >= 33) {
             activity.getSystemService(LocaleManager::class.java)?.applicationLocales =
                 if (tag.isEmpty()) LocaleList.getEmptyLocaleList() else LocaleList.forLanguageTags(tag)
+            updateLocaleKeyCache()
             // MainActivity declares configChanges="locale", so recreate explicitly to re-inflate XML Downloads views too.
             if (!activity.isFinishing && !activity.isDestroyed) {
                 activity.recreate()
@@ -90,6 +117,7 @@ object AppLanguage {
         } else {
             app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_TAG, tag).apply()
             applyBelow33()
+            updateLocaleKeyCache()
             if (!activity.isFinishing && !activity.isDestroyed) {
                 activity.recreate()
             }
@@ -112,11 +140,37 @@ object AppLanguage {
 
     /** YouTube InnerTube API interface language (`hl`) synchronized with the active app locale. */
     fun innerTubeLanguageTag(): String =
-        if (!::app.isInitialized) "en" else innerTubeLanguageTagFor(locale)
+        if (!::app.isInitialized) "en" else currentInnerTubeLocale().hl
 
     /** YouTube InnerTube API content region (`gl`), preserving phone country if picked locale has none. */
     fun innerTubeRegion(): String =
-        if (!::app.isInitialized) "US" else innerTubeRegionFor(locale, phoneLocale)
+        if (!::app.isInitialized) "US" else currentInnerTubeLocale().gl
+
+    /** Combined InnerTube `(hl|gl)` cache key synchronized with the active app locale. */
+    fun innerTubeLocaleKey(): String =
+        if (!::app.isInitialized) "en|US" else currentInnerTubeLocale().key
+
+    private fun updateLocaleKeyCache() {
+        val nextKey = currentInnerTubeLocale().key
+        if (activeLocaleKey != nextKey) activeLocaleKey = nextKey
+    }
+
+    private fun currentInnerTubeLocale(): InnerTubeLocaleCache {
+        val currentLocale = locale
+        val currentPhone = phoneLocale
+        val tag = currentLocale.toLanguageTag()
+        val phoneTag = currentPhone.toLanguageTag()
+        val cached = cachedInnerTubeLocale
+        if (cached != null && cached.fullTag == tag && cached.phoneTag == phoneTag) {
+            return cached
+        }
+        return InnerTubeLocaleCache(
+            fullTag = tag,
+            phoneTag = phoneTag,
+            hl = innerTubeLanguageTagFor(currentLocale),
+            gl = innerTubeRegionFor(currentLocale, currentPhone),
+        ).also { cachedInnerTubeLocale = it }
+    }
 
     internal fun innerTubeLanguageTagFor(loc: Locale?): String {
         val target = loc ?: return "en"
@@ -156,6 +210,7 @@ object AppLanguage {
     private fun applyBelow33() {
         if (Build.VERSION.SDK_INT >= 33) return
         val tag = picked
+        lastAppliedBelow33Tag = tag
         if (tag.isEmpty()) {
             pickedResources = null
             Locale.setDefault(phoneLocale)

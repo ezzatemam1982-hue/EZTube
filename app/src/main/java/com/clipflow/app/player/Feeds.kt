@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -56,10 +57,13 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONArray
 import org.json.JSONObject
@@ -269,18 +273,67 @@ class FeedState(
  * on the next start: both used to wait for the tab, the row a few seconds after the videos.
  */
 @Stable
-class LibraryData(scope: CoroutineScope, context: Context) {
-    val home = FeedState(scope, prefetchTop = 2, freshOnRefresh = true, name = "Home") { InnerTube.home(it) }
-    val subscriptions = FeedState(scope, prefetchTop = 2, name = "Subscriptions") { InnerTube.subscriptionsFeed(it) }
-    val history = FeedState(scope, name = "History") { InnerTube.history(it) }
-    private val prefs = context.getSharedPreferences(CHANNELS_PREFS, Context.MODE_PRIVATE)
-    var channels by mutableStateOf(readChannels())
+class LibraryData private constructor(
+    private val scope: CoroutineScope,
+    private val prefs: android.content.SharedPreferences?,
+    private val localeKeyProvider: () -> String,
+    private val isSignedIn: () -> Boolean,
+    homeLoader: suspend (String?) -> FeedPage,
+    subsLoader: suspend (String?) -> FeedPage,
+    private val channelsLoader: suspend () -> List<ChannelRef>,
+    historyLoader: suspend (String?) -> FeedPage,
+    private val playlistsLoader: suspend () -> List<PlaylistRef>,
+) {
+    constructor(scope: CoroutineScope, context: Context) : this(
+        scope = scope,
+        prefs = context.applicationContext.getSharedPreferences(CHANNELS_PREFS, Context.MODE_PRIVATE),
+        localeKeyProvider = { AppLanguage.innerTubeLocaleKey() },
+        isSignedIn = { Account.signedIn },
+        homeLoader = { InnerTube.home(it) },
+        subsLoader = { InnerTube.subscriptionsFeed(it) },
+        channelsLoader = { InnerTube.channels() },
+        historyLoader = { InnerTube.history(it) },
+        playlistsLoader = { InnerTube.playlists() },
+    )
+
+    internal constructor(
+        scope: CoroutineScope,
+        initialLocaleKey: String = "en|US",
+        isSignedIn: () -> Boolean = { true },
+        homeLoader: suspend (String?) -> FeedPage,
+        subsLoader: suspend (String?) -> FeedPage = { FeedPage(emptyList(), null) },
+        channelsLoader: suspend () -> List<ChannelRef> = { emptyList() },
+        historyLoader: suspend (String?) -> FeedPage = { FeedPage(emptyList(), null) },
+        playlistsLoader: suspend () -> List<PlaylistRef> = { emptyList() },
+    ) : this(
+        scope = scope,
+        prefs = null,
+        localeKeyProvider = { initialLocaleKey },
+        isSignedIn = isSignedIn,
+        homeLoader = homeLoader,
+        subsLoader = subsLoader,
+        channelsLoader = channelsLoader,
+        historyLoader = historyLoader,
+        playlistsLoader = playlistsLoader,
+    )
+
+    val home = FeedState(scope, prefetchTop = 2, freshOnRefresh = true, name = "Home", loader = homeLoader)
+    val subscriptions = FeedState(scope, prefetchTop = 2, name = "Subscriptions", loader = subsLoader)
+    val history = FeedState(scope, name = "History", loader = historyLoader)
+    var channels by mutableStateOf<List<ChannelRef>>(emptyList())
         private set
     var playlists by mutableStateOf<List<PlaylistRef>>(emptyList())
         private set
-    private val scope = scope
     private var channelsJob: Job? = null
     private var playlistsJob: Job? = null
+    private var localeSyncJob: Job? = null
+    private var resetGeneration = 0
+    @Volatile
+    private var warmedUp = false
+    @Volatile
+    private var committedLocaleKey: String = localeKeyProvider()
+    @Volatile
+    private var pendingLocaleKey: String? = null
     var refreshingChannels by mutableStateOf(false)
         private set
     var refreshingPlaylists by mutableStateOf(false)
@@ -288,6 +341,18 @@ class LibraryData(scope: CoroutineScope, context: Context) {
     private var homeShown = false
     /** Subscriptions has been on screen since it was last (re)loaded. */
     private var subscriptionsShown = false
+
+    init {
+        if (prefs != null) {
+            val gen = resetGeneration
+            scope.launch {
+                val cached = withContext(Dispatchers.IO) { readChannels() }
+                if (gen == resetGeneration && channels.isEmpty() && cached.isNotEmpty()) {
+                    channels = cached
+                }
+            }
+        }
+    }
 
     /** Once per session (the kept row shows meanwhile); again only after [reset]. */
     fun ensureChannels() {
@@ -302,11 +367,14 @@ class LibraryData(scope: CoroutineScope, context: Context) {
         channelsJob?.cancel()
         if (showIndicator) refreshingChannels = true
         val job = scope.launch(start = CoroutineStart.LAZY) {
-            val result = runCatching { InnerTube.channels() }
+            val result = runCatching { channelsLoader() }
             result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             if (!isActive) return@launch
             result
-                .onSuccess { channels = it; writeChannels(it) }
+                .onSuccess { list ->
+                    channels = list
+                    withContext(Dispatchers.IO) { writeChannels(list) }
+                }
                 .onFailure { err ->
                     feedLog(Log.ERROR, "Channels: fetch failed", err)
                     if (!showIndicator) channelsJob = null // the next look at the tab tries again
@@ -322,7 +390,7 @@ class LibraryData(scope: CoroutineScope, context: Context) {
         playlistsJob?.cancel()
         if (showIndicator) refreshingPlaylists = true
         val job = scope.launch(start = CoroutineStart.LAZY) {
-            val result = runCatching { InnerTube.playlists() }
+            val result = runCatching { playlistsLoader() }
             result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             if (!isActive) return@launch
             result
@@ -338,12 +406,45 @@ class LibraryData(scope: CoroutineScope, context: Context) {
     /**
      * Signed in: reads Subscriptions and its channel row ahead, once Home's first page is in (so
      * it never competes with what's on screen), or after [WARM_UP_WAIT_MS] if Home isn't asked for.
+     * Coalesced so tab navigation and Downloader Hub toggles never repeat warmup work.
      */
     suspend fun warmUp() {
+        if (warmedUp || !isSignedIn()) return
         withTimeoutOrNull(WARM_UP_WAIT_MS) { snapshotFlow { home.waiting || home.loading }.first { !it } }
-        if (!Account.signedIn) return
+        if (!isSignedIn() || warmedUp) return
+        warmedUp = true
         subscriptions.ensureLoaded()
         ensureChannels()
+    }
+
+    /**
+     * Synchronizes feeds when the active InnerTube `(hl|gl)` locale changes, debouncing rapid locale
+     * changes into a single coordinated reload and ignoring repeated calls during normal navigation.
+     */
+    fun syncLocale(localeKey: String, debounceMs: Long = LOCALE_SYNC_DEBOUNCE_MS): Boolean {
+        if (localeKey.isBlank()) return false
+        if (localeKey == committedLocaleKey && pendingLocaleKey == null) return false
+        if (localeKey == pendingLocaleKey && localeSyncJob?.isActive == true) return false
+        localeSyncJob?.cancel()
+        pendingLocaleKey = localeKey
+        localeSyncJob = scope.launch {
+            if (debounceMs > 0L) delay(debounceMs)
+            pendingLocaleKey = null
+            if (localeKey == committedLocaleKey) return@launch
+            committedLocaleKey = localeKey
+            if (!isSignedIn()) return@launch
+            homeShown = false
+            subscriptionsShown = false
+            warmedUp = false
+            subscriptions.reset()
+            history.reset()
+            channelsJob?.cancel()
+            channelsJob = null
+            playlistsJob?.cancel()
+            playlistsJob = null
+            home.refresh(showIndicator = home.videos.isNotEmpty())
+        }
+        return true
     }
 
     /** Ensures Home loads on screen open and recovers if an earlier background fetch failed or returned empty. */
@@ -375,18 +476,24 @@ class LibraryData(scope: CoroutineScope, context: Context) {
     fun playlistFeed(id: String) = FeedState(scope, name = "Playlist($id)") { InnerTube.playlist(id, it) }
 
     fun reset() {
+        resetGeneration++
+        localeSyncJob?.cancel()
+        localeSyncJob = null
+        pendingLocaleKey = null
+        warmedUp = false
         home.reset(); subscriptions.reset(); history.reset()
         channelsJob?.cancel(); channelsJob = null; homeShown = false; subscriptionsShown = false
         playlistsJob?.cancel(); playlistsJob = null
         refreshingChannels = false; refreshingPlaylists = false
         channels = emptyList(); playlists = emptyList()
-        prefs.edit().remove(KEY_CHANNELS).apply()
+        prefs?.edit()?.remove(KEY_CHANNELS)?.apply()
     }
 
     /** Invalidates stale cached state after sign-in and immediately loads all authenticated feeds. */
     fun reloadSignedIn() {
         reset()
-        if (!Account.signedIn) return
+        committedLocaleKey = localeKeyProvider()
+        if (!isSignedIn()) return
         home.refresh(showIndicator = false)
         subscriptions.refresh(showIndicator = false)
         refreshChannels()
@@ -394,24 +501,29 @@ class LibraryData(scope: CoroutineScope, context: Context) {
         loadPlaylists(showIndicator = false)
     }
 
-    private fun readChannels(): List<ChannelRef> = runCatching {
-        val arr = JSONArray(prefs.getString(KEY_CHANNELS, null) ?: return emptyList())
-        List(arr.length()) { i ->
-            val o = arr.getJSONObject(i)
-            ChannelRef(o.getString("id"), o.optString("name"), o.optString("avatar").ifBlank { null })
-        }
-    }.getOrElse { prefs.edit().remove(KEY_CHANNELS).apply(); emptyList() }
+    private fun readChannels(): List<ChannelRef> {
+        val p = prefs ?: return emptyList()
+        return runCatching {
+            val arr = JSONArray(p.getString(KEY_CHANNELS, null) ?: return emptyList())
+            List(arr.length()) { i ->
+                val o = arr.getJSONObject(i)
+                ChannelRef(o.getString("id"), o.optString("name"), o.optString("avatar").ifBlank { null })
+            }
+        }.getOrElse { p.edit().remove(KEY_CHANNELS).apply(); emptyList() }
+    }
 
     private fun writeChannels(list: List<ChannelRef>) {
+        val p = prefs ?: return
         val arr = JSONArray()
         list.forEach { arr.put(JSONObject().put("id", it.id).put("name", it.name).put("avatar", it.avatar ?: "")) }
-        prefs.edit().putString(KEY_CHANNELS, arr.toString()).apply()
+        p.edit().putString(KEY_CHANNELS, arr.toString()).apply()
     }
 
     private companion object {
         const val CHANNELS_PREFS = "library"
         const val KEY_CHANNELS = "channels"
         const val WARM_UP_WAIT_MS = 6_000L
+        const val LOCALE_SYNC_DEBOUNCE_MS = 350L
         /** A Subscriptions page read ahead this long before the tab is first opened is read again. */
         const val STALE_AHEAD_MS = 10 * 60_000L
     }
@@ -449,6 +561,22 @@ fun gridColumns(): Int {
 /** A TV's narrowest card (Android TV, Tv.kt). */
 private val TvCardMin = 200.dp
 
+/** Builds unique, deterministic LazyColumn keys even if a feed or playlist includes repeated video IDs. */
+internal fun uniqueVideoCardKeys(videos: List<VideoItem>): List<String> {
+    if (videos.isEmpty()) return emptyList()
+    val counts = HashMap<String, Int>(videos.size)
+    return videos.map { video ->
+        val count = counts[video.id] ?: 0
+        counts[video.id] = count + 1
+        if (count == 0) video.id else "${video.id}#$count"
+    }
+}
+
+private sealed interface GridCell {
+    data class Video(val item: VideoItem, val key: String) : GridCell
+    data object Extra : GridCell
+}
+
 /**
  * Video cards, [columns] a row: a grid kept inside the page's LazyColumn, so headers and the
  * trailing loader stay ordinary items. One column is exactly the phone's list.
@@ -462,27 +590,34 @@ fun LazyListScope.videoCards(
     /** Given to the first card, so a TV remote can be put there (fresh search results). */
     firstFocus: FocusRequester? = null,
 ) {
-    val videos = videos.filterNot(Dismissed::hides)
-    fun Modifier.first(video: VideoItem) = if (firstFocus != null && video === videos.firstOrNull()) focusRequester(firstFocus) else this
+    val visible = videos.filterNot(Dismissed::hides)
+    val keys = uniqueVideoCardKeys(visible)
+    fun Modifier.first(video: VideoItem) = if (firstFocus != null && video === visible.firstOrNull()) focusRequester(firstFocus) else this
     if (columns <= 1) {
-        items(videos, key = { it.id }) { video -> VideoCard(video, onClick = { onOpen(video) }, modifier = Modifier.first(video)) }
+        itemsIndexed(visible, key = { index, _ -> keys[index] }) { _, video ->
+            VideoCard(video, onClick = { onOpen(video) }, modifier = Modifier.first(video))
+        }
         return
     }
-    val cells: List<Any> = if (extra != null && videos.isNotEmpty()) videos.take(1) + ExtraCell + videos.drop(1) else videos
+    val videoCells = visible.mapIndexed { index, video -> GridCell.Video(video, keys[index]) }
+    val cells: List<GridCell> = if (extra != null && videoCells.isNotEmpty()) {
+        videoCells.take(1) + GridCell.Extra + videoCells.drop(1)
+    } else {
+        videoCells
+    }
     // A row keeps its first video's key (always a video), so rows already shown stay put as more load.
-    items(cells.chunked(columns), key = { row -> "row-" + (row.first() as VideoItem).id }) { row ->
+    items(cells.chunked(columns), key = { row -> "row-" + (row.first() as GridCell.Video).key }) { row ->
         Row(Modifier.fillMaxWidth().padding(horizontal = 5.dp)) {
             row.forEach { cell ->
-                if (cell is VideoItem) VideoCard(cell, onClick = { onOpen(cell) }, modifier = Modifier.weight(1f).first(cell))
-                else extra?.invoke(Modifier.weight(1f))
+                when (cell) {
+                    is GridCell.Video -> VideoCard(cell.item, onClick = { onOpen(cell.item) }, modifier = Modifier.weight(1f).first(cell.item))
+                    GridCell.Extra -> extra?.invoke(Modifier.weight(1f))
+                }
             }
             repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
         }
     }
 }
-
-/** Where [videoCards]' extra card goes among the videos. */
-private object ExtraCell
 
 /**
  * Cards taken out with "Not interested" / "Don't recommend channel" (#16), gone from every feed at once.

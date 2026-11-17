@@ -369,16 +369,24 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
     private var spare = IntArray(0)
 
     init {
-        // Last time's bank first: these play at once, before any request.
-        val banked = ShortsBank.entries()
-        if (banked.isNotEmpty()) {
-            items = banked.map { it.item }
-            banked.forEach { details[it.item.id] = it.details() }
-            next = ShortsBank.next
-            feedVersion++
+        // Last time's bank first once background SimpleCache/index load finishes cleanly off Main Thread.
+        scope.launch {
+            ShortsBank.awaitReady()
+            if (!ShortsSetting.enabled || items.isNotEmpty()) return@launch
+            val banked = ShortsBank.entries()
+            if (banked.isNotEmpty()) {
+                items = banked.map { it.item }
+                banked.forEach { details[it.item.id] = it.details() }
+                next = ShortsBank.next
+                feedVersion++
+            }
         }
         // Shortly after the app opens (its own pages load first), then every 1.5 s for good.
-        scope.launch { delay(3_000); while (isActive) { if (ShortsSetting.enabled) fillBank(); delay(1_500) } }
+        scope.launch {
+            delay(3_000)
+            ShortsBank.awaitReady()
+            while (isActive) { if (ShortsSetting.enabled) fillBank(); delay(1_500) }
+        }
     }
 
     /**

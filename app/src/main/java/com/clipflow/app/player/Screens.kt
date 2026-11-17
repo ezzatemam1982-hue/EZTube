@@ -162,7 +162,7 @@ fun HomeScreen(
             }, scrollToTop = scrollToTop, indicatorTop = top, gridExtra = shortsCard, showEmptyState = home.chip == null)
         } else {
             LazyColumn(contentPadding = contentPadding.withTop(top)) {
-                item {
+                item(key = "signed-out") {
                     EmptyState(
                         icon = Icons.Rounded.Subscriptions,
                         title = stringResource(R.string.ui_home_signed_out_title),
@@ -246,7 +246,7 @@ fun SubscriptionsScreen(
             }
         } else {
             LazyColumn(contentPadding = contentPadding.withTop(top)) {
-                item {
+                item(key = "signed-out") {
                     EmptyState(
                         icon = Icons.Rounded.Subscriptions,
                         title = stringResource(R.string.ui_subscriptions_signed_out_title),
@@ -567,7 +567,7 @@ private fun FilteredSubscriptionsContent(
                 }
             }
             when {
-                visibleVideos.isNotEmpty() -> videoCards(filteredVideos, columns, onOpen)
+                visibleVideos.isNotEmpty() -> videoCards(visibleVideos, columns, onOpen)
                 lib.subscriptions.error != null && lib.subscriptions.videos.isEmpty() -> {
                     item(key = "filter-error") {
                         EmptyState(
@@ -643,13 +643,20 @@ fun LibraryScreen(
         // Resolved here: the list's builder below isn't composable.
         val watchLater = stringResource(R.string.ui_watch_later)
         val likedVideos = stringResource(R.string.ui_liked_videos)
+        val playlistRows = remember(lib.playlists, watchLater, likedVideos) {
+            val pinned = listOf(
+                PlaylistRef("WL", watchLater, null, null),
+                PlaylistRef("LL", likedVideos, null, null),
+            )
+            (pinned + lib.playlists).chunked(2)
+        }
         LazyColumn(
             state = rememberScrollToTop(scrollToTop),
             contentPadding = contentPadding.withTop(top),
             modifier = Modifier.fillMaxSize(),
         ) {
             if (!signedIn) {
-                item {
+                item(key = "signed-out") {
                     EmptyState(
                         icon = Icons.Rounded.VideoLibrary,
                         title = stringResource(R.string.ui_library_signed_out_title),
@@ -680,11 +687,7 @@ fun LibraryScreen(
                 }
             }
             item(key = "playlistsTitle") { SectionTitle(stringResource(R.string.ui_playlists)) }
-            val pinned = listOf(
-                PlaylistRef("WL", watchLater, null, null),
-                PlaylistRef("LL", likedVideos, null, null),
-            )
-            items((pinned + lib.playlists).chunked(2), key = { row -> row.joinToString { it.id } }) { row ->
+            items(playlistRows, key = { row -> row.joinToString { it.id } }) { row ->
                 Row(Modifier.padding(horizontal = 16.dp, vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     row.forEach { pl -> PlaylistTile(pl, Modifier.weight(1f)) { onOpenPlaylist(pl) } }
                     if (row.size == 1) Spacer(Modifier.weight(1f))

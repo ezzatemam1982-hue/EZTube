@@ -3,8 +3,6 @@ package com.deniscerri.ytdl.ui.adapter
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.SharedPreferences
-import android.os.Handler
-import android.os.Looper
 import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
@@ -21,13 +19,14 @@ import com.deniscerri.ytdl.R
 import com.deniscerri.ytdl.database.enums.DownloadType
 import com.deniscerri.ytdl.database.models.DownloadItemSimple
 import com.deniscerri.ytdl.util.DragSelectTouchListener
+import com.deniscerri.ytdl.util.Extensions.HideThumbnailFlag
+import com.deniscerri.ytdl.util.Extensions.hideThumbnailFlag
 import com.deniscerri.ytdl.util.Extensions.loadThumbnail
 import com.deniscerri.ytdl.util.Extensions.popup
 import com.deniscerri.ytdl.util.FileUtil
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Locale
 
 class ScheduledDownloadAdapter(onItemClickListener: OnItemClickListener, activity: Activity) : PagingDataAdapter<DownloadItemSimple, ScheduledDownloadAdapter.ViewHolder>(
@@ -38,12 +37,17 @@ class ScheduledDownloadAdapter(onItemClickListener: OnItemClickListener, activit
     val checkedItems: MutableSet<Long> = mutableSetOf()
     var inverted: Boolean
     private val sharedPreferences: SharedPreferences
+    private val hideThumbFlag: HideThumbnailFlag
+    private val dateFormat by lazy {
+        SimpleDateFormat(DateFormat.getBestDateTimePattern(Locale.getDefault(), "ddMMMyyyy - HHmm"), Locale.getDefault())
+    }
 
     init {
         this.onItemClickListener = onItemClickListener
         this.activity = activity
         this.inverted = false
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity)
+        hideThumbFlag = sharedPreferences.hideThumbnailFlag("queue")
     }
 
     class ViewHolder(itemView: View, onItemClickListener: OnItemClickListener?) : RecyclerView.ViewHolder(itemView) {
@@ -71,16 +75,12 @@ class ScheduledDownloadAdapter(onItemClickListener: OnItemClickListener, activit
 
         //Scheduled Time
         val time = mainView.findViewById<TextView>(R.id.scheduled_time)
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = item.downloadStartTime
-        time!!.text = SimpleDateFormat(DateFormat.getBestDateTimePattern(Locale.getDefault(), "ddMMMyyyy - HHmm"), Locale.getDefault()).format(calendar.time)
+        time!!.text = dateFormat.format(item.downloadStartTime)
 
-        val uiHandler = Handler(Looper.getMainLooper())
         val thumbnail = card.findViewById<ImageView>(R.id.downloads_image_view)
 
         // THUMBNAIL ----------------------------------
-        val hideThumb = sharedPreferences.getStringSet("hide_thumbnails", emptySet())!!.contains("queue")
-        uiHandler.post { thumbnail.loadThumbnail(hideThumb, item.thumb) }
+        thumbnail.post { thumbnail.loadThumbnail(hideThumbFlag.hidden, item.thumb) }
 
         val duration = card.findViewById<TextView>(R.id.duration)
         duration.text = item.duration

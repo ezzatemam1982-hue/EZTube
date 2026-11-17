@@ -176,6 +176,9 @@ class MainActivity : BaseActivity() {
         isInDownloaderHub = savedInstanceState?.getBoolean("is_in_downloader_hub", true) ?: true
         openedHubFromStream = savedInstanceState?.getBoolean("opened_hub_from_stream", false) ?: false
         applyHubVisibility()
+        window.decorView.post {
+            (application as? App)?.notifyFirstUiRendered()
+        }
 
         navHostFragment = supportFragmentManager.findFragmentById(R.id.frame_layout) as NavHostFragment
         navController = navHostFragment.findNavController()

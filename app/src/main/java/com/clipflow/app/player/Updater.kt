@@ -154,11 +154,18 @@ object AppUpdate {
     fun init(context: Context) {
         app = context.applicationContext
         prefs = app.getSharedPreferences("update", Context.MODE_PRIVATE)
-        // Shown straight away from the last check; the daily check corrects it.
-        available = savedRelease()?.takeIf { isNewer(it.version) }
-        // An installed update leaves its APK behind; keep only the one still to install.
-        val keep = available?.let { apkFile(it).name }
-        dir().listFiles()?.forEach { if (it.name != keep) it.delete() }
+        scope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                val release = savedRelease()?.takeIf { isNewer(it.version) }
+                // An installed update leaves its APK behind; keep only the one still to install.
+                val keep = release?.let { apkFile(it).name }
+                dir().listFiles()?.forEach { if (it.name != keep) it.delete() }
+                release
+            }
+            if (available == null && saved != null) {
+                available = saved
+            }
+        }
     }
 
     /** Called whenever a window comes to the front; looks GitHub up at most once a day, and on a new version's first start. */

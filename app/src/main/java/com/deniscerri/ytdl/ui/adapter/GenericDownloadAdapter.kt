@@ -3,8 +3,6 @@ package com.deniscerri.ytdl.ui.adapter
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.SharedPreferences
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,6 +18,8 @@ import com.deniscerri.ytdl.database.enums.DownloadType
 import com.deniscerri.ytdl.database.models.DownloadItemSimple
 import com.deniscerri.ytdl.database.repository.DownloadRepository
 import com.deniscerri.ytdl.util.DragSelectTouchListener
+import com.deniscerri.ytdl.util.Extensions.HideThumbnailFlag
+import com.deniscerri.ytdl.util.Extensions.hideThumbnailFlag
 import com.deniscerri.ytdl.util.Extensions.loadThumbnail
 import com.deniscerri.ytdl.util.Extensions.popup
 import com.deniscerri.ytdl.util.FileUtil
@@ -34,6 +34,7 @@ class GenericDownloadAdapter(onItemClickListener: OnItemClickListener, activity:
     val checkedItems: MutableSet<Long>
     var inverted: Boolean
     private val sharedPreferences: SharedPreferences
+    private val hideThumbFlag: HideThumbnailFlag
 
     init {
         checkedItems = mutableSetOf()
@@ -41,6 +42,7 @@ class GenericDownloadAdapter(onItemClickListener: OnItemClickListener, activity:
         this.activity = activity
         this.inverted = false
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity)
+        hideThumbFlag = sharedPreferences.hideThumbnailFlag("queue")
     }
 
     class ViewHolder(itemView: View, onItemClickListener: OnItemClickListener?) : RecyclerView.ViewHolder(itemView) {
@@ -64,12 +66,10 @@ class GenericDownloadAdapter(onItemClickListener: OnItemClickListener, activity:
         if (item == null) return
         card.tag = item.id.toString()
 
-        val uiHandler = Handler(Looper.getMainLooper())
         val thumbnail = card.findViewById<ImageView>(R.id.downloads_image_view)
 
         // THUMBNAIL ----------------------------------
-        val hideThumb = sharedPreferences.getStringSet("hide_thumbnails", emptySet())!!.contains("queue")
-        uiHandler.post { thumbnail.loadThumbnail(hideThumb, item.thumb) }
+        thumbnail.post { thumbnail.loadThumbnail(hideThumbFlag.hidden, item.thumb) }
 
         val duration = card.findViewById<TextView>(R.id.duration)
         duration.text = item.duration

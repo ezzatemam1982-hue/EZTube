@@ -5,8 +5,7 @@ import android.app.Activity
 import android.content.SharedPreferences
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
-import android.os.Handler
-import android.os.Looper
+import android.util.LruCache
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,8 +14,6 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.view.isVisible
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import androidx.paging.PagingDataAdapter
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DiffUtil
@@ -25,14 +22,19 @@ import com.deniscerri.ytdl.R
 import com.deniscerri.ytdl.database.enums.DownloadType
 import com.deniscerri.ytdl.database.models.HistoryItem
 import com.deniscerri.ytdl.util.DragSelectTouchListener
+import com.deniscerri.ytdl.util.Extensions.HideThumbnailFlag
+import com.deniscerri.ytdl.util.Extensions.hideThumbnailFlag
 import com.deniscerri.ytdl.util.Extensions.loadThumbnail
 import com.deniscerri.ytdl.util.Extensions.popup
-import com.deniscerri.ytdl.util.FileUtil
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -47,6 +49,24 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
     private val activity: Activity
     private val sharedPreferences: SharedPreferences
     var useDownloadCardDesign: Boolean = false
+    private val hideThumbFlag: HideThumbnailFlag
+    private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val filePresenceCache = LruCache<Long, Pair<List<String>, Boolean>>(256)
+    private val dateFormat by lazy {
+        SimpleDateFormat(android.text.format.DateFormat.getBestDateTimePattern(Locale.getDefault(), "ddMMMyyyy - HHmm"), Locale.getDefault())
+    }
+    private val desaturatedFilter by lazy {
+        ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })
+    }
+    private val transparentTint by lazy {
+        ContextCompat.getColorStateList(activity, android.R.color.transparent)!!
+    }
+    private val surfaceTint by lazy {
+        MaterialColors.getColorStateList(activity, R.attr.colorSurface, transparentTint)
+    }
+    private val primaryContainerTint by lazy {
+        MaterialColors.getColorStateList(activity, R.attr.colorPrimaryContainer, transparentTint)
+    }
 
     init {
         checkedItems = mutableSetOf()
@@ -55,10 +75,12 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
         this.activity = activity
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity)
         useDownloadCardDesign = sharedPreferences.getBoolean("history_use_download_card_design", false)
+        hideThumbFlag = sharedPreferences.hideThumbnailFlag("downloads")
     }
 
     class ViewHolder(itemView: View, onItemClickListener: OnItemClickListener?) : RecyclerView.ViewHolder(itemView) {
         val cardView: MaterialCardView
+        var filesPresent: Boolean = true
 
         init {
             cardView = itemView.findViewById(R.id.download_card_view)
@@ -104,20 +126,69 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
         notifyDataSetChanged()
     }
 
+    private fun applyTypeButtonIcon(btn: MaterialButton, type: DownloadType, filesPresent: Boolean) {
+        if (type == DownloadType.audio) {
+            btn.setIconResource(if (filesPresent) R.drawable.ic_music_downloaded else R.drawable.ic_music)
+        } else if (type == DownloadType.video) {
+            btn.setIconResource(if (filesPresent) R.drawable.ic_video_downloaded else R.drawable.ic_video)
+        } else {
+            btn.setIconResource(if (filesPresent) R.drawable.ic_terminal else R.drawable.baseline_code_off_24)
+        }
+    }
+
+    private fun applyTypeFabIcon(btn: FloatingActionButton, type: DownloadType, filesPresent: Boolean) {
+        if (type == DownloadType.audio) {
+            btn.setImageResource(if (filesPresent) R.drawable.ic_music_downloaded else R.drawable.ic_music)
+        } else if (type == DownloadType.video) {
+            btn.setImageResource(if (filesPresent) R.drawable.ic_video_downloaded else R.drawable.ic_video)
+        } else {
+            btn.setImageResource(if (filesPresent) R.drawable.ic_terminal else R.drawable.baseline_code_off_24)
+        }
+    }
+
+    private fun resolveFilePresence(holder: ViewHolder, item: HistoryItem, onResolved: (Boolean) -> Unit) {
+        val cached = synchronized(filePresenceCache) {
+            filePresenceCache.get(item.id)?.takeIf { it.first == item.downloadPath }?.second
+        }
+        if (cached != null) {
+            holder.filesPresent = cached
+            onResolved(cached)
+            return
+        }
+        holder.filesPresent = true
+        onResolved(true)
+        val expectedTag = item.id.toString()
+        val paths = item.downloadPath
+        ioScope.launch {
+            val present = !paths.all { !File(it).exists() && it.isNotBlank() }
+            synchronized(filePresenceCache) {
+                filePresenceCache.put(item.id, paths to present)
+            }
+            if (!present) {
+                withContext(Dispatchers.Main.immediate) {
+                    if (holder.itemView.tag == expectedTag) {
+                        holder.filesPresent = false
+                        onResolved(false)
+                    }
+                }
+            }
+        }
+    }
+
     override fun onBindViewHolder(holder: ViewHolder, @SuppressLint("RecyclerView") position: Int) {
         val item = getItem(position) ?: return
         val card = holder.cardView
-        holder.itemView.tag = item.id.toString()
-        card.tag = item.id.toString()
+        val itemTag = item.id.toString()
+        holder.itemView.tag = itemTag
+        card.tag = itemTag
         card.popup()
-        val uiHandler = Handler(Looper.getMainLooper())
 
-        if (getItemViewType(position) == TYPE_STANDARD_SINGLE || getItemViewType(position) == TYPE_STANDARD_MULTIPLE) {
+        val viewType = getItemViewType(position)
+        if (viewType == TYPE_STANDARD_SINGLE || viewType == TYPE_STANDARD_MULTIPLE) {
             val thumbnail = card.findViewById<ImageView>(R.id.downloads_image_view)
 
             // THUMBNAIL ----------------------------------
-            val hideThumb = sharedPreferences.getStringSet("hide_thumbnails", emptySet())!!.contains("downloads")
-            uiHandler.post { thumbnail.loadThumbnail(hideThumb, item.thumb) }
+            thumbnail.post { thumbnail.loadThumbnail(hideThumbFlag.hidden, item.thumb) }
 
             // TITLE  ----------------------------------
             val itemTitle = card.findViewById<TextView>(R.id.downloads_title)
@@ -137,39 +208,25 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
 
             // TIME DOWNLOADED  ----------------------------------
             val datetime = card.findViewById<TextView>(R.id.downloads_info_time)
-            datetime.text = SimpleDateFormat(android.text.format.DateFormat.getBestDateTimePattern(Locale.getDefault(), "ddMMMyyyy - HHmm"), Locale.getDefault()).format(item.time * 1000L)
+            datetime.text = dateFormat.format(item.time * 1000L)
 
             // BUTTON ----------------------------------
             val btn = card.findViewById<FloatingActionButton>(R.id.downloads_download_button_type)
-            var filesPresent = true
-
-            //IS IN THE FILE SYSTEM?
-            if (item.downloadPath.all { !File(it).exists() && it.isNotBlank()}) {
-                filesPresent = false
-                thumbnail.colorFilter = ColorMatrixColorFilter(object : ColorMatrix() {
-                    init {
-                        setSaturation(0f)
-                    }
-                })
-                thumbnail.alpha = 0.7f
-                btn.backgroundTintList = MaterialColors.getColorStateList(activity, R.attr.colorSurface, ContextCompat.getColorStateList(activity, android.R.color.transparent)!!)
-            }else{
-                thumbnail.alpha = 1f
-                thumbnail.colorFilter = null
-                btn.backgroundTintList = MaterialColors.getColorStateList(activity, R.attr.colorPrimaryContainer, ContextCompat.getColorStateList(activity, android.R.color.transparent)!!)
-            }
-
-            if (item.type == DownloadType.audio) {
-                if (filesPresent) btn.setImageResource(R.drawable.ic_music_downloaded) else {
-                    btn.setImageResource(R.drawable.ic_music)
-                }
-            } else if (item.type == DownloadType.video) {
-                if (filesPresent) btn.setImageResource(R.drawable.ic_video_downloaded) else btn.setImageResource(R.drawable.ic_video)
-            }else{
-                if (filesPresent) btn.setImageResource(R.drawable.ic_terminal) else btn.setImageResource(R.drawable.baseline_code_off_24)
-            }
             if (btn.hasOnClickListeners()) btn.setOnClickListener(null)
-            btn.isClickable = filesPresent
+
+            resolveFilePresence(holder, item) { filesPresent ->
+                if (!filesPresent) {
+                    thumbnail.colorFilter = desaturatedFilter
+                    thumbnail.alpha = 0.7f
+                    btn.backgroundTintList = surfaceTint
+                } else {
+                    thumbnail.alpha = 1f
+                    thumbnail.colorFilter = null
+                    btn.backgroundTintList = primaryContainerTint
+                }
+                applyTypeFabIcon(btn, item.type, filesPresent)
+                btn.isClickable = filesPresent
+            }
 
             if ((checkedItems.contains(item.id) && !inverted) || (!checkedItems.contains(item.id) && inverted)) {
                 card.isChecked = true
@@ -178,7 +235,6 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
                 card.isChecked = false
                 card.strokeWidth = 0
             }
-            val finalFilePresent = filesPresent
             card.setOnLongClickListener {
                 checkCard(card, item.id, position)
                 true
@@ -187,12 +243,12 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
                 if (checkedItems.size > 0 || inverted) {
                     checkCard(card, item.id, position)
                 } else {
-                    onItemClickListener.onCardClick(item.id, finalFilePresent)
+                    onItemClickListener.onCardClick(item.id, holder.filesPresent)
                 }
             }
 
             btn.setOnClickListener {
-                onItemClickListener.onButtonClick(item.id, finalFilePresent)
+                onItemClickListener.onButtonClick(item.id, holder.filesPresent)
             }
             card.findViewById<View>(R.id.history_copy_link_button)?.apply {
                 isVisible = item.url.isNotBlank()
@@ -204,8 +260,7 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
             val thumbnail = card.findViewById<ImageView>(R.id.downloads_image_view)
 
             // THUMBNAIL ----------------------------------
-            val hideThumb = sharedPreferences.getStringSet("hide_thumbnails", emptySet())!!.contains("downloads")
-            uiHandler.post { thumbnail.loadThumbnail(hideThumb, item.thumb) }
+            thumbnail.post { thumbnail.loadThumbnail(hideThumbFlag.hidden, item.thumb) }
 
             // TITLE  ----------------------------------
             val itemTitle = card.findViewById<TextView>(R.id.title)
@@ -231,39 +286,24 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
 
             // TIME DOWNLOADED  ----------------------------------
             val datetime = card.findViewById<TextView>(R.id.file_size)
-            datetime.text = SimpleDateFormat(android.text.format.DateFormat.getBestDateTimePattern(Locale.getDefault(), "ddMMMyyyy - HHmm"), Locale.getDefault()).format(item.time * 1000L)
+            datetime.text = dateFormat.format(item.time * 1000L)
 
             // BUTTON ----------------------------------
             val btn = card.findViewById<MaterialButton>(R.id.action_button)
-            var filesPresent = true
-
-            //IS IN THE FILE SYSTEM?
-            if (item.downloadPath.all { !File(it).exists() && it.isNotBlank()}) {
-                filesPresent = false
-                thumbnail.colorFilter = ColorMatrixColorFilter(object : ColorMatrix() {
-                    init {
-                        setSaturation(0f)
-                    }
-                })
-                thumbnail.alpha = 0.7f
-                btn.backgroundTintList = MaterialColors.getColorStateList(activity, R.attr.colorSurface, ContextCompat.getColorStateList(activity, android.R.color.transparent)!!)
-            }else{
-                thumbnail.alpha = 1f
-                thumbnail.colorFilter = null
-                btn.backgroundTintList = MaterialColors.getColorStateList(activity, R.attr.colorSurface, ContextCompat.getColorStateList(activity, android.R.color.transparent)!!)
-            }
-
-            if (item.type == DownloadType.audio) {
-                if (filesPresent) btn.setIconResource(R.drawable.ic_music_downloaded) else {
-                    btn.setIconResource(R.drawable.ic_music)
-                }
-            } else if (item.type == DownloadType.video) {
-                if (filesPresent) btn.setIconResource(R.drawable.ic_video_downloaded) else btn.setIconResource(R.drawable.ic_video)
-            }else{
-                if (filesPresent) btn.setIconResource(R.drawable.ic_terminal) else btn.setIconResource(R.drawable.baseline_code_off_24)
-            }
             if (btn.hasOnClickListeners()) btn.setOnClickListener(null)
-            btn.isClickable = filesPresent
+
+            resolveFilePresence(holder, item) { filesPresent ->
+                if (!filesPresent) {
+                    thumbnail.colorFilter = desaturatedFilter
+                    thumbnail.alpha = 0.7f
+                } else {
+                    thumbnail.alpha = 1f
+                    thumbnail.colorFilter = null
+                }
+                btn.backgroundTintList = surfaceTint
+                applyTypeButtonIcon(btn, item.type, filesPresent)
+                btn.isClickable = filesPresent
+            }
 
             if ((checkedItems.contains(item.id) && !inverted) || (!checkedItems.contains(item.id) && inverted)) {
                 card.isChecked = true
@@ -272,7 +312,6 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
                 card.isChecked = false
                 card.strokeWidth = 0
             }
-            val finalFilePresent = filesPresent
             card.setOnLongClickListener {
                 checkCard(card, item.id, position)
                 true
@@ -281,12 +320,12 @@ class HistoryPaginatedAdapter(onItemClickListener: OnItemClickListener, activity
                 if (checkedItems.size > 0 || inverted) {
                     checkCard(card, item.id, position)
                 } else {
-                    onItemClickListener.onCardClick(item.id, finalFilePresent)
+                    onItemClickListener.onCardClick(item.id, holder.filesPresent)
                 }
             }
 
             btn.setOnClickListener {
-                onItemClickListener.onButtonClick(item.id, finalFilePresent)
+                onItemClickListener.onButtonClick(item.id, holder.filesPresent)
             }
         }
     }

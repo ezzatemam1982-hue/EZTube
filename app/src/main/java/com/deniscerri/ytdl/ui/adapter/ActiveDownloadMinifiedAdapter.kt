@@ -3,8 +3,6 @@ package com.deniscerri.ytdl.ui.adapter
 import android.app.Activity
 import android.content.SharedPreferences
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,6 +19,8 @@ import com.deniscerri.ytdl.R
 import com.deniscerri.ytdl.database.enums.DownloadType
 import com.deniscerri.ytdl.database.models.DownloadItem
 import com.deniscerri.ytdl.database.repository.DownloadRepository
+import com.deniscerri.ytdl.util.Extensions.HideThumbnailFlag
+import com.deniscerri.ytdl.util.Extensions.hideThumbnailFlag
 import com.deniscerri.ytdl.util.Extensions.loadThumbnail
 import com.deniscerri.ytdl.util.Extensions.popup
 import com.deniscerri.ytdl.util.FileUtil
@@ -33,11 +33,13 @@ class ActiveDownloadMinifiedAdapter(onItemClickListener: OnItemClickListener, ac
     private val onItemClickListener: OnItemClickListener
     private val activity: Activity
     private val sharedPreferences: SharedPreferences
+    private val hideThumbFlag: HideThumbnailFlag
 
     init {
         this.onItemClickListener = onItemClickListener
         this.activity = activity
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity)
+        hideThumbFlag = sharedPreferences.hideThumbnailFlag("queue")
     }
 
     class ViewHolder(itemView: View, onItemClickListener: OnItemClickListener?) : RecyclerView.ViewHolder(itemView) {
@@ -59,12 +61,10 @@ class ActiveDownloadMinifiedAdapter(onItemClickListener: OnItemClickListener, ac
         val card = holder.cardView
         card.popup()
 
-        val uiHandler = Handler(Looper.getMainLooper())
         val thumbnail = card.findViewById<ImageView>(R.id.downloads_image_view)
 
         // THUMBNAIL ----------------------------------
-        val hideThumb = sharedPreferences.getStringSet("hide_thumbnails", emptySet())!!.contains("queue")
-        uiHandler.post { thumbnail.loadThumbnail(hideThumb, item!!.thumb) }
+        thumbnail.post { thumbnail.loadThumbnail(hideThumbFlag.hidden, item!!.thumb) }
 
         // PROGRESS BAR ----------------------------------------------------
         val progressBar = card.findViewById<LinearProgressIndicator>(R.id.progress)

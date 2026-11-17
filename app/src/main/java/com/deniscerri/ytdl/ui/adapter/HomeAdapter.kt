@@ -3,8 +3,6 @@ package com.deniscerri.ytdl.ui.adapter
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.SharedPreferences
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,6 +18,8 @@ import com.deniscerri.ytdl.R
 import com.deniscerri.ytdl.database.enums.DownloadType
 import com.deniscerri.ytdl.database.models.ResultItem
 import com.deniscerri.ytdl.util.DragSelectTouchListener
+import com.deniscerri.ytdl.util.Extensions.HideThumbnailFlag
+import com.deniscerri.ytdl.util.Extensions.hideThumbnailFlag
 import com.deniscerri.ytdl.util.Extensions.loadThumbnail
 import com.deniscerri.ytdl.util.Extensions.popup
 import com.google.android.material.button.MaterialButton
@@ -35,6 +35,7 @@ class HomeAdapter(onItemClickListener: OnItemClickListener, activity: Activity) 
     private val onItemClickListener: OnItemClickListener
     private val activity: Activity
     private val sharedPreferences: SharedPreferences
+    private val hideThumbFlag: HideThumbnailFlag
 
     init {
         checkedItems = mutableSetOf()
@@ -42,6 +43,7 @@ class HomeAdapter(onItemClickListener: OnItemClickListener, activity: Activity) 
         this.onItemClickListener = onItemClickListener
         this.activity = activity
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity)
+        hideThumbFlag = sharedPreferences.hideThumbnailFlag("home")
     }
 
     class ViewHolder(itemView: View, onItemClickListener: OnItemClickListener?) : RecyclerView.ViewHolder(itemView) {
@@ -63,12 +65,10 @@ class HomeAdapter(onItemClickListener: OnItemClickListener, activity: Activity) 
         val card = holder.cardView
         card.popup()
 
-        val uiHandler = Handler(Looper.getMainLooper())
         val thumbnail = card.findViewById<ImageView>(R.id.result_image_view)
 
         // THUMBNAIL ----------------------------------
-        val hideThumb = sharedPreferences.getStringSet("hide_thumbnails", emptySet())!!.contains("home")
-        uiHandler.post { thumbnail.loadThumbnail(hideThumb, video.thumb) }
+        thumbnail.post { thumbnail.loadThumbnail(hideThumbFlag.hidden, video.thumb) }
 
         // TITLE  ----------------------------------
         val videoTitle = card.findViewById<TextView>(R.id.result_title)

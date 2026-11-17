@@ -3,14 +3,23 @@ package com.clipflow.app.player
 import android.app.Application
 import android.content.Context
 import coil.ImageLoader
+import coil.disk.DiskCache
 import coil.memory.MemoryCache
+import coil.request.CachePolicy
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.schabi.newpipe.extractor.NewPipe
+import java.io.File
 
 /**
  * Initializes all ClipFlow streaming player subsystems and shared resources inside [com.deniscerri.ytdl.App].
  */
 object PlayerInitializer {
+
+    private val startupIoScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /** The Shorts feed, players and bank: one per process, outliving any window. */
     lateinit var shorts: ShortsState
@@ -48,7 +57,9 @@ object PlayerInitializer {
         LocalAvatarStore.init(app)
         AuthSessionManager.restoreCookiesToCookieManager()
         Bells.init(app)
-        NewVideos.schedule(app)
+        startupIoScope.launch {
+            NewVideos.schedule(app)
+        }
         SponsorBlock.init(app)
         ShortsSetting.init(app)
         ShortsBank.init(app)
@@ -75,10 +86,21 @@ object PlayerInitializer {
         )
     }
 
-    // Thumbnails are in every list and the player; a short crossfade replaces pop-in.
+    // Thumbnails are in every list and the player; explicit memory + bounded disk caching prevent decode stutters.
     fun createImageLoader(context: Context): ImageLoader = ImageLoader.Builder(context)
         .okHttpClient(Net.client)
         .crossfade(180)
+        .respectCacheHeaders(false)
+        .bitmapFactoryMaxParallelism(2)
+        .memoryCachePolicy(CachePolicy.ENABLED)
+        .diskCachePolicy(CachePolicy.ENABLED)
+        .networkCachePolicy(CachePolicy.ENABLED)
         .memoryCache { MemoryCache.Builder(context).maxSizePercent(0.25).build() }
+        .diskCache {
+            DiskCache.Builder()
+                .directory(File(context.cacheDir, "image_cache"))
+                .maxSizeBytes(50L * 1024L * 1024L)
+                .build()
+        }
         .build()
 }

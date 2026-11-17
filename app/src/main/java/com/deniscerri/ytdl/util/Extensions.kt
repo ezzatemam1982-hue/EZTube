@@ -4,6 +4,7 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Bitmap
@@ -790,6 +791,29 @@ object Extensions {
 
         return packageInfo.requestedPermissions?.contains(this) ?: false
     }
+
+    class HideThumbnailFlag(
+        prefs: SharedPreferences,
+        private val section: String,
+    ) {
+        @Volatile
+        var hidden: Boolean = prefs.getStringSet("hide_thumbnails", emptySet())?.contains(section) == true
+            private set
+
+        // Stored strongly on this holder because SharedPreferences retains listeners weakly.
+        private val listener = SharedPreferences.OnSharedPreferenceChangeListener { sp, key ->
+            if (key == "hide_thumbnails") {
+                hidden = sp.getStringSet("hide_thumbnails", emptySet())?.contains(section) == true
+            }
+        }
+
+        init {
+            prefs.registerOnSharedPreferenceChangeListener(listener)
+        }
+    }
+
+    fun SharedPreferences.hideThumbnailFlag(section: String): HideThumbnailFlag =
+        HideThumbnailFlag(this, section)
 
     private val unicodeEscape = Regex("""\\u([0-9a-fA-F]{4})""")
     fun String.fixYtdlpPath(): String {

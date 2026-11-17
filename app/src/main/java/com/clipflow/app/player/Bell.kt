@@ -77,6 +77,9 @@ object Bells {
     /** A page read this soon after a change may predate it: it doesn't overrule the change. */
     private const val WRITE_GUARD_MS = 30_000L
 
+    private val ioScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
+    @Volatile
+    private var cleared = false
     private var prefs: SharedPreferences? = null
     private val scope = MainScope()
     private val writtenAt = HashMap<String, Long>()
@@ -85,15 +88,27 @@ object Bells {
     val on = mutableStateMapOf<String, BellChannel>()
 
     fun init(context: Context) {
-        prefs = context.getSharedPreferences("bells", Context.MODE_PRIVATE)
-        runCatching {
-            val arr = JSONArray(prefs?.getString(KEY_ON, null) ?: return)
-            for (i in 0 until arr.length()) {
-                val o = arr.getJSONObject(i)
-                val id = o.optString("id").ifBlank { continue }
-                on[id] = BellChannel(id, o.optString("name").ifBlank { null }, o.optString("avatar").ifBlank { null }, o.optLong("since"))
+        val appContext = context.applicationContext
+        cleared = false
+        ioScope.launch {
+            val p = appContext.getSharedPreferences("bells", Context.MODE_PRIVATE).also { prefs = it }
+            val loaded = mutableListOf<BellChannel>()
+            runCatching {
+                val arr = JSONArray(p.getString(KEY_ON, null) ?: return@runCatching)
+                for (i in 0 until arr.length()) {
+                    val o = arr.getJSONObject(i)
+                    val id = o.optString("id").ifBlank { continue }
+                    loaded += BellChannel(id, o.optString("name").ifBlank { null }, o.optString("avatar").ifBlank { null }, o.optLong("since"))
+                }
+            }.onFailure { Log.w(TAG, "bells: couldn't read the saved bells (${it.message})") }
+            if (loaded.isNotEmpty()) {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) {
+                    if (!cleared) {
+                        loaded.forEach { ch -> if (!on.containsKey(ch.id)) on[ch.id] = ch }
+                    }
+                }
             }
-        }.onFailure { Log.w(TAG, "bells: couldn't read the saved bells (${it.message})") }
+        }
     }
 
     fun isOn(channelId: String?): Boolean = channelId != null && on.containsKey(channelId)
@@ -131,9 +146,12 @@ object Bells {
 
     @Synchronized
     fun clear() {
+        cleared = true
         on.clear()
         writtenAt.clear()
-        prefs?.edit()?.clear()?.apply()
+        ioScope.launch {
+            prefs?.edit()?.clear()?.apply()
+        }
     }
 
     /** Turns [channel]'s bell on or off on the account; shows at once, undone if YouTube says no. */
@@ -185,11 +203,14 @@ object Bells {
     }
 
     private fun save() {
-        val arr = JSONArray()
-        on.values.forEach { ch ->
-            arr.put(JSONObject().put("id", ch.id).put("name", ch.name).put("avatar", ch.avatar).put("since", ch.since))
+        val snapshot = on.values.toList()
+        ioScope.launch {
+            val arr = JSONArray()
+            snapshot.forEach { ch ->
+                arr.put(JSONObject().put("id", ch.id).put("name", ch.name).put("avatar", ch.avatar).put("since", ch.since))
+            }
+            prefs?.edit()?.putString(KEY_ON, arr.toString())?.apply()
         }
-        prefs?.edit()?.putString(KEY_ON, arr.toString())?.apply()
     }
 }
 
