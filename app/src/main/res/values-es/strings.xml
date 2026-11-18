@@ -641,4 +641,14 @@
     <string name="failed_to_fetch">No se pudo obtener</string>
     <string name="temporary_files_description">Archivos de trabajo de EZTube. Configuraciones temporales y datos de descarga en caché.</string>
     <string name="ytdlp_cache_summary">Datos temporales del motor que EZTube reutiliza entre ejecuciones</string>
+    <string name="voice_search">Búsqueda por voz</string>
+    <string name="voice_search_listening">Escuchando…</string>
+    <string name="voice_search_speak_now">Habla ahora</string>
+    <string name="voice_search_tap_to_speak">No se entendió. Toca el micrófono para intentarlo de nuevo.</string>
+    <string name="voice_search_error_offline">Sin conexión a internet. Comprueba tu red e inténtalo de nuevo.</string>
+    <string name="voice_search_retry">Reintentar</string>
+    <string name="voice_search_permission_title">Permiso de micrófono requerido</string>
+    <string name="voice_search_permission_message">EZTube necesita acceso a tu micrófono para habilitar la búsqueda por voz. Concede este permiso en los ajustes de la aplicación.</string>
+    <string name="voice_search_open_settings">Abrir ajustes</string>
+    <string name="voice_search_not_available">El servicio de reconocimiento de voz no está disponible en este dispositivo</string>
 </resources>

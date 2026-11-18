@@ -120,4 +120,16 @@
     <string name="update_download_system_checking">Checking for download system updates…</string>
     <string name="settings_official_website">Official Website</string>
     <string name="settings_support_email">Support &amp; Feedback</string>
+
+    <!-- Voice Search Strings -->
+    <string name="voice_search">Voice search</string>
+    <string name="voice_search_listening">Listening…</string>
+    <string name="voice_search_speak_now">Speak now</string>
+    <string name="voice_search_tap_to_speak">Didn\'t catch that. Tap the mic to try again.</string>
+    <string name="voice_search_error_offline">No internet connection. Please check your network and try again.</string>
+    <string name="voice_search_retry">Try again</string>
+    <string name="voice_search_permission_title">Microphone Permission Required</string>
+    <string name="voice_search_permission_message">EZTube needs access to your microphone to enable voice search. Please grant this permission in app settings.</string>
+    <string name="voice_search_open_settings">Open Settings</string>
+    <string name="voice_search_not_available">Voice recognition is not available on this device</string>
 </resources>

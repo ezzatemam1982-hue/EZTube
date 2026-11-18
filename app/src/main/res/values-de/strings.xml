@@ -534,4 +534,14 @@
     <string name="info_jsons_summary">Gespeicherte Video-Metadaten, damit EZTube sie nicht erneut abrufen muss</string>
     <string name="ytdlp_cache">App-Engine-Cache</string>
     <string name="ytdlp_cache_summary">Temporäre Engine-Daten, die EZTube zwischen Vorgängen wiederverwendet</string>
+    <string name="voice_search">Sprachsuche</string>
+    <string name="voice_search_listening">Zuhören…</string>
+    <string name="voice_search_speak_now">Jetzt sprechen</string>
+    <string name="voice_search_tap_to_speak">Nicht verstanden. Tippe auf das Mikrofon, um es erneut zu versuchen.</string>
+    <string name="voice_search_error_offline">Keine Internetverbindung. Bitte überprüfe dein Netzwerk und versuche es erneut.</string>
+    <string name="voice_search_retry">Wiederholen</string>
+    <string name="voice_search_permission_title">Mikrofonberechtigung erforderlich</string>
+    <string name="voice_search_permission_message">EZTube benötigt Zugriff auf dein Mikrofon, um die Sprachsuche zu aktivieren. Bitte erteile diese Berechtigung in den App-Einstellungen.</string>
+    <string name="voice_search_open_settings">Einstellungen öffnen</string>
+    <string name="voice_search_not_available">Spracherkennungsdienst ist auf diesem Gerät nicht verfügbar</string>
 </resources>

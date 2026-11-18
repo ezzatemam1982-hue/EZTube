@@ -82,6 +82,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.color.MaterialColors
+import com.deniscerri.ytdl.ui.views.VoiceSearchBottomSheet
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.android.material.search.SearchBar
@@ -603,6 +604,12 @@ class HomeFragment : Fragment(), HomeAdapter.OnItemClickListener, SearchSuggesti
 
         searchBar!!.setOnMenuItemClickListener { m: MenuItem ->
             when (m.itemId) {
+                R.id.voice_search_home -> {
+                    VoiceSearchBottomSheet.show(parentFragmentManager, isOfflineSupported = false) { query ->
+                        searchView?.setText(query)
+                        searchView?.let { initSearch(it) }
+                    }
+                }
                 R.id.copy_urls -> {
                     lifecycleScope.launch {
                         val urls = withContext(Dispatchers.IO){

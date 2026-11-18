@@ -4,6 +4,12 @@
     tools:context=".MainActivity" >
 
     <item
+        android:id="@+id/voice_search_home"
+        android:icon="@drawable/ic_mic"
+        android:title="@string/voice_search"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/delete_results"
         android:title="@string/remove_results"
         app:showAsAction="never" />

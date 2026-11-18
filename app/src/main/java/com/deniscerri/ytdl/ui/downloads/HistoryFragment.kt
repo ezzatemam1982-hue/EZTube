@@ -38,6 +38,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.paging.PagingData
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
+import com.deniscerri.ytdl.ui.views.VoiceSearchBottomSheet
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.deniscerri.ytdl.MainActivity
@@ -277,11 +278,31 @@ class HistoryFragment : Fragment(), HistoryPaginatedAdapter.OnItemClickListener{
                 return true
             }
         })
+        val voiceBtn = searchView.findViewById<android.widget.ImageView>(androidx.appcompat.R.id.search_voice_btn)
+        voiceBtn?.let { btn ->
+            btn.isVisible = true
+            btn.setOnClickListener {
+                VoiceSearchBottomSheet.show(parentFragmentManager, isOfflineSupported = true) { query ->
+                    searchView.setQuery(query, true)
+                    historyViewModel.setQueryFilter(query)
+                }
+            }
+        }
         topAppBar.setOnClickListener { scrollToTop() }
         val showingDownloadQueue = NavbarUtil.getNavBarItems(requireContext()).any { n -> n.itemId == R.id.downloadQueueMainFragment && n.isVisible }
         topAppBar.menu.findItem(R.id.download_queue).isVisible = !showingDownloadQueue
         topAppBar.setOnMenuItemClickListener { m: MenuItem ->
             when (m.itemId) {
+                R.id.voice_search_history -> {
+                    VoiceSearchBottomSheet.show(parentFragmentManager, isOfflineSupported = true) { query ->
+                        val item = topAppBar.menu.findItem(R.id.search_history)
+                        item.expandActionView()
+                        val v = item.actionView as? SearchView
+                        v?.setQuery(query, true)
+                        historyViewModel.setQueryFilter(query)
+                    }
+                    true
+                }
                 R.id.remove_history -> {
                     if(websiteList.isEmpty()){
                         Toast.makeText(context, R.string.history_is_empty, Toast.LENGTH_SHORT).show()

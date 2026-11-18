@@ -26,8 +26,17 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <queries>
+
+        <!-- Speech recognition service and intent queries for Android 11+ -->
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
 
         <!-- YTDLnis recognized packages -->
         <package android:name="com.deniscerri.ytdl.python" />

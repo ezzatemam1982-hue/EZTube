@@ -577,4 +577,16 @@
     <string name="update_download_system_checking">جارٍ فحص تحديثات نظام التنزيل…</string>
     <string name="settings_official_website">الموقع الرسمي</string>
     <string name="settings_support_email">الدعم الفني والمساعدة</string>
+
+    <!-- Voice Search Strings -->
+    <string name="voice_search">البحث الصوتي</string>
+    <string name="voice_search_listening">جارٍ الاستماع…</string>
+    <string name="voice_search_speak_now">تحدث الآن</string>
+    <string name="voice_search_tap_to_speak">لم نتمكن من سماعك. اضغط على الميكروفون للمحاولة مرة أخرى.</string>
+    <string name="voice_search_error_offline">لا يوجد اتصال بالإنترنت. يرجى التحقق من الشبكة والمحاولة مرة أخرى.</string>
+    <string name="voice_search_retry">إعادة المحاولة</string>
+    <string name="voice_search_permission_title">إذن الميكروفون مطلوب</string>
+    <string name="voice_search_permission_message">يحتاج تطبيق EZTube إلى إذن الميكروفون لتشغيل البحث الصوتي. يرجى تفعيل الإذن من إعدادات التطبيق.</string>
+    <string name="voice_search_open_settings">فتح الإعدادات</string>
+    <string name="voice_search_not_available">خدمة التعرف على الصوت غير متوفرة على هذا الجهاز</string>
 </resources>

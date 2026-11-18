@@ -3,6 +3,13 @@ package com.clipflow.app.player
 import com.deniscerri.ytdl.BuildConfig
 import com.deniscerri.ytdl.R
 
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.FragmentActivity
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import com.deniscerri.ytdl.ui.views.VoiceSearchBottomSheet
 import java.text.Normalizer
 import java.util.Locale
 
@@ -899,6 +906,26 @@ fun SearchScreen(state: SearchState, contentPadding: PaddingValues, onOpen: (Vid
                     contentAlignment = Alignment.Center,
                 ) { Icon(Icons.Rounded.Close, stringResource(R.string.ui_clear_search), tint = c.onSurfaceVariant) }
             }
+            val context = LocalContext.current
+            Box(
+                modifier = Modifier.size(44.dp).pressable {
+                    val activity = context.findFragmentActivity()
+                    if (activity != null) {
+                        VoiceSearchBottomSheet.show(activity.supportFragmentManager, isOfflineSupported = false) { text ->
+                            state.query = text
+                            submit()
+                        }
+                    }
+                },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_mic),
+                    contentDescription = stringResource(R.string.voice_search),
+                    tint = c.onSurfaceVariant,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
         }
         Spacer(Modifier.height(8.dp))
         } },
@@ -984,3 +1011,10 @@ private fun SearchHistoryList(history: List<String>, contentPadding: PaddingValu
         }
     }
 }
+
+private tailrec fun Context.findFragmentActivity(): FragmentActivity? = when (this) {
+    is FragmentActivity -> this
+    is ContextWrapper -> baseContext.findFragmentActivity()
+    else -> null
+}
+
