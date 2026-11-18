@@ -68,7 +68,7 @@
     <string name="url">URL</string>
     <string name="link_copied_to_clipboard">لنک کلپ بورڈ پر کاپی ہو گیا</string>
     <string name="api_key">API استعمال کریں</string>
-    <string name="api_key_summary">YouTube API سے ویڈیو کی تجاویز</string>
+    <string name="api_key_summary">Online Video API سے ویڈیو کی تجاویز</string>
     <string name="update_app_summary">ایپ کے کھلنے پر اس کے نئے ورژنز کا اعلان کریں۔ ڈیٹا سرکاری GitHub Repository سے نکالا جاتا ہے</string>
     <string name="downloads">ڈاؤن لوڈز</string>
     <string name="remove_deleted">حذف شدہ کو ہٹا دیں</string>

@@ -262,7 +262,7 @@
     <string name="command_directory">Фолдер прилагођене команде</string>
     <string name="loading">Учитавање</string>
     <string name="worst_quality">Најгори квалитет</string>
-    <string name="api_key_summary">Препоруке видео снимака с YouTube API-ја</string>
+    <string name="api_key_summary">Препоруке видео снимака с Online Video API-ја</string>
     <string name="download_now">Преузми сада</string>
     <string name="update_formats_summary">Прикупљање формата чим се појави картица за преузимање</string>
     <string name="security">Безбедност</string>
@@ -300,7 +300,7 @@
     <string name="purple">Љубичаста</string>
     <string name="invert_selected">Обрни изабрано</string>
     <string name="download_over_metered_networks_summary">Преузима користећи било који тип мреже. У супротном, чека на мрежу без ограничења</string>
-    <string name="add_chapters_summary">Означите YouTube/SponsorBlock сегменте као поглавља за видео снимак</string>
+    <string name="add_chapters_summary">Означите Video / SponsorBlock сегменте као поглавља за видео снимак</string>
     <string name="blue">Плава</string>
     <string name="confirm_delete_logs_desc">Избришите целу листу евиденција, трајно.</string>
     <string name="ytld_update_success">Нова верзија је инсталирана</string>
@@ -414,12 +414,12 @@
     <string name="playlist_as_album">Користи назив плејлисте као метаподатке албума</string>
     <string name="continue_anyway">Ипак настави</string>
     <string name="playlist_as_album_summary">Ако метаподаци албума нису доступни, користите назив плејлисте</string>
-    <string name="data_fetching_extractor_youtube">Екстрактор прикупљања података (YouTube)</string>
+    <string name="data_fetching_extractor_youtube">Екстрактор прикупљања података (Online Video)</string>
     <string name="socket_timeout">Временско ограничење сокета</string>
     <string name="advanced">Напредно</string>
     <string name="thumbnail">Сличица</string>
     <string name="preferred_command_template">Преферирани командни шаблон</string>
-    <string name="other_youtube_extractor_args">Остали YouTube Extractor аргументи</string>
+    <string name="other_youtube_extractor_args">Остали Online Video Extractor аргументи</string>
     <string name="status">Статус</string>
     <string name="items">предмет(а)</string>
     <string name="socket_timeout_description">Време за чекање пре одустајања, у секундама</string>
@@ -432,10 +432,10 @@
     <string name="data_fetching_extra_command_summary">Омогућите да се командни шаблони користе за прикупљање података као додатне команде</string>
     <string name="disable_write_info_json">Онемогући JSON за писање информација</string>
     <string name="disable_write_info_json_summary">Сваки пут када рестартујете/наставите преузимање, yt-dlp ће поново преузети json податке са сервера (не препоручује се)</string>
-    <string name="ytdlp_recommnedations">YT-DLP YouTube „Препоруке“ (потребни колачићи)</string>
-    <string name="ytdlp_watch_history">YT-DLP YouTube „Историја гледања“ (потребни колачићи)</string>
-    <string name="ytdlp_liked">YT-DLP YouTube „Лајковани видеи“ (потребни колачићи)</string>
-    <string name="ytdlp_watch_later">YT-DLP YouTube „За касније“ (потребни су колачићи)</string>
+    <string name="ytdlp_recommnedations">YT-DLP Online Video „Препоруке“ (потребни колачићи)</string>
+    <string name="ytdlp_watch_history">YT-DLP Online Video „Историја гледања“ (потребни колачићи)</string>
+    <string name="ytdlp_liked">YT-DLP Online Video „Лајковани видеи“ (потребни колачићи)</string>
+    <string name="ytdlp_watch_later">YT-DLP Online Video „За касније“ (потребни су колачићи)</string>
     <string name="no_check_certificates">Поништи проверу HTTPS сертификата</string>
     <string name="live_stream">Стрим уживо</string>
     <string name="wait_for_video">Чекај за видео снимак</string>
@@ -445,7 +445,7 @@
     <string name="minutes">Минути</string>
     <string name="prefer_container_over_codec_audio_summary">Када је ово омогућено, преферирани аудио кодек ће бити занемарен и само ће се контејнер променити</string>
     <string name="player_client">Клијент плејера</string>
-    <string name="player_client_summary">Клијенти плејера YouTube-а и токен PO</string>
+    <string name="player_client_summary">Клијенти плејера Online Video-а и токен PO</string>
     <string name="use_app_language_for_metadata">Користи језик апликације за метаподатке</string>
     <string name="layout">Изглед</string>
     <string name="list">Листа</string>

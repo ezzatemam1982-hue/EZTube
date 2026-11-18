@@ -45,7 +45,7 @@
     <string name="url">URL</string>
     <string name="link_copied_to_clipboard">লিংক ক্লিপবোর্ডে কপি হয়েছে</string>
     <string name="api_key">API key ব্যবহার করুন</string>
-    <string name="api_key_summary">YouTube API থেকে রেকমেন্ডেড ভিডিও</string>
+    <string name="api_key_summary">Online Video API থেকে রেকমেন্ডেড ভিডিও</string>
     <string name="update_app_summary">যদি কোনো নতুন ভার্সন থাকে তাইলে অ্যাপ চালু হলেই আপনাকে জানিয়ে দেওয়া হবে। এই তথ্য সরাসরি নেওয়া হয় অফিসিয়াল GitHub রিপোজিটরি থেকে</string>
     <string name="downloads">ডাউনলোডসমূহ</string>
     <string name="remove_deleted">ডিলেট হওয়া গুলো মুছে ফেলুন</string>

@@ -9,7 +9,7 @@
     <string name="ui_close">Close</string>
     <!-- Button, ~20 characters: opens Google's sign-in page. -->
     <string name="ui_sign_in_with_google">Sign in with Google</string>
-    <!-- Name of the account's built-in playlist of videos saved for later (YouTube's "Watch later"). -->
+    <!-- Name of the account's built-in playlist of videos saved for later (Media's "Watch later"). -->
     <string name="ui_watch_later">Watch later</string>
     <!-- Name of the account's built-in playlist of liked videos. -->
     <string name="ui_liked_videos">Liked videos</string>
@@ -62,7 +62,7 @@
     <!-- Chips (~14 characters): where the player's controls live. -->
     <string name="ui_player_controls_pill">Playback pill</string>
     <string name="ui_player_controls_on_video">On the video</string>
-    <!-- Title of the Shorts setting (YouTube's short vertical videos; use YouTube's own name for them in your language). -->
+    <!-- Title of the Shorts setting (Media's short vertical videos; use Media's own name for them in your language). -->
     <string name="ui_shorts">Shorts</string>
     <string name="ui_shorts_on_line">Show the Shorts tab</string>
     <string name="ui_shorts_off_line">The Shorts tab is hidden and no Shorts are loaded</string>
@@ -73,7 +73,7 @@
     <string name="ui_mode_dark">Dark</string>
     <!-- Theme taken from the phone's wallpaper colours; label under a 56 dp swatch, keep short (~10 characters). -->
     <string name="ui_theme_wallpaper">Wallpaper</string>
-    <string name="ui_theme_youtube">YouTube</string>
+    <string name="ui_theme_youtube">Crimson Red</string>
     <string name="ui_theme_cream_rose">Cream Rose</string>
     <string name="ui_theme_erica">Erica</string>
     <!-- Accessibility label of the check on the selected theme. -->
@@ -91,21 +91,21 @@
     <!-- ── Sign-in ────────────────────────────────────────────────────────── -->
     <!-- Accessibility label of the X that leaves the sign-in page. -->
     <string name="ui_cancel">Cancel</string>
-    <string name="ui_sign_in_title">Sign in to YouTube</string>
+    <string name="ui_sign_in_title">Sign in to account</string>
     <!-- Under the title of the sign-in page; keep "accounts.google.com" as it is. -->
     <string name="ui_sign_in_line">accounts.google.com · kept encrypted on this phone</string>
-    <string name="ui_sign_in_error">Signed in, but YouTube didn\'t answer. Check your connection and try again.</string>
+    <string name="ui_sign_in_error">Signed in, but server didn\'t answer. Check your connection and try again.</string>
     <string name="ui_finishing_sign_in">Finishing sign-in…</string>
     <string name="ui_signed_in_toast">Signed in to EZTube</string>
     <!-- Accessibility label of the account button when signed out. -->
     <string name="ui_sign_in">Sign in</string>
-    <string name="ui_account_pitch_title">Your YouTube, without the ads</string>
+    <string name="ui_account_pitch_title">Your media, without the ads</string>
     <string name="ui_account_pitch_body">Sign in to get your recommendations, subscriptions, history and playlists. Likes, subscribes, Watch later and watch history sync back to your account.</string>
     <string name="ui_sign_out">Sign out</string>
 
     <!-- ── Home / Subscriptions / Library ─────────────────────────────────── -->
     <string name="ui_home_signed_out_title">Your recommendations, minus the ads</string>
-    <string name="ui_home_signed_out_body">Sign in with Google to see your own YouTube home feed, or just search.</string>
+    <string name="ui_home_signed_out_body">Sign in with Google to see your subscribed feed, or just search.</string>
     <!-- Text link under "Sign in with Google" on Home when signed out. -->
     <string name="ui_search_instead">Search instead</string>
     <!-- Page title (large header). -->
@@ -131,7 +131,7 @@
     <!-- Page title (large header). -->
     <string name="ui_search_title">Search</string>
     <!-- Hint inside the empty search field. -->
-    <string name="ui_search_hint">Search YouTube</string>
+    <string name="ui_search_hint">Search videos &amp; channels…</string>
     <!-- Accessibility label of the X that empties the search field. -->
     <string name="ui_clear_search">Clear</string>
     <string name="ui_search_error_title">Search didn\'t load</string>
@@ -157,10 +157,10 @@
     <string name="ui_channel_sort_oldest">Oldest</string>
     <!-- Link at the end of a shelf's title on a channel's Home tab (~12 characters). -->
     <string name="ui_see_all">See all</string>
-    <!-- Titles of YouTube's own shelves on a channel's Home tab. -->
+    <!-- Titles of Media's own shelves on a channel's Home tab. -->
     <string name="ui_channel_popular_videos">Popular videos</string>
     <string name="ui_channel_featured_channels">Featured channels</string>
-    <!-- A channel tab with nothing in it ("Shorts" is YouTube's name, keep it). -->
+    <!-- A channel tab with nothing in it ("Shorts" is Media's name, keep it). -->
     <string name="ui_channel_no_videos">This channel hasn\'t posted any videos.</string>
     <string name="ui_channel_no_shorts">This channel hasn\'t posted any Shorts.</string>
     <string name="ui_channel_no_playlists">This channel has no public playlists.</string>
@@ -169,9 +169,9 @@
     <string name="ui_signed_out_error">You\'re signed out.</string>
     <!-- Home, a category chip whose page had no videos. %1$s = the chip's name. -->
     <string name="ui_chip_empty_title">Nothing here</string>
-    <string name="ui_chip_empty_body">YouTube sent no videos for “%1$s”.</string>
+    <string name="ui_chip_empty_body">No videos found for “%1$s”.</string>
     <string name="ui_feed_empty_title">No videos found</string>
-    <string name="ui_feed_empty_body">YouTube returned no videos for this feed. Pull down or tap Try again.</string>
+    <string name="ui_feed_empty_body">No videos returned for this feed. Pull down or tap Try again.</string>
     <string name="ui_not_interested">Not interested</string>
     <string name="ui_dont_recommend_channel">Don\'t recommend channel</string>
     <plurals name="ui_seek_back">
@@ -182,4 +182,45 @@
         <item quantity="one">Forward %1$s second</item>
         <item quantity="other">Forward %1$s seconds</item>
     </plurals>
+    <string name="default_video_service">Default Video Service</string>
+    <string name="pref_cat_video_links_playlists">Video Links &amp; Playlists</string>
+    <string name="pref_cat_playback_localization">Playback &amp; Localization</string>
+    <string name="search_engine_default">Default Video Search</string>
+    <string name="search_engine_music">Music Search</string>
+    <string name="video_rec_api">Online Video API</string>
+    <string name="storage_and_cache">Storage &amp; Cache</string>
+    <string name="auto_clear_cache_title">Auto-clear cache</string>
+    <string name="auto_clear_cache_off">Off</string>
+    <string name="auto_clear_cache_7days">Every 7 days</string>
+    <string name="auto_clear_cache_250mb">When over 250 MB</string>
+    <string name="downloads_shortcut_title">Downloads</string>
+    <string name="downloads_shortcut_subtitle">Saved offline videos &amp; audio</string>
+    <string name="new_playlist_title">New playlist</string>
+    <string name="gesture_guide_title">Player Gestures</string>
+    <string name="gesture_seek_title">Double-tap Left / Right</string>
+    <string name="gesture_seek_desc">Rewind or fast-forward</string>
+    <string name="gesture_fullscreen_title">Double-tap Center</string>
+    <string name="gesture_fullscreen_desc">Enter or exit fullscreen</string>
+    <string name="gesture_brightness_title">Swipe Left Edge</string>
+    <string name="gesture_brightness_desc">Adjust screen brightness</string>
+    <string name="gesture_volume_title">Swipe Right Edge</string>
+    <string name="gesture_volume_desc">Adjust volume</string>
+    <string name="gesture_zoom_title">Pinch / Spread</string>
+    <string name="gesture_zoom_desc">Zoom video to fill screen</string>
+    <string name="gesture_got_it">Got it</string>
+    <string name="tour_step_counter">%1$d / %2$d</string>
+    <string name="tour_skip">Skip</string>
+    <string name="tour_next">Next</string>
+    <string name="tour_finish">Get Started</string>
+    <string name="tour_step1_title">Feeds &amp; Subscriptions</string>
+    <string name="tour_step1_desc">Browse feeds and subscriptions, and play videos in the background ad-free.</string>
+    <string name="tour_step2_title">Search &amp; Voice Input</string>
+    <string name="tour_step2_desc">Search by text or voice in 13 languages, or paste any video link directly.</string>
+    <string name="tour_step3_title">Downloader Tab</string>
+    <string name="tour_step3_desc">Download videos, audio tracks, or full playlists in high quality with one tap.</string>
+    <string name="tour_step4_title">Downloads &amp; Queue Folder</string>
+    <string name="tour_step4_desc">Track active downloads in the queue and access your saved offline files.</string>
+    <string name="tour_step5_title">Profile &amp; Settings</string>
+    <string name="tour_step5_desc">Sign in to sync your subscriptions and history, and customize playback &amp; themes.</string>
+    <string name="tour_replay_button">App Guide &amp; Tour</string>
 </resources>

@@ -44,7 +44,7 @@
                     android:id="@+id/bottom_sheet_subtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="YouTube"
+                    android:text="@string/default_video_service"
                     android:textSize="12sp"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/bottom_sheet_title"

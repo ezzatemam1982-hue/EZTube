@@ -38,7 +38,7 @@
     <string name="embed_thumb">کاورها و تامبنیل</string>
     <string name="embed_thumb_summary">استفاده از تامبنیل به عنوان کاور</string>
     <string name="add_chapters">بخش های ویدیو ها</string>
-    <string name="add_chapters_summary">علامت گذاری تکه های YouTube/SponsorBlock به عنوان بخش هایی از ویدیو</string>
+    <string name="add_chapters_summary">علامت گذاری تکه های Video / SponsorBlock به عنوان بخش هایی از ویدیو</string>
     <string name="save_thumb">ذخیره تامبنیل</string>
     <string name="audio_format">فرمت صوت</string>
     <string name="video_format">فرمت ویدیو</string>
@@ -51,7 +51,7 @@
     <string name="you_are_going_to_delete">در حال حذف</string>
     <string name="url">لینک</string>
     <string name="api_key">استفاده از کلید API</string>
-    <string name="api_key_summary">پیشنهادات ویدیو از YouTube API</string>
+    <string name="api_key_summary">پیشنهادات ویدیو از Online Video API</string>
     <string name="downloads">دانلودها</string>
     <string name="remove_deleted">پاک کردن مورد حذف شده</string>
     <string name="remove_duplicates">حذف موارد تکراری</string>

@@ -54,6 +54,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -564,15 +565,52 @@ private fun FoldingPage(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (onSearch != null) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     Modifier
-                        .size(48.dp)
-                        .graphicsLayer { alpha = fold() }
-                        .pressable(enabled = folded) { scope.launch { onSearch() } },
+                        .size(44.dp)
+                        .pressable {
+                            AppTourState.startTour()
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.Rounded.Search, stringResource(R.string.settings_search), tint = c.onSurface)
+                    Icon(
+                        painter = painterResource(R.drawable.baseline_help_24),
+                        contentDescription = stringResource(R.string.tour_replay_button),
+                        tint = c.onSurface,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                if (onSearch != null) {
+                    val context = LocalContext.current
+                    val activity = context.findActivity() as? androidx.fragment.app.FragmentActivity
+                    Row(
+                        modifier = Modifier.graphicsLayer { alpha = fold() },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            Modifier
+                                .size(44.dp)
+                                .pressable(enabled = folded) {
+                                    activity?.let { act ->
+                                        VoiceSearchBottomSheet.show(act.supportFragmentManager, isOfflineSupported = true) { spoken ->
+                                            scope.launch { onSearch() }
+                                        }
+                                    }
+                                },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(Icons.Rounded.Mic, stringResource(R.string.voice_search), tint = c.primary, modifier = Modifier.size(20.dp))
+                        }
+                        Box(
+                            Modifier
+                                .size(44.dp)
+                                .pressable(enabled = folded) { scope.launch { onSearch() } },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(Icons.Rounded.Search, stringResource(R.string.settings_search), tint = c.onSurface, modifier = Modifier.size(22.dp))
+                        }
+                    }
                 }
             }
         }
@@ -1184,7 +1222,6 @@ private fun entries(liveSupported: Boolean): List<Entry> = buildList {
     val ab = SettingsPage.About
     add(Entry(ab, "version", str(R.string.settings_version, BuildConfig.VERSION_NAME), listOf(str(R.string.settings_checking))))
     add(Entry(ab, "developer", str(R.string.developer), listOf(str(R.string.developer_name), "Ezzat Emam", "EZTube")))
-    add(Entry(ab, "clear_cache", str(R.string.settings_clear_cache), listOf("cache", "storage", str(R.string.settings_clear_cache_empty))))
 }
 
 /** Case and accents don't matter ("espanol" finds Español). */
@@ -1736,6 +1773,7 @@ private fun PlaybackPage(player: PlayerState) {
             onDismiss = { showQualityPicker = false },
         )
     }
+    Spacer(Modifier.navigationBarsPadding().height(24.dp))
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1935,9 +1973,9 @@ private fun SponsorBlockPage() {
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = if (infoExpanded) Icons.Rounded.Info else Icons.Outlined.Info,
+                            imageVector = Icons.Rounded.Info,
                             contentDescription = stringResource(R.string.player_sb_info),
-                            tint = if (infoExpanded) c.primary else c.onSurfaceVariant,
+                            tint = c.primary,
                             modifier = Modifier.size(19.dp),
                         )
                     }
@@ -2457,7 +2495,7 @@ private fun AboutPage(player: PlayerState) {
         stringResource(R.string.settings_clear_cache_empty)
     }
     val clearedMessage = stringResource(R.string.settings_clear_cache_done)
-    Joined(5) { i, shape ->
+    Joined(4) { i, shape ->
         when (i) {
             0 -> LinkSetting(
                 "version",
@@ -2506,20 +2544,12 @@ private fun AboutPage(player: PlayerState) {
                     android.widget.Toast.makeText(context, supportEmail, android.widget.Toast.LENGTH_SHORT).show()
                 }
             }
-            3 -> LinkSetting("developer", shape, Icons.Rounded.Person, stringResource(R.string.developer), developerCredit) {
+            else -> LinkSetting("developer", shape, Icons.Rounded.Person, stringResource(R.string.developer), developerCredit) {
                 android.widget.Toast.makeText(
                     context,
                     developerCredit,
                     android.widget.Toast.LENGTH_SHORT,
                 ).show()
-            }
-            else -> LinkSetting("clear_cache", shape, Icons.Rounded.CleaningServices, stringResource(R.string.settings_clear_cache), cacheLine) {
-                scope.launch {
-                    val remaining = withContext(Dispatchers.IO) { clearAppTransientCaches(context) }
-                    TransientCacheSizeStore.update(remaining)
-                    cacheBytes = remaining
-                    player.actionMessage = clearedMessage
-                }
             }
         }
     }

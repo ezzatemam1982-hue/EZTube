@@ -78,7 +78,7 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="YouTube">
+    <PreferenceCategory android:title="@string/pref_cat_video_links_playlists">
         <ListPreference
             android:icon="@drawable/baseline_recommend_24"
             android:key="recommendations_home"

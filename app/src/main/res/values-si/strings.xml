@@ -51,7 +51,7 @@
     <string name="embed_thumb">සිඟිති රූප ආවරණ</string>
     <string name="embed_thumb_summary">සිඟිති රූපය (thumbnail) කවරයේ රූපය ලෙස භාවිතා කරන්න</string>
     <string name="add_chapters">වීඩියෝවල පරිච්ඡේද</string>
-    <string name="add_chapters_summary">YouTube / SponsorBlock කොටස් වීඩියෝව සඳහා පරිච්ඡේද ලෙස සලකුණු කරන්න</string>
+    <string name="add_chapters_summary">Video / SponsorBlock කොටස් වීඩියෝව සඳහා පරිච්ඡේද ලෙස සලකුණු කරන්න</string>
     <string name="save_thumb">සිඟිති රුපය (thumbnail) සුරකින්න</string>
     <string name="save_thumb_summary">සිඟිති රූපය (thumbnail) බාගත කිරීම් ෆෝල්ඩරයේ සුරකින්න</string>
     <string name="audio_format">ශ්‍රව්‍ය ආකෘතිය</string>
@@ -68,7 +68,7 @@
     <string name="url">URL</string>
     <string name="link_copied_to_clipboard">සබැඳිය(Link) ක්ලිප්බෝඩ් එකට පිටපත් කරන ලදී</string>
     <string name="api_key">API යතුර භාවිතා කරන්න</string>
-    <string name="api_key_summary">YouTube API වෙතින් ලැබෙන වීඩියෝ නිර්දේශ</string>
+    <string name="api_key_summary">Online Video API වෙතින් ලැබෙන වීඩියෝ නිර්දේශ</string>
     <string name="update_app_summary">යෙදුම විවෘත කළ විට එහි නව අනුවාද(Versions) පිළිබඳව දැනුම් දෙන්න. එම දත්ත නිල GitHub ගබඩාවෙන් (Repository) ලබාගනු ලැබේ</string>
     <string name="downloads">බාගත කිරීම්</string>
     <string name="search_results">ප්‍රතිඵල වල සොයන්න</string>

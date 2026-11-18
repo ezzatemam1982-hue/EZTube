@@ -227,6 +227,25 @@ fun VideoContent(
         label = "seekPeek",
     )
 
+    var showCenterFullscreenFeedback by remember { mutableStateOf(false) }
+    LaunchedEffect(showCenterFullscreenFeedback) {
+        if (showCenterFullscreenFeedback) {
+            delay(600)
+            showCenterFullscreenFeedback = false
+        }
+    }
+    val context = LocalContext.current
+    var showGesturesGuide by remember {
+        mutableStateOf(PlayerGesturesGuideState.shouldShow(context))
+    }
+    var wasPlayingBeforeGuide by remember { mutableStateOf(false) }
+    LaunchedEffect(showGesturesGuide, state.isPlaying) {
+        if (showGesturesGuide && state.isPlaying) {
+            wasPlayingBeforeGuide = true
+            state.pause()
+        }
+    }
+
     LaunchedEffect(interactive) { if (!interactive) { controlsVisible = false; burstActive = false } }
     LaunchedEffect(state.screenLocked) {
         if (state.screenLocked) {
@@ -401,19 +420,25 @@ fun VideoContent(
                 up.consume()
                 if (!currentInteractive) { currentInactiveTap(); return@awaitEachGesture }
                 val x = up.position.x / size.width
-                val side = if (x < 0.4f) -1 else if (x > 0.6f) 1 else 0
-                if (burstActive && side == burstSide) { seekStep(side); return@awaitEachGesture }
+                val side = if (x < 0.33f) -1 else if (x > 0.67f) 1 else 0
+                if (burstActive && side == burstSide && side != 0) { seekStep(side); return@awaitEachGesture }
                 burstActive = false
                 val waiting = pendingTap?.isActive == true
                 pendingTap?.cancel()
-                if (side == 0 || state.error != null) {
+                if (state.error != null) {
                     toggleControls()
                 } else if (waiting && side == pendingSide && up.uptimeMillis - pendingAt < doubleTapMs) {
-                    controlsVisible = false
-                    burstSide = side
-                    burstSeconds = 0
-                    burstActive = true
-                    seekStep(side)
+                    if (side == 0) {
+                        controlsVisible = false
+                        onToggleFullscreen()
+                        showCenterFullscreenFeedback = true
+                    } else {
+                        controlsVisible = false
+                        burstSide = side
+                        burstSeconds = 0
+                        burstActive = true
+                        seekStep(side)
+                    }
                 } else {
                     pendingSide = side
                     pendingAt = up.uptimeMillis
@@ -790,6 +815,33 @@ fun VideoContent(
                     Icon(Icons.Rounded.LockOpen, null, tint = Color.White, modifier = Modifier.size(18.dp))
                 }
             }
+        }
+        if (showCenterFullscreenFeedback) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.65f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (fullscreen) Icons.Rounded.FullscreenExit else Icons.Rounded.Fullscreen,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(36.dp)
+                )
+            }
+        }
+        if (showGesturesGuide) {
+            PlayerGesturesOverlay(
+                onDismiss = {
+                    showGesturesGuide = false
+                    if (wasPlayingBeforeGuide && !state.isPlaying) {
+                        state.togglePlay()
+                    }
+                }
+            )
         }
     }
 }

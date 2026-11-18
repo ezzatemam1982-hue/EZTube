@@ -55,7 +55,7 @@
     <string name="embed_thumb">Thumbnail covers</string>
     <string name="embed_thumb_summary">Use the thumbnail as cover art</string>
     <string name="add_chapters">Chapters in videos</string>
-    <string name="add_chapters_summary">Mark YouTube / SponsorBlock segments as chapters for the video</string>
+    <string name="add_chapters_summary">Mark video / SponsorBlock segments as chapters for the video</string>
     <string name="save_thumb">Save thumbnail</string>
     <string name="save_thumb_summary">Save the thumbnail in the download folder</string>
     <string name="audio_format">Audio format</string>
@@ -72,7 +72,7 @@
     <string name="url">URL</string>
     <string name="link_copied_to_clipboard">Link copied to clipboard</string>
     <string name="api_key">Use API key</string>
-    <string name="api_key_summary">Video recommendations from YouTube API</string>
+    <string name="api_key_summary">Video recommendations from Online Video API</string>
     <string name="update_app_summary">Announce new versions of the app when it is opened. The data is extracted from the official GitHub Repository</string>
     <string name="downloads">Downloads</string>
     <string name="search_results">Search results</string>
@@ -441,7 +441,7 @@
     <string name="continue_anyway">Continue anyway</string>
     <string name="playlist_as_album">Use playlist name as album metadata</string>
     <string name="playlist_as_album_summary">If album metadata is not present, use playlist name instead</string>
-    <string name="data_fetching_extractor_youtube">Data fetching extractor (YouTube)</string>
+    <string name="data_fetching_extractor_youtube">Data fetching extractor (Online Video)</string>
     <string name="pause_all">Pause all</string>
     <string name="resume_all">Resume all</string>
     <string name="package_name">Package name</string>
@@ -449,7 +449,7 @@
     <string name="status">Status</string>
     <string name="deleted">Deleted</string>
     <string name="websites">Websites</string>
-    <string name="other_youtube_extractor_args">Other YouTube extractor arguments</string>
+    <string name="other_youtube_extractor_args">Other extractor arguments</string>
     <string name="items">item(s)</string>
     <string name="socket_timeout">Socket timeout</string>
     <string name="socket_timeout_description">Time to wait before giving up, in seconds</string>
@@ -459,10 +459,10 @@
     <string name="data_fetching_extra_command_summary">Enable command templates to be used for data fetching as extra commands</string>
     <string name="disable_write_info_json">Disable write info json</string>
     <string name="disable_write_info_json_summary">Every time you restart / resume the download, yt-dlp will re-download json data from the servers (not recommended)</string>
-    <string name="ytdlp_watch_later">yt-dlp YouTube watch later (needs cookies)</string>
-    <string name="ytdlp_recommnedations">yt-dlp YouTube recommendations (needs cookies)</string>
-    <string name="ytdlp_liked">yt-dlp YouTube liked videos (needs cookies)</string>
-    <string name="ytdlp_watch_history">yt-dlp YouTube watch history (needs cookies)</string>
+    <string name="ytdlp_watch_later">Watch later (needs cookies)</string>
+    <string name="ytdlp_recommnedations">Recommendations (needs cookies)</string>
+    <string name="ytdlp_liked">Liked videos (needs cookies)</string>
+    <string name="ytdlp_watch_history">Watch history (needs cookies)</string>
     <string name="no_check_certificates">Suppress HTTPS certificate validation</string>
     <string name="live_stream">Live stream</string>
     <string name="live_from_start">Live from start</string>
@@ -472,7 +472,7 @@
     <string name="prefer_container_over_codec_audio">Prefer container over codec for audio downloads</string>
     <string name="prefer_container_over_codec_audio_summary">With this enabled, the preferred audio codec preference will be ignored and only container will change</string>
     <string name="player_client">Player client</string>
-    <string name="player_client_summary">YouTube Player Clients &amp; PO Token</string>
+    <string name="player_client_summary">Player Clients &amp; PO Token</string>
     <string name="use_app_language_for_metadata">Match app language for titles &amp; audio</string>
     <string name="layout">Layout</string>
     <string name="list">List</string>
@@ -523,7 +523,7 @@
     <string name="update_ytdlp_while_downloading">Update yt-dlp while downloading</string>
     <string name="update_ytdlp_while_downloading_summary">Add -U to yt-dlp to update it to latest before downloading</string>
     <string name="preview_filename">Preview filename</string>
-    <string name="potoken_guide">Auth\n-----------------------\n1. Click \'Auth\' to open the sign in page in WebView.\n2. Sign in to your Google Account.\n3. Play any video that supports auto-translated subtitles.\n4. Turn on auto-translated subtitles and see if it works.\n\t4.1 If auto-translated subtitles don\'t work, switch to another video that supports auto-translated subtitles and try step 4 again.\n5. Click OK.\n\nNo Auth\n-----------------------\n1. Click \'No Auth\'.\n2. Write any youtube video url\n3. Wait for the video to load and play the video for at least 3 seconds.\n4. Click OK.</string>
+    <string name="potoken_guide">Auth\n-----------------------\n1. Click \'Auth\' to open the sign in page in WebView.\n2. Sign in to your Google Account.\n3. Play any video that supports auto-translated subtitles.\n4. Turn on auto-translated subtitles and see if it works.\n\t4.1 If auto-translated subtitles don\'t work, switch to another video that supports auto-translated subtitles and try step 4 again.\n5. Click OK.\n\nNo Auth\n-----------------------\n1. Click \'No Auth\'.\n2. Write any video url\n3. Wait for the video to load and play the video for at least 3 seconds.\n4. Click OK.</string>
     <string name="no_auth">No Auth</string>
     <string name="auth">Auth</string>
     <string name="app_icon">App icon</string>

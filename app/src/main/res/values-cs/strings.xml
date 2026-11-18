@@ -59,7 +59,7 @@
     <string name="command_directory">Složka vlastních příkazů</string>
     <string name="you_are_in_latest_version">Používáte poslední verzi</string>
     <string name="audio">Audio</string>
-    <string name="add_chapters_summary">Označte YouTube / SponsorBlock segmenty jako kapitoly pro video</string>
+    <string name="add_chapters_summary">Označte Video / SponsorBlock segmenty jako kapitoly pro video</string>
     <string name="ytld_update_success">Nová verze yt-dlp je nainstalovaná</string>
     <string name="no_results">Žádné výsledky</string>
     <string name="embed_subs_summary">Přidá titulky do videa</string>
@@ -69,7 +69,7 @@
     <string name="update_app_summary">Oznámení nových verzí aplikace při jejím otevření. Data jsou převzata z oficiálního repozitáře GitHub</string>
     <string name="url">URL adresa</string>
     <string name="link_copied_to_clipboard">Odkaz zkopírován do schránky</string>
-    <string name="api_key_summary">Doporučená videa z YouTube API</string>
+    <string name="api_key_summary">Doporučená videa z Online Video API</string>
     <string name="socks5_proxy_summary">Použijte zadaný proxy server HTTP/HTTPS/SOCKS</string>
     <string name="shortcuts_desc">Použijte běžně používané příkazy k vytváření šablon</string>
     <string name="delete_file_too">Odstranit soubor ze zařízení</string>
@@ -413,11 +413,11 @@
     <string name="continue_anyway">Pokračovat i tak</string>
     <string name="playlist_as_album">Použití názvu playlistu jako metadata alba</string>
     <string name="playlist_as_album_summary">Pokud metadata alba nejsou k dispozici, použije místo nich název playlistu</string>
-    <string name="data_fetching_extractor_youtube">Extraktor načtených dat (YouTube)</string>
+    <string name="data_fetching_extractor_youtube">Extraktor načtených dat (Online Video)</string>
     <string name="items">položka(y)</string>
     <string name="socket_timeout">Časový limit soketu</string>
     <string name="advanced">Pokročilé</string>
-    <string name="other_youtube_extractor_args">Další argumenty YouTube extraktoru</string>
+    <string name="other_youtube_extractor_args">Další argumenty Online Video extraktoru</string>
     <string name="socket_timeout_description">Doba čekání, než to vzdáte, v sekundách</string>
     <string name="thumbnail">Miniatura</string>
     <string name="package_name">Název balíčku</string>
@@ -431,10 +431,10 @@
     <string name="data_fetching_extra_command_summary">Povolí použití šablon příkazů pro načítání dat jako doplňkových příkazů</string>
     <string name="disable_write_info_json_summary">Při každém restartu/obnovení stahování bude yt-dlp znovu stahovat data json ze serverů (nedoporučuje se)</string>
     <string name="disable_write_info_json">Vypnutí zápisu údajů Json</string>
-    <string name="ytdlp_recommnedations">yt-dlp YouTube doporučené (potřebuje soubory cookie)</string>
-    <string name="ytdlp_watch_history">yt-dlp YouTube historie sledování (potřebuje soubory cookie)</string>
-    <string name="ytdlp_watch_later">yt-dlp YouTube sledovat později (vyžaduje soubory cookie)</string>
-    <string name="ytdlp_liked">yt-dlp YouTube oblíbená videa (potřebuje soubory cookie)</string>
+    <string name="ytdlp_recommnedations">yt-dlp Online Video doporučené (potřebuje soubory cookie)</string>
+    <string name="ytdlp_watch_history">yt-dlp Online Video historie sledování (potřebuje soubory cookie)</string>
+    <string name="ytdlp_watch_later">yt-dlp Online Video sledovat později (vyžaduje soubory cookie)</string>
+    <string name="ytdlp_liked">yt-dlp Online Video oblíbená videa (potřebuje soubory cookie)</string>
     <string name="no_check_certificates">Zakázat ověřování certifikátu HTTPS</string>
     <string name="live_stream">Živě</string>
     <string name="live_from_start">Živě od začátku</string>
@@ -442,7 +442,7 @@
     <string name="wait_for_video">Čekejte na video</string>
     <string name="prefer_container_over_codec_audio_summary">Pokud je tato volba povolena, předvolba preferovaného zvukového kodeku bude ignorována a změní se pouze kontejner</string>
     <string name="player_client">Klient přehrávače</string>
-    <string name="player_client_summary">Klienti přehrávače YouTube a token PO</string>
+    <string name="player_client_summary">Klienti přehrávače Online Video a token PO</string>
     <string name="use_app_language_for_metadata">Použítí jazyku aplikace pro metadata</string>
     <string name="layout">Uspořádání</string>
     <string name="list">Seznam</string>
@@ -496,7 +496,7 @@
     <string name="update_ytdlp_while_downloading">Aktualizace yt-dlp během stahování</string>
     <string name="update_ytdlp_while_downloading_summary">Přidejte -U k yt-dlp, aby se aktualizoval na nejnovější verzi před stahováním</string>
     <string name="preview_filename">Název náhledu</string>
-    <string name="potoken_guide">"Ověření\n-----------------------\n1. Klikněte na „Ověření“ a otevřete přihlašovací stránku ve WebView.\n2. Přihlaste se ke svému účtu Google.\n3. Přehrajte libovolné video, které podporuje automaticky přeložené titulky.\n4. Zapněte automaticky přeložené titulky a zkontrolujte, zda fungují.\n    4.1 Pokud automaticky přeložené titulky nefungují, přepněte na jiné video, které podporuje automaticky přeložené titulky, a zkuste krok 4 znovu.\n5. Klikněte na OK.\n\nBez ověření\n-----------------------\n1. Klikněte na „Bez ověření“.\n2. Zadejte libovolnou adresu URL videa na YouTube.\n3. Počkejte, až se video načte, a přehrávejte ho alespoň 3 sekundy.\n4. Klikněte na OK."</string>
+    <string name="potoken_guide">"Ověření\n-----------------------\n1. Klikněte na „Ověření“ a otevřete přihlašovací stránku ve WebView.\n2. Přihlaste se ke svému účtu Google.\n3. Přehrajte libovolné video, které podporuje automaticky přeložené titulky.\n4. Zapněte automaticky přeložené titulky a zkontrolujte, zda fungují.\n    4.1 Pokud automaticky přeložené titulky nefungují, přepněte na jiné video, které podporuje automaticky přeložené titulky, a zkuste krok 4 znovu.\n5. Klikněte na OK.\n\nBez ověření\n-----------------------\n1. Klikněte na „Bez ověření“.\n2. Zadejte libovolnou adresu URL videa na Online Video.\n3. Počkejte, až se video načte, a přehrávejte ho alespoň 3 sekundy.\n4. Klikněte na OK."</string>
     <string name="no_auth">Bez ověření</string>
     <string name="auth">Ověření</string>
     <string name="prefer_drc_audio">Upřednostnit DRC Audio</string>

@@ -82,8 +82,8 @@
     <string name="aria2_summary">Puapâpa hlâta aria2c he adaona lâta hmâh teh</string>
     <string name="save_thumb_summary">Hmiabai he daopa byh lia soh</string>
     <string name="command_download_notification_channel_description">yt-dlp kawme sâkha hmâpa ta adaopa siena palâsapa pahnosana</string>
-    <string name="api_key_summary">YouTube API tawhta khokheipa vidiôzy</string>
-    <string name="add_chapters_summary">YouTube / SponsorBlock tlawpaihzy he vidiô pachhaihpazy lâta apyh</string>
+    <string name="api_key_summary">Online Video API tawhta khokheipa vidiôzy</string>
+    <string name="add_chapters_summary">Video / SponsorBlock tlawpaihzy he vidiô pachhaihpazy lâta apyh</string>
     <string name="update_app_summary">App pahypa a châ tita vâsie thiehpa he phuahpa a châ. Data châ awfise GitHub tawhta thao papuapa a châ.</string>
     <string name="embed_subtitles">Pabupa châtlâhrohpazy</string>
     <string name="add_chapter">Pachhaihnazy khô</string>

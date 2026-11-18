@@ -36,7 +36,7 @@
     <string name="history_is_empty">Празна историја</string>
     <string name="link_copied_to_clipboard">Врската е копирана во таблата со исечоци</string>
     <string name="api_key">Користете го клучот API</string>
-    <string name="api_key_summary">Препораки за видео од Youtube API</string>
+    <string name="api_key_summary">Препораки за видео од Online Video API</string>
     <string name="update_app_summary">Објавете ги новите верзии на апликацијата кога ќе се отвори</string>
     <string name="remove_duplicates">Отстранете ги дупликатите</string>
     <string name="sort_by">Сортирање</string>
@@ -74,7 +74,7 @@
     <string name="downloading">Симнување</string>
     <string name="limit_rate_summary">Максимална граница на симнување( во бајти на секунда) т.е. 50К или 4,2М</string>
     <string name="embed_thumb">Малечки тапети</string>
-    <string name="add_chapters_summary">Обележи youtube / SponsorBlock делови за поглавје во видеото</string>
+    <string name="add_chapters_summary">Обележи Online Video / SponsorBlock делови за поглавје во видеото</string>
     <string name="run_command">Извршете команда</string>
     <string name="command_download_notification_channel_description">Известување кое го покажува напредокот на преземањето со помош на командата yt-dlp</string>
     <string name="you_are_going_to_delete">Бришење</string>

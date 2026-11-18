@@ -51,7 +51,7 @@
     <string name="embed_thumb">थंबनेल कव्हर</string>
     <string name="embed_thumb_summary">कव्हर आर्ट म्हणून थंबनेल वापरा</string>
     <string name="add_chapters">व्हिडिओंमधील प्रकरणे</string>
-    <string name="add_chapters_summary">व्हिडिओसाठी YouTube / SponsorBlock विभागांना अध्याय म्हणून चिन्हांकित करा</string>
+    <string name="add_chapters_summary">व्हिडिओसाठी Video / SponsorBlock विभागांना अध्याय म्हणून चिन्हांकित करा</string>
     <string name="save_thumb">लघुप्रतिमा जतन करा</string>
     <string name="save_thumb_summary">थंबनेल डाउनलोड फोल्डरमध्ये सेव्ह करा</string>
     <string name="video_format">व्हिडिओ फॉरमॅट</string>
@@ -67,7 +67,7 @@
     <string name="url">URL</string>
     <string name="link_copied_to_clipboard">लिंक क्लिपबोर्डवर कॉपी केली</string>
     <string name="api_key">API की वापरा</string>
-    <string name="api_key_summary">YouTube API कडून व्हिडिओ शिफारसी</string>
+    <string name="api_key_summary">Online Video API कडून व्हिडिओ शिफारसी</string>
     <string name="update_app_summary">अ‍ॅप उघडल्यावर त्याच्या नवीन आवृत्त्यांची घोषणा करा. डेटा अधिकृत गिटहब रिपॉझिटरीमधून काढला जातो</string>
     <string name="downloads">डाउनलोड</string>
     <string name="remove_deleted">हटवलेले काढा</string>

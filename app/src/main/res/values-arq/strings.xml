@@ -51,7 +51,7 @@
     <string name="embed_thumb">أغلفة الصور المصغرة</string>
     <string name="embed_thumb_summary">استخدام الصورة المصغرة كغلاف</string>
     <string name="add_chapters">الفصول في الفيديوهات</string>
-    <string name="add_chapters_summary">دخل أجزاء YouTube / SponsorBlock كفصول في الفيديو</string>
+    <string name="add_chapters_summary">دخل أجزاء Video / SponsorBlock كفصول في الفيديو</string>
     <string name="save_thumb">حفظ الصور المصغرة</string>
     <string name="save_thumb_summary">حفظ الصورة المصغرة في المجلد تاع التنزيلات</string>
     <string name="audio_format">صيغة الصوت</string>
@@ -68,7 +68,7 @@
     <string name="url">الرابط</string>
     <string name="link_copied_to_clipboard">الرابط راه تنسخ للحافظة</string>
     <string name="api_key">إستخدام مفتاح API</string>
-    <string name="api_key_summary">توصيات الفيديوهات من واجهة تاع الـYouTube</string>
+    <string name="api_key_summary">توصيات الفيديوهات من واجهة تاع الـOnline Video</string>
     <string name="update_app_summary">الإعلان على الإصدارات الجديدة للتطبيق عند فتحه. البيانات راهي تجي من مستودع GitHub الرسمي</string>
     <string name="downloads">التنزيلات</string>
     <string name="remove_deleted">إزالة المحذوف</string>
@@ -501,7 +501,7 @@
     <string name="update_ytdlp_while_downloading">حدّث yt-dlp أثناء التنزيل</string>
     <string name="update_ytdlp_while_downloading_summary">أضِف الخيار -U إلى yt-dlp لتحديثه إلى أحدث إصدار قبل بدء التنزيل</string>
     <string name="preview_filename">معاينة اسم الملف</string>
-    <string name="potoken_guide">تسجيل الدخول (Auth)\n-----------------------\n1. اضغط على \"Auth\" لفتح صفحة تسجيل الدخول داخل WebView\n2. سجّل الدخول إلى حسابك في Google\n3. شغّل أي فيديو يدعم الترجمة التلقائية المترجمة إلى لغات أخرى (Auto-translated subtitles)\n4. فعّل الترجمة التلقائية المترجمة وتحقق مما إذا كانت تعمل\n- 4.1 إذا لم تعمل، انتقل إلى فيديو آخر يدعم الترجمة التلقائية المترجمة ثم أعد تنفيذ الخطوة 4\n5. اضغط \"OK\"\n-----------------------\nبدون تسجيل الدخول (No Auth)\n1. اضغط على \"No Auth\"\n2. أدخل رابط أي فيديو من YouTube\n3. انتظر حتى يتم تحميل الفيديو، ثم شغّله لمدة 3 ثوانٍ على الأقل\n4. اضغط \"OK\"</string>
+    <string name="potoken_guide">تسجيل الدخول (Auth)\n-----------------------\n1. اضغط على \"Auth\" لفتح صفحة تسجيل الدخول داخل WebView\n2. سجّل الدخول إلى حسابك في Google\n3. شغّل أي فيديو يدعم الترجمة التلقائية المترجمة إلى لغات أخرى (Auto-translated subtitles)\n4. فعّل الترجمة التلقائية المترجمة وتحقق مما إذا كانت تعمل\n- 4.1 إذا لم تعمل، انتقل إلى فيديو آخر يدعم الترجمة التلقائية المترجمة ثم أعد تنفيذ الخطوة 4\n5. اضغط \"OK\"\n-----------------------\nبدون تسجيل الدخول (No Auth)\n1. اضغط على \"No Auth\"\n2. أدخل رابط أي فيديو من Online Video\n3. انتظر حتى يتم تحميل الفيديو، ثم شغّله لمدة 3 ثوانٍ على الأقل\n4. اضغط \"OK\"</string>
     <string name="no_auth">بدون تسجيل الدخول</string>
     <string name="auth">تسجيل الدخول</string>
     <string name="app_icon">أيقونة التطبيق</string>

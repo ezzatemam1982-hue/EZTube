@@ -2,7 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory android:title="YouTube">
+    <PreferenceCategory android:title="@string/pref_cat_playback_localization">
         <Preference
             android:defaultValue=""
             android:icon="@drawable/baseline_person_24"
@@ -29,7 +29,7 @@
 <!--        <EditTextPreference-->
 <!--            android:defaultValue=""-->
 <!--            android:icon="@drawable/ic_code"-->
-<!--            android:key="youtube_data_sync_id"-->
+<!--            android:key="Online Video_data_sync_id"-->
 <!--            app:useSimpleSummaryProvider="true"-->
 <!--            android:title="Data Sync ID" />-->
 

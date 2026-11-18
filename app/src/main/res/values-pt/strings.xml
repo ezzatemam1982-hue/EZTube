@@ -47,7 +47,7 @@
     <string name="audio_quality">Qualidade do áudio</string>
     <string name="items_left">itens restantes</string>
     <string name="download">Download</string>
-    <string name="api_key_summary">Recomendações de vídeos a partir da API do YouTube</string>
+    <string name="api_key_summary">Recomendações de vídeos a partir da API do Online Video</string>
     <string name="update_app_summary">Verifica se há atualizações ao iniciar o aplicativo. Os dados são extraídos do repositório oficial do GitHub</string>
     <string name="remove_duplicates">Remover duplicados</string>
     <string name="downloads">Downloads</string>
@@ -200,7 +200,7 @@
     <string name="clear_temporary_files_summary">Excluir arquivos em cache de downloads como falhas, erros e cancelados</string>
     <string name="move_temporary_files_summary">Mover arquivos em cache para a pasta de downloads</string>
     <string name="video_recommendations_summary">Obter vídeos recomendados na tela inicial</string>
-    <string name="add_chapters_summary">Marcar segmentos YouTube/SponsorBlock como capítulos do vídeo</string>
+    <string name="add_chapters_summary">Marcar segmentos Video / SponsorBlock como capítulos do vídeo</string>
     <string name="you_are_going_to_delete_multiple_items">Excluir vários itens</string>
     <string name="request_permission_desc">Este aplicativo requer \"Permissão de Armazenamento\" para salvar downloads no dispositivo</string>
     <string name="sponsorblock_nonmusic">Partes sem música e sem relação com o tema</string>
@@ -417,7 +417,7 @@
     <string name="recode_video_summary">Recodifica o arquivo de vídeo para o formato especificado</string>
     <string name="disable_write_info_json">Desabilitar salvamento de informações Json</string>
     <string name="disable_write_info_json_summary">Cada vez que você reiniciar / continuar o download, o yt-dlp baixará novamente os dados json dos servidores (não recomendado)</string>
-    <string name="other_youtube_extractor_args">Outros argumentos do YouTube Extractor</string>
+    <string name="other_youtube_extractor_args">Outros argumentos do Online Video Extractor</string>
     <string name="socket_timeout">Tempo limite de Socket</string>
     <string name="socket_timeout_description">Tempo de esperar antes de desistir, em segundos</string>
     <string name="advanced">Avançado</string>
@@ -429,12 +429,12 @@
     <string name="cleanup_leftover_downloads">Limpar downloads restantes (cancelados, com erro)</string>
     <string name="format_importance_note">Ajuste a importância do elemento de formato. Essa ordem só será usada quando o aplicativo buscar os formatos no cartão de download e selecionar automaticamente o formato!</string>
     <string name="download_archive_folder">Pasta para o arquivamento de downloads</string>
-    <string name="ytdlp_watch_later">yt-dlp: Assistir mais tarde no YouTube (precisa de cookies)</string>
-    <string name="ytdlp_recommnedations">yt-dlp: Recomendações do YouTube (precisa de cookies)</string>
-    <string name="ytdlp_liked">yt-dlp: Vídeos curtidos do YouTube (precisa de cookies)</string>
-    <string name="ytdlp_watch_history">yt-dlp: Histórico de exibição do YouTube (precisa de cookies)</string>
+    <string name="ytdlp_watch_later">yt-dlp: Assistir mais tarde no Online Video (precisa de cookies)</string>
+    <string name="ytdlp_recommnedations">yt-dlp: Recomendações do Online Video (precisa de cookies)</string>
+    <string name="ytdlp_liked">yt-dlp: Vídeos curtidos do Online Video (precisa de cookies)</string>
+    <string name="ytdlp_watch_history">yt-dlp: Histórico de exibição do Online Video (precisa de cookies)</string>
     <string name="data_fetching_extra_command_summary">Permitir que os modelos de comando sejam usados para busca de dados a partir de comandos extras</string>
-    <string name="data_fetching_extractor_youtube">Extrator para busca de dados (YouTube)</string>
+    <string name="data_fetching_extractor_youtube">Extrator para busca de dados (Online Video)</string>
     <string name="retry_missing_downloads_desc">Baixar novamente itens que não estão presentes no histórico de downloads</string>
     <string name="reset_processed_links_desc">Baixar todos os itens novamente</string>
     <string name="sync_with_source_desc">Excluir itens baixados se eles estiverem faltando na fonte</string>
@@ -447,7 +447,7 @@
     <string name="prefer_container_over_codec_audio">Preferir o contêiner em vez do codec para downloads de áudio</string>
     <string name="prefer_container_over_codec_audio_summary">Com essa opção habilitada, a preferência do codec de áudio será ignorada e somente o contêiner será alterado</string>
     <string name="player_client">Cliente de reprodução</string>
-    <string name="player_client_summary">Cliente de reprodução do YouTube &amp; Chave de acesso PO</string>
+    <string name="player_client_summary">Cliente de reprodução do Online Video &amp; Chave de acesso PO</string>
     <string name="use_app_language_for_metadata">Usar idioma do aplicativo para metadados</string>
     <string name="layout">Layout</string>
     <string name="list">Lista</string>

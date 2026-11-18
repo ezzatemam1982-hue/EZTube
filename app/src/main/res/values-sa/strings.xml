@@ -137,13 +137,13 @@
     <string name="bitrate">बीटरेट</string>
     <string name="not_deleted">न नष्टम्</string>
     <string name="player_client">खिलाडी ग्राहक</string>
-    <string name="player_client_summary">YouTube प्लेयर क्लायन्ट् &amp; PO टोकन</string>
+    <string name="player_client_summary">Online Video प्लेयर क्लायन्ट् &amp; PO टोकन</string>
     <string name="use_app_language_for_metadata">मेटाडाटा कृते एप् भाषायाः उपयोगं कुर्वन्तु</string>
     <string name="layout">प्रारूपं</string>
     <string name="grid">गृध्र</string>
     <string name="on_time">उपरि</string>
     <string name="backup_created_successfully">सुरक्षितं प्रति लेखं सफलतया संरक्षितम् !</string>
-    <string name="other_youtube_extractor_args">अन्ये YouTube निष्कर्षक तर्काः</string>
+    <string name="other_youtube_extractor_args">अन्ये Online Video निष्कर्षक तर्काः</string>
     <string name="items">मदा)</string>
     <string name="thumbnail">लघुचित्रम्</string>
     <string name="navigation_bar">नेविगेशन बार</string>
@@ -183,7 +183,7 @@
     <string name="add">अधिकारय</string>
     <string name="back">पृष्ठम्</string>
     <string name="api_key_summary">यू ट्यूब एपीआईः कृते दृश्यसूचनाः</string>
-    <string name="ytdlp_liked">yt-dlp YouTube इत्यनेन पसन्दं कृतं विडियो (कुकीजस्य आवश्यकता अस्ति)</string>
+    <string name="ytdlp_liked">yt-dlp Online Video इत्यनेन पसन्दं कृतं विडियो (कुकीजस्य आवश्यकता अस्ति)</string>
     <string name="search_command_hint">आज्ञायाम् अन्वेषणम्</string>
     <string name="concurrent_fragments_summary">DASH/HLS स्वदेशीय चलचित्रस्य सहानुकूलेन डाउनलोडकरणाय अंशाणां संख्या</string>
     <string name="downloading">अवरोधनम्</string>
@@ -355,8 +355,8 @@
     <string name="move_temporary_files_summary">सङ्केतितजालानि अवगच्छताम्</string>
     <string name="cut_unsupported">अस्य वस्तूनां कर्तनं अनुपलब्धम्</string>
     <string name="cut_unavailable_please_update_item">तव आवश्यकं सम्पातविधिम् उपयोक्तुं वस्तुप्रवृत्तिं अद्यतनं कर्तुम्।</string>
-    <string name="ytdlp_watch_later">yt-dlp YouTube पश्चात् पश्यन्तु (कुकीजस्य आवश्यकता अस्ति)</string>
-    <string name="ytdlp_recommnedations">yt-dlp YouTube अनुशंसाः (कुकीजस्य आवश्यकता अस्ति)</string>
+    <string name="ytdlp_watch_later">yt-dlp Online Video पश्चात् पश्यन्तु (कुकीजस्य आवश्यकता अस्ति)</string>
+    <string name="ytdlp_recommnedations">yt-dlp Online Video अनुशंसाः (कुकीजस्य आवश्यकता अस्ति)</string>
     <string name="use_only_po_token">केवलं PO टोकनस्य उपयोगं कुर्वन्तु (player client इत्यस्य अवहेलनां कुर्वन्तु)</string>
     <string name="cache_directory">Cache पुटम्</string>
     <string name="data_fetching_extra_command_summary">अतिरिक्त-आदेशरूपेण दत्तांश-आनयनार्थं उपयोक्तुं आदेश-सारूप्यं सक्षमं कुर्वन्तु</string>
@@ -444,8 +444,8 @@
     <string name="no_check_certificates">HTTPS प्रमाणपत्रसत्यापनं दमनं कुर्वन्तु</string>
     <string name="scroll_down">तलसम्पातं गत्वा</string>
     <string name="access_all_directories_summary">पूर्वनिर्धारितरूपेण प्रतिबन्धितनिर्देशिकासु एप् डाउनलोड् भवतु</string>
-    <string name="data_fetching_extractor_youtube">आँकडा आनयन निष्कर्षकः (YouTube) .</string>
-    <string name="ytdlp_watch_history">yt-dlp YouTube watch history (कुकीजस्य आवश्यकता अस्ति)</string>
+    <string name="data_fetching_extractor_youtube">आँकडा आनयन निष्कर्षकः (Online Video) .</string>
+    <string name="ytdlp_watch_history">yt-dlp Watch history (कुकीजस्य आवश्यकता अस्ति)</string>
     <string name="recode_video_summary">विडियो सञ्चिकां निर्दिष्टे विडियो प्रारूपे पुनः कोडयति</string>
     <string name="generate_potokens_warning">इदं कार्यं कृत्वा त्वं कुकीन् निष्क्रियं कर्तुं आवश्यकम् अस्ति।</string>
     <string name="copy_url">यूआरएल का विवरण</string>

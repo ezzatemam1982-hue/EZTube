@@ -47,7 +47,7 @@
     <string name="embed_thumb">Miniatür örtüklər</string>
     <string name="embed_thumb_summary">Miniatürü, örtük təsviri kimi işlət</string>
     <string name="add_chapters">Videolardakı bölmələr</string>
-    <string name="add_chapters_summary">YouTube / SponsorBlock bölümlərin video üçün bölmələr kimi işarələ</string>
+    <string name="add_chapters_summary">Video / SponsorBlock bölümlərin video üçün bölmələr kimi işarələ</string>
     <string name="save_thumb">Miniatürü saxla</string>
     <string name="save_thumb_summary">Miniatürü yükləmə qovluğunda saxla</string>
     <string name="audio_format">Səs formatı</string>
@@ -64,7 +64,7 @@
     <string name="url">URL</string>
     <string name="link_copied_to_clipboard">Bağlantı buferə köçürüldü</string>
     <string name="api_key">API açar İşlət</string>
-    <string name="api_key_summary">YouTube API-dən Video tövsiyələri</string>
+    <string name="api_key_summary">Online Video API-dən Video tövsiyələri</string>
     <string name="update_app_summary">Açıldıqda tətbiqin yeni versiyasın bildir. Məlumatlar rəsmi olaraq GitHub Saxlayıcıdan götürülüb</string>
     <string name="downloads">Yükləmələr</string>
     <string name="remove_deleted">Silinənləri təmizlə</string>
@@ -413,11 +413,11 @@
     <string name="continue_anyway">Yenə də davam et</string>
     <string name="playlist_as_album">Albom şərhi məlumatı kimi pleylist adı istifadə et</string>
     <string name="playlist_as_album_summary">Albom şərhi məlumatı yoxdursa, əvəzinə pleylist adı istifadə et</string>
-    <string name="data_fetching_extractor_youtube">Məlumat çıxarıcı (YouTube)</string>
+    <string name="data_fetching_extractor_youtube">Məlumat çıxarıcı (Online Video)</string>
     <string name="items">element</string>
     <string name="socket_timeout">Zaman aşımı</string>
     <string name="thumbnail">Miniatür</string>
-    <string name="other_youtube_extractor_args">Digər YouTube extractor quruluşları</string>
+    <string name="other_youtube_extractor_args">Digər Extractor quruluşları</string>
     <string name="socket_timeout_description">Bitirməzdən əvvəl saniyə ilə gözləmək vaxtı</string>
     <string name="advanced">Qabaqcıl</string>
     <string name="pause_all">Hamısın dayandır</string>
@@ -431,10 +431,10 @@
     <string name="data_fetching_extra_command_summary">Əlavə əmrlər kimi məlumat alınmasında istifadə ediləcək əmr şablonların işə sal</string>
     <string name="disable_write_info_json">Məlumat Json-u yazmağı qapat</string>
     <string name="disable_write_info_json_summary">Hər dəfə yükləməni təkrar başlatdığınızda/davam etdirdiyinizdə yt-dlp serverlərdən json məlumatını yenidən endirəcək. (Tövsiyə edilmir)</string>
-    <string name="ytdlp_watch_later">Yt-dlp Youtube sonra izlə (məlumata ehtiyac var)</string>
-    <string name="ytdlp_recommnedations">yt-dlp YouTube tövsiyələri (məlumata ehtiyac var)</string>
-    <string name="ytdlp_liked">yt-dlp YouTube bəyənilən videolar (məlumata ehtiyac var)</string>
-    <string name="ytdlp_watch_history">Yt-dlp YouTube baxış tarixçəsi (məlumata ehtiyac var)</string>
+    <string name="ytdlp_watch_later">yt-dlp sonra izlə (məlumata ehtiyac var)</string>
+    <string name="ytdlp_recommnedations">yt-dlp Online Video tövsiyələri (məlumata ehtiyac var)</string>
+    <string name="ytdlp_liked">yt-dlp Online Video bəyənilən videolar (məlumata ehtiyac var)</string>
+    <string name="ytdlp_watch_history">Yt-dlp Online Video baxış tarixçəsi (məlumata ehtiyac var)</string>
     <string name="no_check_certificates">HTTPS sertifikatının təsdiqini dayandır</string>
     <string name="live_stream">Canlı yayım</string>
     <string name="live_from_start">Başlanğıcdan canlı</string>
@@ -444,7 +444,7 @@
     <string name="prefer_container_over_codec_audio">Səs yükləmələr üçün kodlama əvəzinə konteynerə üstünlük ver</string>
     <string name="prefer_container_over_codec_audio_summary">Bu aktivləşdikdə, üstünlük verilən səs kodlayıcı seçiminə məhəl qoyulmayacaq və yalnız konteyner dəyişdiriləcək</string>
     <string name="player_client">Oynadıcı qəbuledici</string>
-    <string name="player_client_summary">YouTube Player Clients &amp; PO Token</string>
+    <string name="player_client_summary">Player Clients &amp; PO Token</string>
     <string name="use_app_language_for_metadata">Şərhi məlumat üçün tətbiq dili istifadə et</string>
     <string name="layout">Düzülüş</string>
     <string name="list">Siyahı</string>
@@ -496,7 +496,7 @@
     <string name="update_ytdlp_while_downloading">Yükləyərkən yt-dlp-nı yenilə</string>
     <string name="update_ytdlp_while_downloading_summary">Yükləməzdən əvvəl onu ən son versiyaya yeniləmək üçün yt-dlp-yə -U əlavə edin</string>
     <string name="preview_filename">Önizləmə fayl adı</string>
-    <string name="potoken_guide">Təsdiqlənmə\n-----------------------\n1. WebView-də giriş səhifəsin açmaq üçün \"Təsdiqlə\"-yə klikləyin.\n2. Google Hesabınıza daxil olun.\n3. Avtomatik tərcümə olunan titrləri dəstəkləyən istənilən videonu oynadın.\n4. Avtomatik tərcümə olunan titrləri açın və onun işlədiyinə əmin olun.\n4.1 Avtomatik tərcümə olunan titrlər işləmirsə, avtomatik tərcümə olunan titrləri dəstəkləyən başqa videoya keçin və 4-cü addımı təkrar cəhd edin.\n5. Oldu-ya klikləyin. \n\nTəsdiqləməsiz\n----------------------- \n1. \'Təsdiqləməsiz\"-ə klikləyin. \n2. İstənilən youtube video url-ni yazın \n3. Videonun yüklənilməsini gözləyin və videonu ən azı 3 saniyə oynadın. \n4. Oldu-ya klikləyin.</string>
+    <string name="potoken_guide">Təsdiqlənmə\n-----------------------\n1. WebView-də giriş səhifəsin açmaq üçün \"Təsdiqlə\"-yə klikləyin.\n2. Google Hesabınıza daxil olun.\n3. Avtomatik tərcümə olunan titrləri dəstəkləyən istənilən videonu oynadın.\n4. Avtomatik tərcümə olunan titrləri açın və onun işlədiyinə əmin olun.\n4.1 Avtomatik tərcümə olunan titrlər işləmirsə, avtomatik tərcümə olunan titrləri dəstəkləyən başqa videoya keçin və 4-cü addımı təkrar cəhd edin.\n5. Oldu-ya klikləyin. \n\nTəsdiqləməsiz\n----------------------- \n1. \'Təsdiqləməsiz\"-ə klikləyin. \n2. İstənilən video url-ni yazın \n3. Videonun yüklənilməsini gözləyin və videonu ən azı 3 saniyə oynadın. \n4. Oldu-ya klikləyin.</string>
     <string name="no_auth">Təsdiqləməsiz</string>
     <string name="auth">Təsdiqlə</string>
     <string name="prefer_drc_audio">DRC səsə üstünlük ver</string>

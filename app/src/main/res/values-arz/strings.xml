@@ -54,7 +54,7 @@
     <string name="remove_downloading">الغاء التحميلات</string>
     <string name="cancelled">تم الالغاء</string>
     <string name="cancel_task">الغاء المهمة</string>
-    <string name="player_client_summary">YouTube Player Clients &amp; PO Token</string>
+    <string name="player_client_summary">Player Clients &amp; PO Token</string>
     <string name="changed_path_for_everyone_to">تم تغيير مسار التحميل لكل العناصر إلى:</string>
     <string name="changelog">سجل التغييرات</string>
     <string name="cache_directory_warning">تغيير مجلد التخزين المؤقت ممكن يسبب مشاكل مش متوقعة. لو البرنامج ما قدرش يكتب في المسار المتحدد، هيستخدم مجلد التخزين المؤقت الداخلي الافتراضي</string>
@@ -101,9 +101,9 @@
     <string name="downloaded">"تم التنزيل: "</string>
     <string name="disable_write_info_json_summary">في كل مرة تقوم فيها بإعادة التشغيل / استئناف التنزيل، سيقوم yt-dlp بإعادة تنزيل بيانات json من الخوادم (غير مستحسن)</string>
     <string name="ytdlp_watch_later">yt-dlp مشاهدة اليوتيوب لاحقًا (يحتاج إلى ملفات تعريف الارتباط)</string>
-    <string name="ytdlp_recommnedations">توصيات YouTube الخاصة بـ yt-dlp (تحتاج إلى ملفات تعريف الارتباط)</string>
-    <string name="ytdlp_liked">مقاطع الفيديو التي أعجبتك على YouTube (تحتاج إلى ملفات تعريف الارتباط)</string>
-    <string name="ytdlp_watch_history">سجل مشاهدة YouTube yt-dlp (يحتاج إلى ملفات تعريف الارتباط)</string>
+    <string name="ytdlp_recommnedations">توصيات Online Video الخاصة بـ yt-dlp (تحتاج إلى ملفات تعريف الارتباط)</string>
+    <string name="ytdlp_liked">مقاطع الفيديو التي أعجبتك على Online Video (تحتاج إلى ملفات تعريف الارتباط)</string>
+    <string name="ytdlp_watch_history">سجل مشاهدة Online Video yt-dlp (يحتاج إلى ملفات تعريف الارتباط)</string>
     <string name="no_check_certificates">قمع التحقق من صحة شهادة HTTPS</string>
     <string name="live_stream">البث المباشر</string>
     <string name="live_from_start">مباشر من البداية</string>
@@ -136,7 +136,7 @@
     <string name="embed_thumb">أغلفة الصور المصغرة</string>
     <string name="embed_thumb_summary">استخدم الصورة المصغرة كغلاف فني</string>
     <string name="add_chapters">الفصول في الفيديوهات</string>
-    <string name="add_chapters_summary">قم بوضع علامة على مقاطع YouTube / SponsorBlock كفصول للفيديو</string>
+    <string name="add_chapters_summary">قم بوضع علامة على مقاطع Video / SponsorBlock كفصول للفيديو</string>
     <string name="save_thumb">حفظ الصورة المصغرة</string>
     <string name="save_thumb_summary">احفظ الصورة المصغرة في مجلد التنزيل</string>
     <string name="video_format">تنسيق الفيديو</string>
@@ -149,7 +149,7 @@
     <string name="url">الرابط</string>
     <string name="link_copied_to_clipboard">تم نسخ الرابط إلى الحافظة</string>
     <string name="api_key">استخدم مفتاح API</string>
-    <string name="api_key_summary">توصيات الفيديو من YouTube API</string>
+    <string name="api_key_summary">توصيات الفيديو من Online Video API</string>
     <string name="downloads">التحميلات</string>
     <string name="remove_deleted">إزالة المحذوف</string>
     <string name="remove_duplicates">إزالة التكرارات</string>

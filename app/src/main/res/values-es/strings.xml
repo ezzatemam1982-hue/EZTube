@@ -41,7 +41,7 @@
     <string name="download_all">Descargar Todo</string>
     <string name="ytld_update_success">Nueva versión yt-dlp instalada</string>
     <string name="ok">Aceptar</string>
-    <string name="api_key_summary">Recomendaciones de videos desde la API de YouTube</string>
+    <string name="api_key_summary">Recomendaciones de videos desde la API de Online Video</string>
     <string name="run_command">Ejecutar comando</string>
     <string name="embed_thumb">Portadas de las miniaturas</string>
     <string name="command_download_notification_channel_description">Notificación que muestra el progreso de la descarga a través de un comando yt-dlp</string>
@@ -55,7 +55,7 @@
     <string name="embed_thumb_summary">Usar la miniatura como arte de portada</string>
     <string name="add_chapters">Capítulos en videos</string>
     <string name="you_are_going_to_delete">Borrando</string>
-    <string name="add_chapters_summary">Marcar los segmentos de YouTube / SponsorBlock como capítulos para el video</string>
+    <string name="add_chapters_summary">Marcar los segmentos de Video / SponsorBlock como capítulos para el video</string>
     <string name="audio_format">Formato de audio</string>
     <string name="items_left">objeto(s) restante(s)</string>
     <string name="download">Descargar</string>
@@ -198,7 +198,7 @@
     <string name="subtitle_languages">Idiomas de los subtítulos</string>
     <string name="format_source">Formatos de la fuente</string>
     <string name="video_recommendations">Videos recomendados</string>
-    <string name="video_recommendations_summary">Vídeos recomendados de YouTube en la pantalla de inicio</string>
+    <string name="video_recommendations_summary">Vídeos recomendados de Online Video en la pantalla de inicio</string>
     <string name="preferred_search_engine">Buscador favorito</string>
     <string name="preferred_search_engine_summary">El buscador para las búsquedas dentro de la aplicación</string>
     <string name="format_filtering_hint">Todos los artículos deben ser del mismo tipo para utilizar esta opción</string>
@@ -413,11 +413,11 @@
     <string name="continue_anyway">Continuar de todos modos</string>
     <string name="playlist_as_album">Usar el nombre de la lista de reproducción como metadatos del álbum</string>
     <string name="playlist_as_album_summary">Si los metadatos del álbum no están presentes, utiliza el nombre de la lista de reproducción en su lugar</string>
-    <string name="data_fetching_extractor_youtube">Extractor de recuperación de datos (YouTube)</string>
+    <string name="data_fetching_extractor_youtube">Extractor de recuperación de datos (Online Video)</string>
     <string name="socket_timeout">Vencimiento del socket</string>
     <string name="items">artículo(s)</string>
     <string name="advanced">Avanzado</string>
-    <string name="other_youtube_extractor_args">Otros argumentos del extractor de YouTube</string>
+    <string name="other_youtube_extractor_args">Otros argumentos del extractor de Online Video</string>
     <string name="socket_timeout_description">Tiempo de espera antes de abandonar, en segundos</string>
     <string name="thumbnail">Miniaturas</string>
     <string name="pause_all">Pausar todo</string>
@@ -431,10 +431,10 @@
     <string name="data_fetching_extra_command_summary">Habilitar plantillas de comandos que se utilizarán para la obtención de datos como comandos adicionales</string>
     <string name="disable_write_info_json">Deshabilita escribir informe de json</string>
     <string name="disable_write_info_json_summary">Cada vez que reinicie/reanude la descarga, yt-dlp volverá a descargar los datos json desde los servidores (no recomendado)</string>
-    <string name="ytdlp_watch_later">yt‐dlp Youtube visto más tarde (necesita cookies )</string>
-    <string name="ytdlp_recommnedations">Recomendaciones de YouTube de yt‐dlp (necesita cookies)</string>
-    <string name="ytdlp_liked">Vídeos que me gustan en YouTube de yt‐dlp (necesita cookies)</string>
-    <string name="ytdlp_watch_history">Historial de visualización de YouTube de yt‐dlp (requiere cookies)</string>
+    <string name="ytdlp_watch_later">yt‐dlp Online Video visto más tarde (necesita cookies )</string>
+    <string name="ytdlp_recommnedations">Recomendaciones de Online Video de yt‐dlp (necesita cookies)</string>
+    <string name="ytdlp_liked">Vídeos que me gustan en Online Video de yt‐dlp (necesita cookies)</string>
+    <string name="ytdlp_watch_history">Historial de visualización de Online Video de yt‐dlp (requiere cookies)</string>
     <string name="player_client">Cliente reproductor</string>
     <string name="layout">Layout</string>
     <string name="list">Lista</string>
@@ -444,7 +444,7 @@
     <string name="live_stream">Transmisión en vivo</string>
     <string name="minutes">Minutos</string>
     <string name="prefer_container_over_codec_audio">Preferir el contenedor sobre códice para descargas de sonido</string>
-    <string name="player_client_summary">Clientes del reproductor de YouTube y token PO</string>
+    <string name="player_client_summary">Clientes del reproductor de Online Video y token PO</string>
     <string name="use_app_language_for_metadata">Utilizar el lenguaje de app para metadatos</string>
     <string name="use_only_po_token">Utilizar únicamente el vale del PO (ignora cliente de reproducción)</string>
     <string name="app_icon_change">El icono pudo cambiar y la aplicación se cerrará</string>
@@ -501,7 +501,7 @@
     <string name="crop_validation_exceeds_h">Y+H supera %d</string>
     <string name="prefer_drc_audio">Preferir Audio DRC</string>
     <string name="preview_filename">Previsualizar nombre de archivo</string>
-    <string name="potoken_guide">Auth\n-----\n1. Haga clic en \'Auth\' para abrir el signo en la página de WebView.\n2. Inicie sesión en su cuenta de Google.\n3. Reproduce cualquier vídeo que soporte subtítulos autotranslatados.\n4. Encienda subtítulos autotranslatados y vea si funciona.\n4.1 Si los subtítulos autotranslatados no funcionan, cambia a otro vídeo que admite subtítulos autotranslatados y prueba el paso 4 de nuevo.\n5. Haga clic en Aceptar.\n\nNo Auth\n-----\n1. Haga clic en \'No Auth\'.\n2. Escribe cualquier url de vídeo de youtube\n3. Espere a que el vídeo se cargue y reproduzca el video por lo menos 3 segundos.\n4. Haga clic en Aceptar.</string>
+    <string name="potoken_guide">Auth\n-----\n1. Haga clic en \'Auth\' para abrir el signo en la página de WebView.\n2. Inicie sesión en su cuenta de Google.\n3. Reproduce cualquier vídeo que soporte subtítulos autotranslatados.\n4. Encienda subtítulos autotranslatados y vea si funciona.\n4.1 Si los subtítulos autotranslatados no funcionan, cambia a otro vídeo que admite subtítulos autotranslatados y prueba el paso 4 de nuevo.\n5. Haga clic en Aceptar.\n\nNo Auth\n-----\n1. Haga clic en \'No Auth\'.\n2. Escribe cualquier url de vídeo\n3. Espere a que el vídeo se cargue y reproduzca el video por lo menos 3 segundos.\n4. Haga clic en Aceptar.</string>
     <string name="no_auth">No Autenticado</string>
     <string name="auth">Autenticación</string>
     <string name="app_icon">Icono de la aplicación</string>

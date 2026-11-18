@@ -1,6 +1,6 @@
 <resources>
-    <!-- Shorts tab: shown instead of the feed when YouTube sent no Shorts at all. -->
-    <string name="shorts_none_offered">YouTube didn\'t offer any Shorts right now.</string>
+    <!-- Shorts tab: shown instead of the feed when Online Video sent no Shorts at all. -->
+    <string name="shorts_none_offered">No Shorts offered right now any Shorts right now.</string>
     <!-- Shorts tab: shown on a short that failed to load or play (under shorts_cant_play_title). -->
     <string name="shorts_cant_play_now">This Short can\'t play right now.</string>
     <!-- Shorts tab: bold heading over the reason a short failed. -->

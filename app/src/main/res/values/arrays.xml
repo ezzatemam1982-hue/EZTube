@@ -163,8 +163,8 @@
     </array>
 
     <array name="search_engines">
-        <item>YouTube</item>
-        <item>YouTube Music</item>
+        <item>@string/search_engine_default</item>
+        <item>@string/search_engine_music</item>
         <item>Soundcloud</item>
         <item>Bilibili</item>
 <!--        <item>Nico video</item>-->
@@ -1067,7 +1067,7 @@
     <array name="video_recommendations">
         <item>@string/disabled</item>
         <item>NewPipe</item>
-        <item>YouTube API</item>
+        <item>@string/video_rec_api</item>
         <item>@string/ytdlp_watch_later</item>
         <item>@string/ytdlp_recommnedations</item>
         <item>@string/ytdlp_liked</item>
@@ -1560,4 +1560,15 @@
         <item>open</item>
     </string-array>
 
+    <string-array name="auto_clear_cache_entries">
+        <item>@string/auto_clear_cache_250mb</item>
+        <item>@string/auto_clear_cache_7days</item>
+        <item>@string/auto_clear_cache_off</item>
+    </string-array>
+
+    <string-array name="auto_clear_cache_values">
+        <item>size_250mb</item>
+        <item>days_7</item>
+        <item>off</item>
+    </string-array>
 </resources>

@@ -159,6 +159,10 @@ class MainActivity : BaseActivity() {
             }
         }
 
+        lifecycleScope.launch(Dispatchers.IO) {
+            com.deniscerri.ytdl.util.CacheCleanupUtil.checkAndAutoClean(applicationContext)
+        }
+
         // new users already went through the permissions page, so only the required ones are re-checked
         askPermissions(includeOptional = true)
 

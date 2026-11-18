@@ -62,5 +62,5 @@
     <string name="save_thumb_summary">Desa la miniatura a la carpeta de descàrregues</string>
     <string name="command_download_notification_channel_description">Notificació que mostra el progrés de la descàrrega mitjançant una comanda yt-dlp</string>
     <string name="Remove">Elimina</string>
-    <string name="add_chapters_summary">Marca els segments de YouTube / SponsorBlock com a capítols per al vídeo</string>
+    <string name="add_chapters_summary">Marca els segments de Video / SponsorBlock com a capítols per al vídeo</string>
 </resources>

@@ -33,7 +33,7 @@
     <string name="embed_subs_summary">Встраивать субтитры в видеоконтейнер</string>
     <string name="embed_thumb">Обложка из миниатюры</string>
     <string name="add_chapters">Главы в видео</string>
-    <string name="add_chapters_summary">Создавать главы в видеофайлах на основе сегментов YouTube/SponsorBlock</string>
+    <string name="add_chapters_summary">Создавать главы в видеофайлах на основе сегментов Video / SponsorBlock</string>
     <string name="save_thumb">Сохранять миниатюру</string>
     <string name="audio_format">Формат аудио</string>
     <string name="video_format">Формат видео</string>
@@ -46,7 +46,7 @@
     <string name="url">URL</string>
     <string name="link_copied_to_clipboard">Ссылка скопирована в буфер обмена</string>
     <string name="api_key">Использовать ключ API</string>
-    <string name="api_key_summary">Рекомендации из YouTube API</string>
+    <string name="api_key_summary">Рекомендации из Online Video API</string>
     <string name="downloads">Загрузки</string>
     <string name="command_download_notification_channel_name">Загрузка через команду</string>
     <string name="remove_deleted">Удалить удалённые</string>
@@ -412,12 +412,12 @@
     <string name="continue_anyway">Всё равно продолжить</string>
     <string name="playlist_as_album">Название плейлиста в качестве метаданных альбома</string>
     <string name="playlist_as_album_summary">Использовать название плейлиста вместо метаданных альбома, если они отсутствуют</string>
-    <string name="data_fetching_extractor_youtube">Средство извлечения данных (YouTube)</string>
+    <string name="data_fetching_extractor_youtube">Средство извлечения данных (Online Video)</string>
     <string name="items">предмет(ы)</string>
     <string name="advanced">Дополнительно</string>
     <string name="thumbnail">Миниатюра</string>
     <string name="socket_timeout_description">Время ожидания перед отменой загрузки (в секундах)</string>
-    <string name="other_youtube_extractor_args">Другие аргументы YouTube-экстрактора</string>
+    <string name="other_youtube_extractor_args">Другие аргументы Online Video-экстрактора</string>
     <string name="socket_timeout">Тайм-аут соединения</string>
     <string name="pause_all">Приостановить все</string>
     <string name="resume_all">Возобновить все</string>
@@ -430,10 +430,10 @@
     <string name="disable_write_info_json">Не сохранять JSON с метаданными</string>
     <string name="disable_write_info_json_summary">При каждом перезапуске/возобновлении загрузки yt-dlp будет повторно загружать JSON-данные с сервера (не рекомендуется)</string>
     <string name="data_fetching_extra_command_summary">Разрешить использование шаблонов команд в качестве дополнительных команд для получения данных о видео (заголовков, списка форматов и т. д.)</string>
-    <string name="ytdlp_recommnedations">yt-dlp — Рекомендации YouTube (требуются cookie)</string>
-    <string name="ytdlp_liked">yt-dlp — Понравившиеся видео на YouTube (требуются cookie)</string>
-    <string name="ytdlp_watch_history">yt-dlp — История просмотров на YouTube (требуются cookie)</string>
-    <string name="ytdlp_watch_later">yt-dlp — «Посмотреть позже» на YouTube (требуются cookie)</string>
+    <string name="ytdlp_recommnedations">yt-dlp — Рекомендации Online Video (требуются cookie)</string>
+    <string name="ytdlp_liked">yt-dlp — Понравившиеся видео на Online Video (требуются cookie)</string>
+    <string name="ytdlp_watch_history">yt-dlp — История просмотров на Online Video (требуются cookie)</string>
+    <string name="ytdlp_watch_later">yt-dlp — «Посмотреть позже» на Online Video (требуются cookie)</string>
     <string name="no_check_certificates">Не проверять HTTPS-сертификат</string>
     <string name="live_stream">Прямая трансляция</string>
     <string name="wait_for_video">Ожидать записи</string>
@@ -443,7 +443,7 @@
     <string name="prefer_container_over_codec_audio">Предпочитать контейнер кодеку для загрузок аудио</string>
     <string name="prefer_container_over_codec_audio_summary">Если этот параметр включён, предпочитаемый аудиокодек будет игнорироваться и изменится только контейнер</string>
     <string name="player_client">Клиент плеера</string>
-    <string name="player_client_summary">Клиенты YouTube-плеера и PO Token</string>
+    <string name="player_client_summary">Клиенты Online Video-плеера и PO Token</string>
     <string name="use_app_language_for_metadata">Запрашивать метаданные на языке приложения</string>
     <string name="layout">Макет</string>
     <string name="list">Список</string>
@@ -495,7 +495,7 @@
     <string name="update_ytdlp_while_downloading">Обновлять yt-dlp во время загрузки</string>
     <string name="update_ytdlp_while_downloading_summary">Добавлять -U в yt-dlp, чтобы обновлять его до последней версии перед загрузкой</string>
     <string name="preview_filename">Предпросмотр имени файла</string>
-    <string name="potoken_guide">Авторизация ------------------\n1. Нажмите «Авторизация», чтобы открыть страницу входа;\n2. Войдите в свою учётную запись Google;\n3. Воспроизведите любое видео, поддерживающее субтитры с автоматическим переводом;\n4. Включите субтитры с автопереводом и посмотрите, работают ли они;\n4.1 Если не работают, переключитесь на другое видео, повторите шаг 3 и 4;\n5. Нажмите ОК.\n\nБез авторизации\n------------------------\n1. Нажмите «Без авторизации»;\n2. Введите URL любого видео с YouTube;\n3. Дождитесь его загрузки, воспроизведите его не менее 3 секунд;\n4. Нажмите ОК.</string>
+    <string name="potoken_guide">Авторизация ------------------\n1. Нажмите «Авторизация», чтобы открыть страницу входа;\n2. Войдите в свою учётную запись Google;\n3. Воспроизведите любое видео, поддерживающее субтитры с автоматическим переводом;\n4. Включите субтитры с автопереводом и посмотрите, работают ли они;\n4.1 Если не работают, переключитесь на другое видео, повторите шаг 3 и 4;\n5. Нажмите ОК.\n\nБез авторизации\n------------------------\n1. Нажмите «Без авторизации»;\n2. Введите URL любого видео с Online Video;\n3. Дождитесь его загрузки, воспроизведите его не менее 3 секунд;\n4. Нажмите ОК.</string>
     <string name="no_auth">Без авторизации</string>
     <string name="auth">Авторизация</string>
     <string name="prefer_drc_audio">Предпочитать аудио с поддержкой DRC</string>

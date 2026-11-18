@@ -137,14 +137,14 @@
     <string name="cancel_task">Atcelt Lejupielādi</string>
     <string name="limit_rate_summary">Maksimālais lejupielādes ātrums (baitos sekundē), piem., 50K vai 4.2M</string>
     <string name="aria2_summary">Izmantot aria2c kā lejupielādētāju, nevis noklusējuma</string>
-    <string name="add_chapters_summary">Atzīmē YouTube / SponsorBlock segmentus kā video nodaļas</string>
+    <string name="add_chapters_summary">Atzīmē Video / SponsorBlock segmentus kā video nodaļas</string>
     <string name="link_copied_to_clipboard">Saite kopēta starpliktuvē</string>
     <string name="add_chapters">Sadaļas videoklipos</string>
     <string name="author">Autors</string>
     <string name="audio_quality_summary">0 (labākā) 10 (sliktākā)</string>
     <string name="url">URL</string>
     <string name="api_key">Izmantot API Atslēgu</string>
-    <string name="api_key_summary">Ātrāki rezultāti no YouTube</string>
+    <string name="api_key_summary">Ātrāki rezultāti no Online Video</string>
     <string name="incognito_summary">Lejupielādēt bez pievienošanas vēsturei</string>
     <string name="download">Lejupielādēt</string>
     <string name="embed_subtitles">Iegult Subtitrus</string>
@@ -199,7 +199,7 @@
     <string name="download_over_metered_networks_summary">Veic lejupielādi, izmantojot jebkuru tīkla veidu. Pretējā gadījumā gaida, kad tiks izveidots savienojums ar neierobežotu tīklu</string>
     <string name="format_source">Formātu Avots</string>
     <string name="video_recommendations">Video Ieteikumi</string>
-    <string name="video_recommendations_summary">Saņemiet ieteiktos YouTube videoklipus sākuma ekrānā no Invidious</string>
+    <string name="video_recommendations_summary">Saņemiet ieteiktos Online Video videoklipus sākuma ekrānā no Invidious</string>
     <string name="preferred_search_engine">Vēlamā Meklētājprogramma</string>
     <string name="purple">Violets</string>
     <string name="restore_complete">Lietotnes Atjaunošana Pabeigta. Ir atjaunoti šādi vienumi:</string>

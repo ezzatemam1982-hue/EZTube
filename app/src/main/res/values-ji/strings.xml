@@ -51,7 +51,7 @@
     <string name="embed_thumb">טהאמבנעיל קאווערס</string>
     <string name="embed_thumb_summary">באניץ דעם טהאמבנעיל אלס קאווער ארט</string>
     <string name="add_chapters">טשעפטערס אין ווידיאס</string>
-    <string name="add_chapters_summary">באצייכן YouTube / SponsorBlock סעגמענטן אלס טשעפטערס אינעם ווידיא</string>
+    <string name="add_chapters_summary">באצייכן Video / SponsorBlock סעגמענטן אלס טשעפטערס אינעם ווידיא</string>
     <string name="save_thumb">סעיוו טהאמבנעיל</string>
     <string name="save_thumb_summary">סעיוו דעם טהאמבנעיל אינעם דאונלאוד פאלדער</string>
     <string name="audio_format">אדיאו פארמאט</string>
@@ -67,7 +67,7 @@
     <string name="you_are_going_to_delete">מעקנדיג</string>
     <string name="link_copied_to_clipboard">לינק קאפירט צום קליפבארד</string>
     <string name="api_key">באניץ API key</string>
-    <string name="api_key_summary">ווידיא רעקאמענדאציעס פונעם YouTube API</string>
+    <string name="api_key_summary">ווידיא רעקאמענדאציעס פונעם Online Video API</string>
     <string name="update_app_summary">מאלד נייע ווערסיעס פונעם עפ ווען מ\'עפנט עס. די דאטא ווערט גענומען פונעם אפיציעלן GitHub Repository</string>
     <string name="downloads">דאונלאודס</string>
     <string name="remove_deleted">אראפנעמען געמעקטע</string>

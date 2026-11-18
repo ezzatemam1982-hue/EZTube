@@ -48,7 +48,7 @@
     <string name="embed_subs_summary">Lisa videole subtiitrid</string>
     <string name="embed_thumb">Pisipildid</string>
     <string name="add_chapters">Peatükid videotes</string>
-    <string name="add_chapters_summary">Märkige YouTube\'i/SponsorBlocki segmendid video peatükkidena</string>
+    <string name="add_chapters_summary">Märkige Online Video\'i/SponsorBlocki segmendid video peatükkidena</string>
     <string name="save_thumb">Salvesta pisipilt</string>
     <string name="save_thumb_summary">Salvesta pisipilt allalaadimise kausta</string>
     <string name="audio_format">Heli/audio formaat</string>
@@ -64,7 +64,7 @@
     <string name="url">URL</string>
     <string name="link_copied_to_clipboard">Link on lõikelauale kopeeritud</string>
     <string name="api_key">Kasuta API-võtit</string>
-    <string name="api_key_summary">Video soovitused YouTube\'i API-st</string>
+    <string name="api_key_summary">Video soovitused Online Video\'i API-st</string>
     <string name="update_app_summary">Teavita rakenduse avamisel uutest versioonidest. Andmed pärinevad ametlikust GitHubi repositooriumist</string>
     <string name="downloads">Allalaadimised</string>
     <string name="remove_deleted">Eemalda kustutatud</string>
@@ -442,7 +442,7 @@
     <string name="continue_anyway">Jätka ikkagi</string>
     <string name="playlist_as_album">Kasuta esitusloendi nime albumi metaandmetena</string>
     <string name="playlist_as_album_summary">Kui albumi metaandmed puuduvad, kasuta selle asemel esitusloendi nime</string>
-    <string name="data_fetching_extractor_youtube">Andmete hankija (YouTube)</string>
+    <string name="data_fetching_extractor_youtube">Andmete hankija (Online Video)</string>
     <string name="pause_all">Peata kõik</string>
     <string name="resume_all">Jätka kõigiga</string>
     <string name="package_name">Paketi nimi</string>
@@ -450,7 +450,7 @@
     <string name="status">Staatus</string>
     <string name="deleted">Kustutatud</string>
     <string name="websites">Veebilehed</string>
-    <string name="other_youtube_extractor_args">Muud YouTube\'i ekstraktori argumendid</string>
+    <string name="other_youtube_extractor_args">Muud Online Video\'i ekstraktori argumendid</string>
     <string name="items">üksus(ed)</string>
     <string name="socket_timeout">ühenduse ajalõpp</string>
     <string name="socket_timeout_description">Ooteaeg enne loobumist (sekundites)</string>
@@ -460,10 +460,10 @@
     <string name="data_fetching_extra_command_summary">Võimalda käsumallide kasutamist andmete hankimiseks lisakäskudena</string>
     <string name="disable_write_info_json">Keela info kirjutamine JSON-faili</string>
     <string name="disable_write_info_json_summary">Iga kord, kui allalaadimise taaskäivitate või jätkate, laadib yt-dlp serveritest JSON-andmed uuesti alla (ei ole soovitatav)</string>
-    <string name="ytdlp_watch_later">yt-dlp YouTube’i „vaata hiljem“ (vajab küpsiseid)</string>
-    <string name="ytdlp_recommnedations">yt-dlp YouTube’i soovitused (vajab küpsiseid)</string>
-    <string name="ytdlp_liked">yt-dlp YouTube’i meeldinud videod (vajab küpsiseid)</string>
-    <string name="ytdlp_watch_history">yt-dlp YouTube’i vaatamisajalugu (vajab küpsiseid)</string>
+    <string name="ytdlp_watch_later">yt-dlp Online Video’i „vaata hiljem“ (vajab küpsiseid)</string>
+    <string name="ytdlp_recommnedations">yt-dlp Online Video’i soovitused (vajab küpsiseid)</string>
+    <string name="ytdlp_liked">yt-dlp Online Video’i meeldinud videod (vajab küpsiseid)</string>
+    <string name="ytdlp_watch_history">yt-dlp Online Video’i vaatamisajalugu (vajab küpsiseid)</string>
     <string name="no_check_certificates">Keela HTTPS-sertifikaadi valideerimine</string>
     <string name="live_stream">Otseülekanne</string>
     <string name="live_from_start">Otseülekanne algusest peale</string>
@@ -473,7 +473,7 @@
     <string name="prefer_container_over_codec_audio">Eelista helifailide allalaadimisel konteinerit koodekile</string>
     <string name="prefer_container_over_codec_audio_summary">Kui see on lubatud, siis eelistatud helikoodeki valikut eiratakse ja muutub ainult konteiner</string>
     <string name="player_client">Mängijaklient</string>
-    <string name="player_client_summary">YouTube\'i pleieri kliendid ja PO-token</string>
+    <string name="player_client_summary">Online Video\'i pleieri kliendid ja PO-token</string>
     <string name="use_app_language_for_metadata">Kasuta rakenduse keelt metaandmetes</string>
     <string name="layout">Paigutus</string>
     <string name="list">Loend</string>
@@ -515,7 +515,7 @@
     <string name="update_ytdlp_while_downloading">Uuenda yt-dlp allalaadimise ajal</string>
     <string name="update_ytdlp_while_downloading_summary">Lisa yt-dlp\'le -U, et see enne allalaadimist värskeimale versioonile uuendada</string>
     <string name="preview_filename">Eelvaate failinimi</string>
-    <string name="potoken_guide">Autentimisega\n-----------------------\n1. Klõpsa valikul „Auth“ (Autentimine), et avada sisselogimisleht WebView-aknas.\n2. Logi sisse oma Google\'i kontole.\n3. Käivita video, mis toetab automaatselt tõlgitud subtiitreid.\n4. Lülita sisse automaatselt tõlgitud subtiitrid ja kontrolli, kas need toimivad. \n\t4.1 Kui automaatselt tõlgitud subtiitrid ei tööta, vali mõni teine video, mis neid toetab, ja proovi uuesti 4. sammu.\n5. Klõpsa nuppu \"OK\".\n\nIlma autentimiseta\n-----------------------\n1. Klõpsa valikul „No Auth“ (Ilma autentimiseta).\n2. Sisesta YouTube\'i video URL.\n3. Oota, kuni video laeb, ja lase sellel mängida vähemalt 3 sekundit.\n4. Klõpsa nuppu „OK“.</string>
+    <string name="potoken_guide">Autentimisega\n-----------------------\n1. Klõpsa valikul „Auth“ (Autentimine), et avada sisselogimisleht WebView-aknas.\n2. Logi sisse oma Google\'i kontole.\n3. Käivita video, mis toetab automaatselt tõlgitud subtiitreid.\n4. Lülita sisse automaatselt tõlgitud subtiitrid ja kontrolli, kas need toimivad. \n\t4.1 Kui automaatselt tõlgitud subtiitrid ei tööta, vali mõni teine video, mis neid toetab, ja proovi uuesti 4. sammu.\n5. Klõpsa nuppu \"OK\".\n\nIlma autentimiseta\n-----------------------\n1. Klõpsa valikul „No Auth“ (Ilma autentimiseta).\n2. Sisesta Online Video\'i video URL.\n3. Oota, kuni video laeb, ja lase sellel mängida vähemalt 3 sekundit.\n4. Klõpsa nuppu „OK“.</string>
     <string name="no_auth">Ilma autentimiseta</string>
     <string name="auth">Autentimisega</string>
     <string name="app_icon">Rakenduse ikoon</string>

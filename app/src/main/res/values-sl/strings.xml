@@ -66,7 +66,7 @@
     <string name="url">URL</string>
     <string name="link_copied_to_clipboard">Povezava je bila kopirana v odložišče</string>
     <string name="api_key">Uporabi API ključ</string>
-    <string name="api_key_summary">Priporočila videoposnetkov iz YouTube API</string>
+    <string name="api_key_summary">Priporočila videoposnetkov iz Online Video API</string>
     <string name="downloads">Prenosi</string>
     <string name="remove_deleted">Odstrani izbrisano</string>
     <string name="restart">Ponovni zagon</string>
@@ -394,7 +394,7 @@
     <string name="continue_anyway">Vseeno nadaljuj</string>
     <string name="playlist_as_album">Uporabi ime seznama predvajanja kot metapodatke albuma</string>
     <string name="playlist_as_album_summary">Če metapodatki albuma niso prisotni, uporabite ime seznama predvajanja</string>
-    <string name="data_fetching_extractor_youtube">Program za pridobivanje podatkov (YouTube)</string>
+    <string name="data_fetching_extractor_youtube">Program za pridobivanje podatkov (Online Video)</string>
     <string name="pause_all">Zaustavi vse</string>
     <string name="resume_all">Nadaljuj vse</string>
     <string name="package_name">Ime paketa</string>
@@ -411,8 +411,8 @@
     <string name="data_fetching_extra_command_summary">Omogoči uporabo predlog ukazov za pridobivanje podatkov kot dodatnih ukazov</string>
     <string name="disable_write_info_json">Onemogoči zapisovanje informacij v JSON</string>
     <string name="disable_write_info_json_summary">Vsakič, ko ponovno zaženete/nadaljujete prenos, bo yt-dlp ponovno prenesel podatke JSON s strežnikov (ni priporočljivo)</string>
-    <string name="ytdlp_watch_later">yt-dlp YouTube za poznejši ogled (potrebni piškotki)</string>
-    <string name="ytdlp_recommnedations">yt-dlp Priporočila za YouTube (potrebni piškotki)</string>
+    <string name="ytdlp_watch_later">yt-dlp Online Video za poznejši ogled (potrebni piškotki)</string>
+    <string name="ytdlp_recommnedations">yt-dlp Priporočila za Online Video (potrebni piškotki)</string>
     <string name="ytdlp_liked">yt-dlp Všečkani videoposnetki na YouTubu (potrebni piškotki)</string>
     <string name="ytdlp_watch_history">Zgodovina ogledov na YouTubu yt-dlp (potrebni piškotki)</string>
     <string name="no_check_certificates">Onemogoči preverjanje veljavnosti HTTPS potrdila</string>
@@ -424,7 +424,7 @@
     <string name="prefer_container_over_codec_audio">Za prenos zvoka raje izberi vsebnik kot kodek</string>
     <string name="prefer_container_over_codec_audio_summary">Če je to omogočeno, bo želeni zvočni kodek prezrt in spremenil se bo le vsebnik</string>
     <string name="player_client">Odjemalec predvajalnika</string>
-    <string name="player_client_summary">YouTube odjemalci predvajalnika &amp; PO žeton</string>
+    <string name="player_client_summary">Online Video odjemalci predvajalnika &amp; PO žeton</string>
     <string name="use_app_language_for_metadata">Za metapodatke uporabi jezik aplikacije</string>
     <string name="layout">Postavitev</string>
     <string name="list">Seznam</string>
@@ -496,7 +496,7 @@
     <string name="update_ytdlp_while_downloading">Posodobi yt-dlp med prenosom</string>
     <string name="update_ytdlp_while_downloading_summary">Dodaj -U k yt-dlp, za posodobitev na najnovejšo različico pred prenosom</string>
     <string name="preview_filename">Predogled imena datoteke</string>
-    <string name="potoken_guide">Avtorizacija\n-----------------------\n1. Kliknite \'Avtorizacija\', da odprete stran za prijavo v spletnem pogledu.\n2. Prijavite se v svoj Google Račun.\n3. Predvajajte kateri koli videoposnetek, ki podpira samodejno prevedene podnapise.\n4. Vklopite samodejno prevedene podnapise in preverite, ali delujejo.\n\t4.1 Če samodejno prevedeni podnapisi ne delujejo, preklopite na drug videoposnetek, ki podpira samodejno prevedene podnapise, in poskusite znova 4. korak.\n5. Kliknite V redu.\n\nBrez avtorizacije\n-----------------------\n1. Kliknite \'Brez avtorizacije\'.\n2. Vnesite url katerega koli youtube videoposnetka.\n3. Počakajte, da se videoposnetek naloži, in ga predvajajte vsaj 3 sekunde.\n4. Kliknite V redu.</string>
+    <string name="potoken_guide">Avtorizacija\n-----------------------\n1. Kliknite \'Avtorizacija\', da odprete stran za prijavo v spletnem pogledu.\n2. Prijavite se v svoj Google Račun.\n3. Predvajajte kateri koli videoposnetek, ki podpira samodejno prevedene podnapise.\n4. Vklopite samodejno prevedene podnapise in preverite, ali delujejo.\n\t4.1 Če samodejno prevedeni podnapisi ne delujejo, preklopite na drug videoposnetek, ki podpira samodejno prevedene podnapise, in poskusite znova 4. korak.\n5. Kliknite V redu.\n\nBrez avtorizacije\n-----------------------\n1. Kliknite \'Brez avtorizacije\'.\n2. Vnesite url katerega koli Online Video videoposnetka.\n3. Počakajte, da se videoposnetek naloži, in ga predvajajte vsaj 3 sekunde.\n4. Kliknite V redu.</string>
     <string name="no_auth">Brez avtorizacije</string>
     <string name="auth">Avtorizacija</string>
     <string name="app_icon">Ikona aplikacije</string>

@@ -20,14 +20,14 @@
     <string name="concurrent_fragments">Parallell nedlasting</string>
     <string name="processing">Behandler</string>
     <string name="add_chapters">Kapitler i videoer</string>
-    <string name="add_chapters_summary">Marker YouTube/SponsorBlock-segmenter som kapitler for videoen</string>
+    <string name="add_chapters_summary">Marker Video / SponsorBlock-segmenter som kapitler for videoen</string>
     <string name="embed_thumb">Miniatyrbildeomslag</string>
     <string name="save_thumb_summary">Lagre miniatyrbildet i nedlastingsmappen</string>
     <string name="audio_quality_summary">0 (best) 10 (verst)</string>
     <string name="cancel_task">Avbryt nedlasting</string>
     <string name="command_download_notification_channel_description">Merknad som viser nedlastingsfremdrift for bruk av yt-dlp -kommando</string>
     <string name="history_is_empty">Historikken er tom.</string>
-    <string name="api_key_summary">Raskere resultater fra YouTube</string>
+    <string name="api_key_summary">Raskere resultater fra Online Video</string>
     <string name="remove_duplicates">Fjern duplikater</string>
     <string name="sort_by">Sortering</string>
     <string name="update_app_summary">Varsler om nye versjoner av programmet når det åpnes</string>
@@ -196,7 +196,7 @@
     <string name="subtitle_languages">Undertekstspråk</string>
     <string name="video_recommendations">Videoanbefalinger</string>
     <string name="format_source">Kildeformater</string>
-    <string name="video_recommendations_summary">Få anbefalte YouTube-videoer på hjemmeskjermen fra Invidious</string>
+    <string name="video_recommendations_summary">Få anbefalte Online Video-videoer på hjemmeskjermen fra Invidious</string>
     <string name="ignore_battery_optimization">Ignorer batterioptimalisering</string>
     <string name="preferred_search_engine">Foretrukket søkemotor</string>
     <string name="preferred_search_engine_summary">Søkemotor å bruke for søk i programmet</string>

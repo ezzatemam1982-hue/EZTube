@@ -44,7 +44,7 @@
     <string name="comments_error_cant_post">Comments are turned off or can\'t be posted on this video.</string>
     <string name="comments_error_reply_not_found">Couldn\'t find that comment to reply to. Try again.</string>
     <string name="comments_error_like_not_found">Couldn\'t find that comment to like. Try again.</string>
-    <string name="comments_error_not_accepted">YouTube didn\'t accept the comment.</string>
+    <string name="comments_error_not_accepted">Server didn\'t accept the comment.</string>
 
     <!-- ── Captions ─────────────────────────────────────────────────────────── -->
 
@@ -59,7 +59,7 @@
     <!-- Error over the video / in the transcript. %1$s = a language name. -->
     <string name="captions_error_download">Couldn\'t download %1$s for translating.</string>
     <string name="captions_error_load">Couldn\'t load these captions.</string>
-    <!-- Note after a caption track's language in the list: captions YouTube made itself from speech. -->
+    <!-- Note after a caption track's language in the list: captions Online Video made itself from speech. -->
     <string name="captions_auto_generated">auto-generated</string>
     <!-- Short form of "auto-generated", in a small chip next to the transcript's title, keep short. -->
     <string name="captions_auto">auto</string>

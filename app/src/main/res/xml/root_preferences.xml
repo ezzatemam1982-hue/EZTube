@@ -54,4 +54,21 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/storage_and_cache">
+        <Preference
+            app:icon="@drawable/baseline_delete_24"
+            app:key="clear_cache"
+            android:summary="@string/settings_clear_cache_empty"
+            app:title="@string/settings_clear_cache" />
+
+        <ListPreference
+            app:icon="@drawable/ic_clock"
+            app:key="auto_clear_cache"
+            app:title="@string/auto_clear_cache_title"
+            android:entries="@array/auto_clear_cache_entries"
+            android:entryValues="@array/auto_clear_cache_values"
+            android:defaultValue="size_250mb"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

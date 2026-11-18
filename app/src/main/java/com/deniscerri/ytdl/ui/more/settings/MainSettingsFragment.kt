@@ -64,8 +64,12 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        view.setBackgroundColor(0xFF000000.toInt())
+        listView.setBackgroundColor(0xFF000000.toInt())
+
         listView.clipToPadding = false
         val initialBottomPadding = listView.paddingBottom
+        val extraBottom = (24 * resources.displayMetrics.density).toInt()
         ViewCompat.setOnApplyWindowInsetsListener(listView) { v, insets ->
             val navBars = insets.getInsets(
                 WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime()
@@ -75,7 +79,7 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
                 v.paddingLeft,
                 v.paddingTop,
                 v.paddingRight,
-                initialBottomPadding + navBars.bottom
+                initialBottomPadding + navBars.bottom + extraBottom
             )
 
             insets
@@ -109,18 +113,45 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
                 val adapter = listView.adapter as? PreferenceGroupAdapter
                 val pref = if (pos != RecyclerView.NO_POSITION) adapter?.getItem(pos) else null
 
-                if (pref != null && pref !is PreferenceCategory) {
+                if (pref is PreferenceCategory) {
+                    val catTitle = v.findViewById<TextView>(android.R.id.title)
+                    catTitle?.apply {
+                        val colorAttr = TypedValue()
+                        context.theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, colorAttr, true)
+                        setTextColor(colorAttr.data)
+                        typeface = android.graphics.Typeface.DEFAULT_BOLD
+                    }
+                } else if (pref != null) {
                     v.setBackgroundResource(R.drawable.bg_settings_card)
+                }
+
+                val iconView = v.findViewById<android.widget.ImageView>(android.R.id.icon)
+                if (iconView != null && iconView.visibility == View.VISIBLE && iconView.drawable != null) {
+                    val iconSize = (38 * resources.displayMetrics.density).toInt()
+                    val iconPadding = (8 * resources.displayMetrics.density).toInt()
+                    iconView.layoutParams = iconView.layoutParams.apply {
+                        width = iconSize
+                        height = iconSize
+                    }
+                    iconView.setPadding(iconPadding, iconPadding, iconPadding, iconPadding)
+                    val bgDrawable = android.graphics.drawable.GradientDrawable().apply {
+                        setColor(0xFF262626.toInt())
+                        cornerRadius = 10 * resources.displayMetrics.density
+                    }
+                    iconView.background = bgDrawable
+                    val colorAttr = TypedValue()
+                    v.context.theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, colorAttr, true)
+                    iconView.imageTintList = android.content.res.ColorStateList.valueOf(colorAttr.data)
                 }
 
                 val titleView = v.findViewById<TextView>(android.R.id.title)
                 if (titleView != null) {
-                    titleView.maxLines = 1
+                    titleView.maxLines = 2
                     titleView.ellipsize = TextUtils.TruncateAt.END
                     TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
                         titleView,
-                        12,
-                        16,
+                        11,
+                        15,
                         1,
                         TypedValue.COMPLEX_UNIT_SP
                     )
@@ -281,6 +312,35 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
                 backupPathResultLauncher.launch(intent)
                 true
             }
+        }
+
+        val clearCachePref = findPreference<Preference>("clear_cache")
+        fun updateCacheSummary() {
+            lifecycleScope.launch(Dispatchers.IO) {
+                val bytes = com.deniscerri.ytdl.util.CacheCleanupUtil.measureClearableCacheBytes(requireContext())
+                withContext(Dispatchers.Main) {
+                    clearCachePref?.summary = if (bytes > 0L) {
+                        getString(R.string.settings_clear_cache_line, android.text.format.Formatter.formatShortFileSize(requireContext(), bytes))
+                    } else {
+                        getString(R.string.settings_clear_cache_empty)
+                    }
+                }
+            }
+        }
+        updateCacheSummary()
+        clearCachePref?.setOnPreferenceClickListener {
+            lifecycleScope.launch(Dispatchers.IO) {
+                val remaining = com.deniscerri.ytdl.util.CacheCleanupUtil.clearAppTransientCaches(requireContext())
+                withContext(Dispatchers.Main) {
+                    clearCachePref.summary = if (remaining > 0L) {
+                        getString(R.string.settings_clear_cache_line, android.text.format.Formatter.formatShortFileSize(requireContext(), remaining))
+                    } else {
+                        getString(R.string.settings_clear_cache_empty)
+                    }
+                    view?.let { v -> Snackbar.make(v, getString(R.string.settings_clear_cache_done), Snackbar.LENGTH_SHORT).show() }
+                }
+            }
+            true
         }
     }
 

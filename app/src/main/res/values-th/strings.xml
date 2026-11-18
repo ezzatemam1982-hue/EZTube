@@ -39,7 +39,7 @@
     <string name="you_are_going_to_delete">กำลังลบ</string>
     <string name="url">URL</string>
     <string name="api_key">ป้อนรหัส API</string>
-    <string name="api_key_summary">วิดีโอแนะนำจาก API ของ YouTube</string>
+    <string name="api_key_summary">วิดีโอแนะนำจาก API ของ Online Video</string>
     <string name="downloads">การดาวน์โหลด</string>
     <string name="remove_deleted">ลบทิ้งแล้ว</string>
     <string name="remove_duplicates">ลบรายการที่ซ้ำกัน</string>
@@ -275,7 +275,7 @@
     <string name="access_all_directories">อนุญาตให้เข้าถึงไดเร็กทอรีทั้งหมด</string>
     <string name="access_all_directories_summary">ให้แอปดาวน์โหลดในไดเร็กทอรีที่ถูกจำกัดตามค่าเริ่มต้น</string>
     <string name="in_queue">อยู่ในคิว</string>
-    <string name="add_chapters_summary">ทำเครื่องหมายส่วน YouTube / SponsorBlock เป็นตอนสำหรับวิดีโอ</string>
+    <string name="add_chapters_summary">ทำเครื่องหมายส่วน Video / SponsorBlock เป็นตอนสำหรับวิดีโอ</string>
     <string name="cache_first_summary">ไฟล์แคชจะดาวน์โหลดลงที่จัดเก็บภายใน จากนั้นจึงจะย้ายไปยังไดเรกทอรีที่คุณเลือก ใช้นี้เมื่อคุณไม่สามารถลงที่จัดเก็บโดยตรง</string>
     <string name="audio_samplerate">อัตราความถี่ของเสียง</string>
     <string name="title">ชื่อ</string>
@@ -323,14 +323,14 @@
     <string name="continue_anyway">ดำเนินการต่อไป</string>
     <string name="playlist_as_album">ใช้ชื่อเพลย์ลิสต์เป็นข้อมูลอภิพันธุ์ (เมต้าดาต้า) ของอัลบั้ม</string>
     <string name="playlist_as_album_summary">หากข้อมูลอภิพันธุ์ (เมต้าดาต้า) ของอัลบั้มนั้นยังไม่เป็นปัจจุบัน, จะมีการใช้ชื่อของเพลย์ลิสต์แทน</string>
-    <string name="data_fetching_extractor_youtube">เครื่องมือดึงข้อมูลของยูทูบ (YouTube)</string>
+    <string name="data_fetching_extractor_youtube">เครื่องมือดึงข้อมูลของยูทูบ (Online Video)</string>
     <string name="pause_all">หยุดทั้งหมด</string>
     <string name="resume_all">ดำเนินการต่อทั้งหมด</string>
     <string name="package_name">ชื่อของแพ็คเกจ</string>
     <string name="preferred_command_template">เครื่องมือเทมเพลตคำสั่งที่ต้องการ</string>
     <string name="status">สถานะ</string>
     <string name="deleted">ลบออกแล้ว</string>
-    <string name="other_youtube_extractor_args">เครื่องมือดึงข้อมูลของยูทูบ (YouTube) เพิ่มเติม</string>
+    <string name="other_youtube_extractor_args">เครื่องมือดึงข้อมูลของยูทูบ (Online Video) เพิ่มเติม</string>
     <string name="items">รายการ</string>
     <string name="socket_timeout">การเชื่อมต่อของซ็อกเก็ตเกิดหมดเวลา</string>
     <string name="socket_timeout_description">เวลาที่จะรอก่อนที่จะยอมยกเลิก, ในไม่กี่วินาที</string>
@@ -450,7 +450,7 @@
     <string name="prefer_container_over_codec_audio">เลือกคอนเทนเนอร์แทนตัวแปลงสัญญาณสำหรับการดาวน์โหลดไฟล์เสียง</string>
     <string name="prefer_container_over_codec_audio_summary">เมื่อเปิดใช้งานแล้ว ตัวแปลงเสียงที่ต้องการจะถูกเพิกเฉย และจะเปลี่ยนแปลงเฉพาะตัวคอนเทนเนอร์เท่านั้น</string>
     <string name="player_client">ไคลเอนต์ของตัวเล่น</string>
-    <string name="player_client_summary">YouTube Player Clients &amp; PO Token</string>
+    <string name="player_client_summary">Player Clients &amp; PO Token</string>
     <string name="use_app_language_for_metadata">ใช้ภาษาของแอปสำหรับข้อมูลรายละเอียด</string>
     <string name="layout">โครงส่วน</string>
     <string name="list">ลิสต์</string>
@@ -503,7 +503,7 @@
     <string name="update_ytdlp_while_downloading">อัปเดต yt-dlp ระหว่างการดาวน์โหลด</string>
     <string name="update_ytdlp_while_downloading_summary">เพิ่ม -U เข้าไปในคำสั่ง yt-dlp เพื่ออัปเดตโปรแกรมให้เป็นเวอร์ชันล่าสุดก่อนทำการดาวน์โหลด</string>
     <string name="preview_filename">แสดงตัวอย่างชื่อไฟล์</string>
-    <string name="potoken_guide">"แบบ Auth (การเข้าสู่ระบบยืนยันตัวตน)\n\n1.  คลิกที่ปุ่ม \'Auth\' เพื่อเปิดหน้าต่างเข้าสู่ระบบใน WebView\n    (หน้าเว็บที่ซ้อนอยู่ในแอปพลิเคชัน)\n2.  ลงชื่อเข้าใช้ (Sign in) ด้วยบัญชี Google ของคุณ\n3.  เปิดเล่นวิดีโออะไรก็ได้ที่รองรับฟีเจอร์ \"ซับไตเติล/คำบรรยายแปลภาษาอัตโนมัติ\"\n4.  เปิดใช้งานคำบรรยายแปลอัตโนมัติ แล้วเช็กดูว่ามันทำงาน (แสดงผล)\n    ได้ตามปกติหรือไม่\n      - 4.1 หากคำบรรยายแปลอัตโนมัติไม่ทำงาน\n        ให้ลองเปลี่ยนไปเปิดวิดีโออื่นที่รองรับฟีเจอร์นี้\n        แล้วลองทำตามขั้นตอนที่ 4 ใหม่อีกครั้ง\n5.  คลิก OK (ตกลง)\n\nแบบ No Auth (ไม่ต้องเข้าสู่ระบบ)\n\n1.  คลิกที่ปุ่ม \'No Auth\'\n2.  ใส่ หรือ พิมพ์ลิงก์ (URL) ของวิดีโอ YouTube อะไรก็ได้ลงไป\n3.  รอให้ระบบโหลดวิดีโอขึ้นมา จากนั้นให้เปิดเล่นวิดีโอเป็นเวลาอย่างน้อย 3 วินาที\n4.  คลิก OK (ตกลง)"</string>
+    <string name="potoken_guide">"แบบ Auth (การเข้าสู่ระบบยืนยันตัวตน)\n\n1.  คลิกที่ปุ่ม \'Auth\' เพื่อเปิดหน้าต่างเข้าสู่ระบบใน WebView\n    (หน้าเว็บที่ซ้อนอยู่ในแอปพลิเคชัน)\n2.  ลงชื่อเข้าใช้ (Sign in) ด้วยบัญชี Google ของคุณ\n3.  เปิดเล่นวิดีโออะไรก็ได้ที่รองรับฟีเจอร์ \"ซับไตเติล/คำบรรยายแปลภาษาอัตโนมัติ\"\n4.  เปิดใช้งานคำบรรยายแปลอัตโนมัติ แล้วเช็กดูว่ามันทำงาน (แสดงผล)\n    ได้ตามปกติหรือไม่\n      - 4.1 หากคำบรรยายแปลอัตโนมัติไม่ทำงาน\n        ให้ลองเปลี่ยนไปเปิดวิดีโออื่นที่รองรับฟีเจอร์นี้\n        แล้วลองทำตามขั้นตอนที่ 4 ใหม่อีกครั้ง\n5.  คลิก OK (ตกลง)\n\nแบบ No Auth (ไม่ต้องเข้าสู่ระบบ)\n\n1.  คลิกที่ปุ่ม \'No Auth\'\n2.  ใส่ หรือ พิมพ์ลิงก์ (URL) ของวิดีโอ Online Video อะไรก็ได้ลงไป\n3.  รอให้ระบบโหลดวิดีโอขึ้นมา จากนั้นให้เปิดเล่นวิดีโอเป็นเวลาอย่างน้อย 3 วินาที\n4.  คลิก OK (ตกลง)"</string>
     <string name="no_auth">ไม่ต้องเข้าสู่ระบบ</string>
     <string name="auth">เข้าสู่ระบบ</string>
     <string name="show_quick_download_share_menu">แสดงตัวเลือกดาวน์โหลดทันทีในเมนูแชร์</string>

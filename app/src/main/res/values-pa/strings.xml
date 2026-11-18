@@ -12,7 +12,7 @@
     <string name="processing">ਕਾਰਵਾਈ</string>
     <string name="embed_subs_summary">ਵੀਡੀਓ \'ਚ ਸਬਟਾਈਟਲ ਸ਼ਾਮਿਲ ਕਰੋ</string>
     <string name="embed_thumb">ਥੰਮਨੇਲ ਕਵਰ</string>
-    <string name="add_chapters_summary">ਵੀਡੀਓ ਲਈ ਚੈਪਟਰ ਵਜੋਂ YouTube / ਸਪਾਂਸਰਬਲਾਕ ਖੰਡਾਂ ਦੀ ਨਿਸ਼ਾਨਦੇਹੀ ਕਰੋ</string>
+    <string name="add_chapters_summary">ਵੀਡੀਓ ਲਈ ਚੈਪਟਰ ਵਜੋਂ Online Video / ਸਪਾਂਸਰਬਲਾਕ ਖੰਡਾਂ ਦੀ ਨਿਸ਼ਾਨਦੇਹੀ ਕਰੋ</string>
     <string name="save_thumb">ਥੰਮਨੇਲ ਸੇਵ ਕਰੋ</string>
     <string name="save_thumb_summary">ਥੰਮਨੇਲ ਨੂੰ ਡਾਊਨਲੋਡ ਫ਼ੋਲਡਰ ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਕਰੋ</string>
     <string name="audio_format">ਆਡੀਓ ਫ਼ਾਰਮੈਟ</string>
@@ -79,7 +79,7 @@
     <string name="api_key">API ਕੁੰਜੀ ਦੀ ਵਰਤੋਂ ਕਰੋ</string>
     <string name="update_app_summary">ਐਪ ਖੋਲ੍ਹਣ \'ਤੇ ਇਸ ਦੇ ਨਵੇਂ ਸੰਸਕਰਣਾਂ ਦੀ ਘੋਸ਼ਣਾ ਕਰੋ। ਡਾਟਾ ਅਧਿਕਾਰਤ ਗਿਟਹੱਬ ਰਿਪੋਜ਼ਟਰੀ ਤੋਂ ਕੱਢਿਆ ਜਾਂਦਾ ਹੈ</string>
     <string name="downloads">ਡਾਊਨਲੋਡ</string>
-    <string name="api_key_summary">YouTube API ਤੋਂ ਵੀਡੀਓ ਸਿਫ਼ਾਰਿਸ਼ਾਂ</string>
+    <string name="api_key_summary">Online Video API ਤੋਂ ਵੀਡੀਓ ਸਿਫ਼ਾਰਿਸ਼ਾਂ</string>
     <string name="remove_deleted">ਡਿਲੀਟ ਕੀਤੇ ਹਟਾਓ</string>
     <string name="remove_duplicates">ਡੁਪਲੀਕੇਟ ਹਟਾਓ</string>
     <string name="remove_downloading">ਡਾਊਨਲੋਡਜ਼ ਰੱਦ ਕਰੋ</string>
@@ -173,7 +173,7 @@
     <string name="save_subs">ਸਬਟਾਈਟਲ ਸੇਵ ਕਰੋ</string>
     <string name="format_source">ਫ਼ਾਰਮੈਟ ਸਰੋਤ</string>
     <string name="video_recommendations">ਵੀਡੀਓ ਸਿਫ਼ਾਰਿਸ਼ਾਂ</string>
-    <string name="video_recommendations_summary">ਹੋਮ ਸਕ੍ਰੀਨ \'ਤੇ ਸਿਫ਼ਾਰਿਸ਼ ਕੀਤੇ YouTube ਵੀਡੀਓਜ਼ ਪ੍ਰਾਪਤ ਕਰੋ</string>
+    <string name="video_recommendations_summary">ਹੋਮ ਸਕ੍ਰੀਨ \'ਤੇ ਸਿਫ਼ਾਰਿਸ਼ ਕੀਤੇ Online Video ਵੀਡੀਓਜ਼ ਪ੍ਰਾਪਤ ਕਰੋ</string>
     <string name="preferred_search_engine_summary">ਐਪ ਵਿੱਚ ਵਰਤਣ ਲਈ ਖੋਜ ਇੰਜਣ</string>
     <string name="preferred_home_screen">ਤਰਜੀਹੀ ਹੋਮ ਸਕ੍ਰੀਨ</string>
     <string name="undo">ਵਾਪਿਸ</string>
@@ -419,9 +419,9 @@
     <string name="data_fetching_extra_command">ਡਾਟਾ ਪ੍ਰਾਪਤੀ ਵਾਧੂ ਕਮਾਂਡ</string>
     <string name="disable_write_info_json_summary">ਹਰ ਵਾਰ ਜਦੋਂ ਤੁਸੀਂ ਡਾਉਨਲੋਡ ਨੂੰ ਦੁਬਾਰਾ ਚਾਲੂ / ਰਿਜ਼ਊਮ ਕਰਦੇ ਹੋ, yt-dlp ਸਰਵਰਾਂ ਤੋਂ json ਡੇਟਾ ਨੂੰ ਦੁਬਾਰਾ ਡਾਊਨਲੋਡ ਕਰੇਗਾ (ਸਿਫ਼ਾਰਸ਼ ਨਹੀਂ ਕੀਤੀ ਜਾਂਦੀ)</string>
     <string name="data_fetching_extra_command_summary">ਵਾਧੂ ਕਮਾਂਡਾਂ ਵਜੋਂ ਡਾਟਾ ਪ੍ਰਾਪਤ ਕਰਨ ਲਈ ਵਰਤੇ ਜਾਣ ਲਈ ਕਮਾਂਡ ਟੈਂਪਲੇਟਾਂ ਨੂੰ ਸਮਰੱਥ ਬਣਾਓ</string>
-    <string name="ytdlp_watch_history">yt-dlp Youtube ਵੇਖਣ ਦਾ ਇਤਿਹਾਸ (ਕੂਕੀਜ਼ ਦੀ ਲੋੜ ਹੈ)</string>
+    <string name="ytdlp_watch_history">yt-dlp ਵੇਖਣ ਦਾ ਇਤਿਹਾਸ (ਕੂਕੀਜ਼ ਦੀ ਲੋੜ ਹੈ)</string>
     <string name="disable_write_info_json">Json ਲਿਖਣ ਦੀ ਜਾਣਕਾਰੀ ਨੂੰ ਅਸਮਰੱਥ ਕਰੋ</string>
-    <string name="other_youtube_extractor_args">ਹੋਰ YouTube ਐਕਸਟਰੈਕਟਰ ਆਰਗੂਮੈਂਟਸ</string>
+    <string name="other_youtube_extractor_args">ਹੋਰ Online Video ਐਕਸਟਰੈਕਟਰ ਆਰਗੂਮੈਂਟਸ</string>
     <string name="items">ਆਈਟਮਾਂ</string>
     <string name="socket_timeout">ਸਾਕੇਟ ਟਾਈਮਆਊਟ</string>
     <string name="socket_timeout_description">ਕਨੈਕਸ਼ਨ ਟਰਾਈ ਕਰਨਾ ਛੱਡ ਦੇਣ ਤੋਂ ਪਹਿਲਾਂ ਉਡੀਕ ਕਰਨ ਦਾ ਸਮਾਂ, ਸਕਿੰਟਾਂ ਵਿੱਚ</string>
@@ -432,9 +432,9 @@
     <string name="status">ਸਥਿਤੀ</string>
     <string name="websites">ਵੈਬਸਾਈਟਾਂ</string>
     <string name="deleted">ਡਿਲੀਟ ਕੀਤੇ</string>
-    <string name="ytdlp_watch_later">yt-dlp Youtube ਬਾਅਦ ਵਿੱਚ ਦੇਖੋ (ਕੂਕੀਜ਼ ਦੀ ਲੋੜ ਹੈ)</string>
-    <string name="ytdlp_recommnedations">yt-dlp Youtube ਸਿਫ਼ਾਰਿਸ਼ਾਂ (ਕੂਕੀਜ਼ ਦੀ ਲੋੜ ਹੈ)</string>
-    <string name="ytdlp_liked">yt-dlp Youtube ਪਸੰਦ ਕੀਤੇ ਵੀਡੀਓਜ਼ (ਕੂਕੀਜ਼ ਦੀ ਲੋੜ ਹੈ)</string>
+    <string name="ytdlp_watch_later">yt-dlp ਬਾਅਦ ਵਿੱਚ ਦੇਖੋ (ਕੂਕੀਜ਼ ਦੀ ਲੋੜ ਹੈ)</string>
+    <string name="ytdlp_recommnedations">yt-dlp ਸਿਫ਼ਾਰਿਸ਼ਾਂ (ਕੂਕੀਜ਼ ਦੀ ਲੋੜ ਹੈ)</string>
+    <string name="ytdlp_liked">yt-dlp ਪਸੰਦ ਕੀਤੇ ਵੀਡੀਓਜ਼ (ਕੂਕੀਜ਼ ਦੀ ਲੋੜ ਹੈ)</string>
     <string name="player_client">ਪਲੇਅਰ ਕਲਾਈਂਟ</string>
     <string name="use_app_language_for_metadata">ਮੈਟਾਡੇਟਾ ਲਈ ਐਪ ਭਾਸ਼ਾ ਦੀ ਵਰਤੋਂ ਕਰੋ</string>
     <string name="list">ਸੂਚੀ</string>
@@ -461,7 +461,7 @@
     <string name="wait_for_video">ਵੀਡੀਓ ਦੀ ਉਡੀਕ ਕਰੋ</string>
     <string name="retry_every">ਹਰ ਵਾਰ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ</string>
     <string name="prefer_container_over_codec_audio">ਆਡੀਓ ਡਾਊਨਲੋਡਸ ਲਈ ਕੋਡੇਕ ਨਾਲੋਂ ਕੰਟੇਨਰ ਨੂੰ ਤਰਜੀਹ ਦਿਓ</string>
-    <string name="player_client_summary">YouTube ਪਲੇਅਰ ਕਲਾਇੰਟ ਅਤੇ PO ਟੋਕਨ</string>
+    <string name="player_client_summary">Online Video ਪਲੇਅਰ ਕਲਾਇੰਟ ਅਤੇ PO ਟੋਕਨ</string>
     <string name="use_only_po_token">ਸਿਰਫ਼ PO ਟੋਕਨ ਦੀ ਵਰਤੋਂ ਕਰੋ (ਪਲੇਅਰ ਕਲਾਈਂਟ ਨੂੰ ਅਣਡਿੱਠ ਕਰੋ)</string>
     <string name="app_icon_change">ਆਈਕਨ ਬਦਲ ਸਕਦਾ ਹੈ ਅਤੇ ਐਪਲੀਕੇਸ਼ਨ ਬੰਦ ਹੋ ਜਾਵੇਗੀ</string>
     <string name="generate_potokens">PO ਟੋਕਨ ਤਿਆਰ ਕਰੋ</string>

@@ -102,8 +102,12 @@ abstract class BaseSettingsFragment : PreferenceFragmentCompat(), SettingHost {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        view.setBackgroundColor(0xFF000000.toInt())
+        listView.setBackgroundColor(0xFF000000.toInt())
+
         listView.clipToPadding = false
         val initialBottomPadding = listView.paddingBottom
+        val extraBottom = (24 * resources.displayMetrics.density).toInt()
         ViewCompat.setOnApplyWindowInsetsListener(listView) { v, insets ->
             val navBars = insets.getInsets(
                 WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime()
@@ -112,7 +116,7 @@ abstract class BaseSettingsFragment : PreferenceFragmentCompat(), SettingHost {
                 v.paddingLeft,
                 v.paddingTop,
                 v.paddingRight,
-                initialBottomPadding + navBars.bottom
+                initialBottomPadding + navBars.bottom + extraBottom
             )
             insets
         }
@@ -145,30 +149,73 @@ abstract class BaseSettingsFragment : PreferenceFragmentCompat(), SettingHost {
                 val adapter = listView.adapter as? PreferenceGroupAdapter
                 val pref = if (pos != RecyclerView.NO_POSITION) adapter?.getItem(pos) else null
 
-                if (pref != null && pref !is PreferenceCategory && v.findViewById<View>(R.id.status_card) == null) {
+                if (pref is PreferenceCategory) {
+                    val catTitle = v.findViewById<TextView>(android.R.id.title)
+                    catTitle?.apply {
+                        val colorAttr = TypedValue()
+                        context.theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, colorAttr, true)
+                        setTextColor(colorAttr.data)
+                        typeface = android.graphics.Typeface.DEFAULT_BOLD
+                    }
+                } else if (pref != null && v.findViewById<View>(R.id.status_card) == null) {
                     v.setBackgroundResource(R.drawable.bg_settings_card)
+                }
+
+                val iconView = v.findViewById<ImageView>(android.R.id.icon)
+                if (iconView != null && iconView.visibility == View.VISIBLE && iconView.drawable != null) {
+                    val iconSize = (38 * resources.displayMetrics.density).toInt()
+                    val iconPadding = (8 * resources.displayMetrics.density).toInt()
+                    iconView.layoutParams = iconView.layoutParams.apply {
+                        width = iconSize
+                        height = iconSize
+                    }
+                    iconView.setPadding(iconPadding, iconPadding, iconPadding, iconPadding)
+                    val bgDrawable = android.graphics.drawable.GradientDrawable().apply {
+                        setColor(0xFF262626.toInt())
+                        cornerRadius = 10 * resources.displayMetrics.density
+                    }
+                    iconView.background = bgDrawable
+                    val colorAttr = TypedValue()
+                    v.context.theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, colorAttr, true)
+                    iconView.imageTintList = ColorStateList.valueOf(colorAttr.data)
                 }
 
                 val titleView = v.findViewById<TextView>(android.R.id.title)
                 if (titleView != null) {
-                    titleView.maxLines = 1
+                    titleView.maxLines = 2
                     titleView.ellipsize = TextUtils.TruncateAt.END
                     TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
                         titleView,
-                        12,
-                        16,
+                        11,
+                        15,
                         1,
                         TypedValue.COMPLEX_UNIT_SP
                     )
                 }
 
+                val seekBar = v.findViewById<android.widget.SeekBar>(androidx.preference.R.id.seekbar)
+                if (seekBar != null) {
+                    val colorAttr = TypedValue()
+                    v.context.theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, colorAttr, true)
+                    val primaryColor = ColorStateList.valueOf(colorAttr.data)
+                    seekBar.progressTintList = primaryColor
+                    seekBar.thumbTintList = primaryColor
+                }
+
                 val summaryView = v.findViewById<TextView>(android.R.id.summary)
                 val summaryText = summaryView?.text
                 val hasDescription = !summaryText.isNullOrBlank()
+                val isDynamicPathOrValue = summaryText?.let {
+                    it.contains("/") || it.contains("MB") || it.contains("KB") || it.contains("GB") || it.contains(":")
+                } ?: false
 
                 var infoIcon = v.findViewWithTag<ImageView>("pref_info_button")
                 if (hasDescription && pref !is PreferenceCategory) {
-                    summaryView?.visibility = View.GONE
+                    if (!isDynamicPathOrValue) {
+                        summaryView?.visibility = View.GONE
+                    } else {
+                        summaryView?.visibility = View.VISIBLE
+                    }
 
                     if (infoIcon == null) {
                         infoIcon = ImageView(v.context).apply {
@@ -190,16 +237,24 @@ abstract class BaseSettingsFragment : PreferenceFragmentCompat(), SettingHost {
                             context.theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, colorAttr, true)
                             imageTintList = ColorStateList.valueOf(colorAttr.data)
                         }
-                        val widgetFrame = v.findViewById<ViewGroup>(android.R.id.widget_frame)
-                        if (widgetFrame != null && v is ViewGroup) {
-                            val index = v.indexOfChild(widgetFrame)
-                            if (index >= 0) {
-                                v.addView(infoIcon, index)
-                            } else {
+                        if (seekBar != null) {
+                            val titleParent = titleView?.parent as? ViewGroup
+                            if (titleParent != null && infoIcon.parent == null) {
+                                val index = titleParent.indexOfChild(titleView)
+                                titleParent.addView(infoIcon, (index + 1).coerceAtMost(titleParent.childCount))
+                            }
+                        } else {
+                            val widgetFrame = v.findViewById<ViewGroup>(android.R.id.widget_frame)
+                            if (widgetFrame != null && v is ViewGroup) {
+                                val index = v.indexOfChild(widgetFrame)
+                                if (index >= 0) {
+                                    v.addView(infoIcon, index)
+                                } else {
+                                    v.addView(infoIcon)
+                                }
+                            } else if (v is ViewGroup) {
                                 v.addView(infoIcon)
                             }
-                        } else if (v is ViewGroup) {
-                            v.addView(infoIcon)
                         }
                     }
 

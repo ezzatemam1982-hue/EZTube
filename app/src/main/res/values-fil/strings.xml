@@ -71,7 +71,7 @@
     <string name="url">URL</string>
     <string name="link_copied_to_clipboard">Ang link ay nakopya sa clipboard</string>
     <string name="api_key">Gumamit ng API key</string>
-    <string name="api_key_summary">Rekomendasyon ng mga video mula sa Youtube API</string>
+    <string name="api_key_summary">Rekomendasyon ng mga video mula sa Online Video API</string>
     <string name="downloads">Mga Download</string>
     <string name="remove_deleted">Alisin ang tinanggal na</string>
     <string name="remove_duplicates">Tanggalin ang mga duplikado</string>
@@ -99,7 +99,7 @@
     <string name="cancel_task">Kanselahin ang gawain</string>
     <string name="show_download_card">Ipakita ang download card</string>
     <string name="download_card_summary">Baguhin ang mga setting para sa item na iyon bago i-download. Ang pag-disable sa opsyong ito ay magsisimula kaagad ang pag-download</string>
-    <string name="add_chapters_summary">Markahan ang YouTube / SponsorBlock na mga segment bilang chapter para sa video</string>
+    <string name="add_chapters_summary">Markahan ang Video / SponsorBlock na mga segment bilang chapter para sa video</string>
     <string name="update_app_summary">I-anunsyo ang mga bagong bersyon ng app kapag ito ay binuksan. Ang data ay kinukuha mula sa opisyal na Github Repository</string>
     <string name="save_dir">I-save ang direktoryo</string>
     <string name="new_template">Bagong modelo</string>

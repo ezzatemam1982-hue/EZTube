@@ -119,7 +119,7 @@
     <string name="embed_thumb">Gambar lakaran kecil</string>
     <string name="embed_thumb_summary">Guna lakaran kecil sebagai gambar depan</string>
     <string name="add_chapters">Bab dalam video</string>
-    <string name="add_chapters_summary">Menanda segmen Youtube / SponsorBlock sebagai bab-bab untuk video</string>
+    <string name="add_chapters_summary">Menanda segmen Online Video / SponsorBlock sebagai bab-bab untuk video</string>
     <string name="save_thumb">Simpan lakaran kecil</string>
     <string name="save_thumb_summary">Simpan lakaran kecil di dalam folder muat turun</string>
     <string name="audio_quality_summary">0 (terbaik) 10 (terburuk)</string>
@@ -131,7 +131,7 @@
     <string name="limit_rate_summary">Batas muat turun maksimum (dalam bytes per saat), e.g. 50K atau 4.2M</string>
     <string name="cancel_task">Batalkan tugasan</string>
     <string name="api_key">Guna kekunci API</string>
-    <string name="api_key_summary">Video disyorkan daripada API YouTube</string>
+    <string name="api_key_summary">Video disyorkan daripada API Online Video</string>
     <string name="remove_downloading">Batalkan muat turun</string>
     <string name="embed_subtitles">Sematkan sari kata</string>
     <string name="sponsorblock_promos">Promosi diri sendiri</string>

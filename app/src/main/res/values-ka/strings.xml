@@ -52,7 +52,7 @@
     <string name="embed_thumb">მინიატურული სურათები</string>
     <string name="embed_thumb_summary">მინიატურის გარეკანის ნახატად გამოყენება</string>
     <string name="add_chapters">თავები ვიდეოში</string>
-    <string name="add_chapters_summary">მონიშნეთ YouTube / SponsorBlock სეგმენტები ვიდეოს თავებად</string>
+    <string name="add_chapters_summary">მონიშნეთ Video / SponsorBlock სეგმენტები ვიდეოს თავებად</string>
     <string name="save_thumb">მინიატურის შენახვა</string>
     <string name="save_thumb_summary">მინიატურის შენახვა ჩამოტვირთვის საქაღალდეში</string>
     <string name="audio_format">აუდიო ფორმატი</string>

@@ -189,7 +189,10 @@ class HomeFragment : Fragment(), HomeAdapter.OnItemClickListener, SearchSuggesti
 
         //initViews
         searchBar = view.findViewById(R.id.search_bar)
+        searchBar?.textView?.textDirection = View.TEXT_DIRECTION_FIRST_STRONG
         searchView = view.findViewById(R.id.search_view)
+        searchView?.editText?.textDirection = View.TEXT_DIRECTION_FIRST_STRONG
+        searchView?.editText?.gravity = android.view.Gravity.CENTER_VERTICAL or android.view.Gravity.START
         appBarLayout = view.findViewById(R.id.home_appbarlayout)
         materialToolbar = view.findViewById(R.id.home_toolbar)
         homeBrandHeader = view.findViewById<ComposeView>(R.id.home_brand_header)?.apply {

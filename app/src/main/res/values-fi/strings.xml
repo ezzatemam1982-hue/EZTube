@@ -35,7 +35,7 @@
     <string name="command_directory">Mukautettujen komentojen kansio</string>
     <string name="couldnt_find_apk">Sopivaa APK:ta ei löytynyt</string>
     <string name="aria2_summary">Käytä aria2c:tä lataukseen oletuksen sijaan</string>
-    <string name="add_chapters_summary">Merkitse YouTube/SponsorBlock-segmentit kappaleiksi videoon</string>
+    <string name="add_chapters_summary">Merkitse Video / SponsorBlock-segmentit kappaleiksi videoon</string>
     <string name="save_thumb">Tallenna pikkukuva</string>
     <string name="command_download_notification_channel_description">Ilmoitus joka näyttää yt-dlp komennon latauksen edistymisen</string>
     <string name="link_copied_to_clipboard">Linkki kopioitu leikepöydälle</string>
@@ -120,7 +120,7 @@
     <string name="embed_subs_summary">Lisää tekstitykset videoon</string>
     <string name="embed_thumb">Upota pikkukuva</string>
     <string name="history_is_empty">Historia on tyhjä</string>
-    <string name="api_key_summary">Videosuositukset Youtube API:sta</string>
+    <string name="api_key_summary">Videosuositukset Online Video API:sta</string>
     <string name="embed_thumb_summary">Käytä pikkukuvaa kansitaiteena</string>
     <string name="you_are_going_to_delete">Poistetaan</string>
     <string name="save_thumb_summary">Tallenna pikkukuva latauskansioon</string>
@@ -420,7 +420,7 @@
     <string name="continue_anyway">Jatka silti</string>
     <string name="playlist_as_album">Käytä soittolistan nimeä albumin metatietona</string>
     <string name="playlist_as_album_summary">Jos albumin metatietoa ei ole, käytä sen sijaan soittolistan nimeä</string>
-    <string name="data_fetching_extractor_youtube">Tiedonhaun erotin (YouTube)</string>
+    <string name="data_fetching_extractor_youtube">Tiedonhaun erotin (Online Video)</string>
     <string name="pause_all">Keskeytä kaikki</string>
     <string name="resume_all">Jatka kaikkia</string>
     <string name="package_name">Pakettinimi</string>
@@ -428,7 +428,7 @@
     <string name="status">Tila</string>
     <string name="deleted">Poistettu</string>
     <string name="websites">Verkkosivustot</string>
-    <string name="other_youtube_extractor_args">Muut YouTube-erottimen argumentit</string>
+    <string name="other_youtube_extractor_args">Muut Online Video-erottimen argumentit</string>
     <string name="items">kohdetta</string>
     <string name="socket_timeout">Soketin aikakatkaisu</string>
     <string name="socket_timeout_description">Odotusaika ennen luovuttamista, sekunteina</string>
@@ -438,10 +438,10 @@
     <string name="data_fetching_extra_command_summary">Salli komentomallien käyttö lisäkomentoina tiedonhaussa</string>
     <string name="disable_write_info_json">Poista info json -tiedoston kirjoitus käytöstä</string>
     <string name="disable_write_info_json_summary">Joka kerta kun käynnistät tai jatkat latausta, yt-dlp lataa json-tiedot uudelleen palvelimilta (ei suositella)</string>
-    <string name="ytdlp_watch_later">yt-dlp YouTuben katso myöhemmin (vaatii evästeet)</string>
-    <string name="ytdlp_recommnedations">yt-dlp YouTuben suositukset (vaatii evästeet)</string>
-    <string name="ytdlp_liked">yt-dlp YouTuben tykätyt videot (vaatii evästeet)</string>
-    <string name="ytdlp_watch_history">yt-dlp YouTuben katseluhistoria (vaatii evästeet)</string>
+    <string name="ytdlp_watch_later">yt-dlp Online Videon katso myöhemmin (vaatii evästeet)</string>
+    <string name="ytdlp_recommnedations">yt-dlp Online Videon suositukset (vaatii evästeet)</string>
+    <string name="ytdlp_liked">yt-dlp Online Videon tykätyt videot (vaatii evästeet)</string>
+    <string name="ytdlp_watch_history">yt-dlp Online Videon katseluhistoria (vaatii evästeet)</string>
     <string name="no_check_certificates">Ohita HTTPS-varmenteen vahvistus</string>
     <string name="live_stream">Suoratoisto</string>
     <string name="live_from_start">Suoratoisto alusta</string>
@@ -451,7 +451,7 @@
     <string name="prefer_container_over_codec_audio">Suosi konttia koodekin yli äänilatauksissa</string>
     <string name="prefer_container_over_codec_audio_summary">Tämän ollessa käytössä ensisijaisen äänikoodekin asetus ohitetaan ja vain kontti muuttuu</string>
     <string name="player_client">Soitinasiakas</string>
-    <string name="player_client_summary">YouTuben soitinasiakkaat ja PO-token</string>
+    <string name="player_client_summary">Online Videon soitinasiakkaat ja PO-token</string>
     <string name="use_app_language_for_metadata">Käytä sovelluksen kieltä metatiedoille</string>
     <string name="layout">Asettelu</string>
     <string name="list">Lista</string>
@@ -501,7 +501,7 @@
     <string name="update_ytdlp_while_downloading">Päivitä yt-dlp lataamisen aikana</string>
     <string name="update_ytdlp_while_downloading_summary">Lisää -U yt-dlp:hen päivittääksesi sen uusimpaan ennen lataamista</string>
     <string name="preview_filename">Esikatsele tiedostonimi</string>
-    <string name="potoken_guide">Auth\n-----------------------\n1. Napsauta \'Kirjaudu\' avataksesi kirjautumissivun WebView\'ssa.\n2. Kirjaudu Google-tilillesi.\n3. Toista mitä tahansa videota, joka tukee automaattisesti käännettyjä tekstityksiä.\n4. Ota automaattisesti käännetyt tekstitykset käyttöön ja katso toimiiko se.\n\t4.1 Jos automaattisesti käännetyt tekstitykset eivät toimi, vaihda toiseen videoon, joka tukee niitä, ja yritä vaihetta 4 uudelleen.\n5. Napsauta OK.\n\nEi kirjautumista\n-----------------------\n1. Napsauta \'Ei kirjautumista\'.\n2. Kirjoita minkä tahansa YouTube-videon URL\n3. Odota videon latautumista ja toista videota vähintään 3 sekuntia.\n4. Napsauta OK.</string>
+    <string name="potoken_guide">Auth\n-----------------------\n1. Napsauta \'Kirjaudu\' avataksesi kirjautumissivun WebView\'ssa.\n2. Kirjaudu Google-tilillesi.\n3. Toista mitä tahansa videota, joka tukee automaattisesti käännettyjä tekstityksiä.\n4. Ota automaattisesti käännetyt tekstitykset käyttöön ja katso toimiiko se.\n\t4.1 Jos automaattisesti käännetyt tekstitykset eivät toimi, vaihda toiseen videoon, joka tukee niitä, ja yritä vaihetta 4 uudelleen.\n5. Napsauta OK.\n\nEi kirjautumista\n-----------------------\n1. Napsauta \'Ei kirjautumista\'.\n2. Kirjoita minkä tahansa Online Video-videon URL\n3. Odota videon latautumista ja toista videota vähintään 3 sekuntia.\n4. Napsauta OK.</string>
     <string name="no_auth">Ei kirjautumista</string>
     <string name="auth">Kirjaudu</string>
     <string name="app_icon">Sovelluksen kuvake</string>

@@ -88,7 +88,7 @@
     <string name="settings">Beállítások</string>
     <string name="command_directory">Egyéni parancs mappa</string>
     <string name="worst_quality">Legrosszabb minőség</string>
-    <string name="api_key_summary">Videó ajánlatok a YouTube API-tól</string>
+    <string name="api_key_summary">Videó ajánlatok a Online Video API-tól</string>
     <string name="remove_downloading">Letöltések megszakítása</string>
     <string name="ytdl_update_hint">Hasznos tippek a frissítés közben</string>
     <string name="access_all_directories_summary">Engedélyezze a letöltést az alapértelmezés szerint korlátozott könyvtárakba</string>
@@ -96,7 +96,7 @@
     <string name="exit_app">Kilépés az alkalmazásból</string>
     <string name="incognito_summary">Töltse le anélkül, hogy hozzáadná az előzményekhez</string>
     <string name="audio">Hang</string>
-    <string name="add_chapters_summary">Jelölje meg a YouTube / SponsorBlock szegmenseket a videó fejezeteiként</string>
+    <string name="add_chapters_summary">Jelölje meg a Video / SponsorBlock szegmenseket a videó fejezeteiként</string>
     <string name="ytld_update_success">Új yt-dlp verzió telepítve</string>
     <string name="no_results">Nincsen találat</string>
     <string name="best_quality">Legjobb minőség</string>
@@ -410,7 +410,7 @@
     <string name="use_item_url_not_playlist">Tárgy URL használata lejátszásilista URL helyett</string>
     <string name="recode_video">Videó újrakódolása</string>
     <string name="recode_video_summary">Újrakódolja a videófájlt a megadott formátumra</string>
-    <string name="data_fetching_extractor_youtube">Adatszerző kinyerő (YouTube)</string>
+    <string name="data_fetching_extractor_youtube">Adatszerző kinyerő (Online Video)</string>
     <string name="restore_info">Nyomja meg a \'Restore\' gombot hogy összeolvassza a lementett adatokat a jelenlegiekkel.
 \nNyomja meg a \'Reset\' gombot ha csak a lementett adatokat kívánja megtartani.</string>
     <string name="use_item_url_not_playlist_summary">Ennek bekapcsolásával a playlistek metaadata nem fog beágyazódni</string>
@@ -424,7 +424,7 @@
     <string name="status">Állapot</string>
     <string name="deleted">Törölt</string>
     <string name="websites">Weboldalak</string>
-    <string name="other_youtube_extractor_args">Egyéb YouTube-kinyerő paraméterek</string>
+    <string name="other_youtube_extractor_args">Egyéb Online Video-kinyerő paraméterek</string>
     <string name="items">elem(ek)</string>
     <string name="socket_timeout">Socket időtúllépés</string>
     <string name="socket_timeout_description">Socket időtúllépés – Várakozási idő a megszakítás előtt, másodpercben</string>
@@ -434,10 +434,10 @@
     <string name="data_fetching_extra_command_summary">Parancssablonok engedélyezése, hogy adatlekéréshez kiegészítő parancsként használhatók legyenek</string>
     <string name="disable_write_info_json">Json info írásának letiltása</string>
     <string name="disable_write_info_json_summary">Minden alkalommal, amikor újraindítja vagy folytatja a letöltést, a yt-dlp újra letölti a json adatokat a szerverekről (nem ajánlott)</string>
-    <string name="ytdlp_watch_later">yt-dlp YouTube \"megtekintés később\" (cookie szükséges)</string>
-    <string name="ytdlp_recommnedations">yt-dlp YouTube ajánlások (cookie szükséges)</string>
-    <string name="ytdlp_liked">yt-dlp YouTube kedvelt videók (cookie szükséges)</string>
-    <string name="ytdlp_watch_history">yt-dlp YouTube nézési előzmény (cookie szükséges)</string>
+    <string name="ytdlp_watch_later">yt-dlp Online Video \"megtekintés később\" (cookie szükséges)</string>
+    <string name="ytdlp_recommnedations">yt-dlp Online Video ajánlások (cookie szükséges)</string>
+    <string name="ytdlp_liked">yt-dlp Online Video kedvelt videók (cookie szükséges)</string>
+    <string name="ytdlp_watch_history">yt-dlp Online Video nézési előzmény (cookie szükséges)</string>
     <string name="no_check_certificates">HTTPS tanúsítványellenőrzés figyelmen kívül hagyása</string>
     <string name="live_stream">Élő adás</string>
     <string name="live_from_start">Élő adás az elejétől</string>
@@ -474,7 +474,7 @@
     <string name="reverse">Fordított</string>
     <string name="no_keep_subs">Feliratfájlok törlése beágyazás után</string>
     <string name="no_keep_subs_summary">Ha egyszerre használja a „Feliratok beágyazása” és „Feliratok mentése” opciókat, a feliratfájlokat ne tartsa meg beágyazás után</string>
-    <string name="player_client_summary">YouTube-lejátszó-kliensek és PO-token</string>
+    <string name="player_client_summary">Online Video-lejátszó-kliensek és PO-token</string>
     <string name="video_compatible">Kompatibilis videó</string>
     <string name="video_compatible_summary">Átkódolja a videót, hogy kompatibilis legyen más alkalmazásokkal</string>
     <string name="no_free_space_warning">Nincs szabad hely ehhez a konfigurációhoz.</string>
@@ -495,7 +495,7 @@
     <string name="update_ytdlp_while_downloading">Yt-dlp frissítése letöltés közben</string>
     <string name="update_ytdlp_while_downloading_summary">Add hozzá az -U kapcsolót a yt-dlp-hez, hogy a letöltés előtt frissítsd a legújabb verzióra</string>
     <string name="preview_filename">Fájlnév előnézete</string>
-    <string name="potoken_guide">Hitelesítés\n-------------------------\n1. Kattintson a „Hitelesítés” gombra a WebView bejelentkezési oldalának megnyitásához.\n2. Jelentkezzen be Google-fiókjába.\n3. Játsszon le egy olyan videót, amely támogatja az automatikusan lefordított feliratokat.\n4. Kapcsolja be az automatikusan lefordított feliratokat, és nézze meg, hogy működnek-e.\n4.1 Ha az automatikusan lefordított feliratok nem működnek, váltson egy másik videóra, amely támogatja az automatikusan lefordított feliratokat, és próbálja meg újra a 4. lépést.\n5. Kattintson az OK gombra.\n\nNincs hitelesítés\n-------------------------\n1. Kattintson a „Nincs hitelesítés” gombra.\n2. Írjon be egy tetszőleges YouTube-videó URL-jét.\n3. Várja meg, amíg a videó betöltődik, és játssza le legalább 3 másodpercig.\n4. Kattintson az OK gombra.</string>
+    <string name="potoken_guide">Hitelesítés\n-------------------------\n1. Kattintson a „Hitelesítés” gombra a WebView bejelentkezési oldalának megnyitásához.\n2. Jelentkezzen be Google-fiókjába.\n3. Játsszon le egy olyan videót, amely támogatja az automatikusan lefordított feliratokat.\n4. Kapcsolja be az automatikusan lefordított feliratokat, és nézze meg, hogy működnek-e.\n4.1 Ha az automatikusan lefordított feliratok nem működnek, váltson egy másik videóra, amely támogatja az automatikusan lefordított feliratokat, és próbálja meg újra a 4. lépést.\n5. Kattintson az OK gombra.\n\nNincs hitelesítés\n-------------------------\n1. Kattintson a „Nincs hitelesítés” gombra.\n2. Írjon be egy tetszőleges Online Video-videó URL-jét.\n3. Várja meg, amíg a videó betöltődik, és játssza le legalább 3 másodpercig.\n4. Kattintson az OK gombra.</string>
     <string name="no_auth">Nincs hitelesítés</string>
     <string name="auth">Hitelesítés</string>
     <string name="url_regex">URL Regex (Reguláris kifejezés)</string>

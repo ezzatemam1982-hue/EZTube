@@ -3,7 +3,7 @@
          beside the icon in a shared pill; keep as short as possible (~12 characters). -->
     <string name="app_tab_home">Home</string>
     <string name="app_tab_subscriptions">Subscriptions</string>
-    <!-- YouTube's name for its short vertical videos; most languages keep "Shorts". -->
+    <!-- Media's name for its short vertical videos; most languages keep "Shorts". -->
     <string name="app_tab_shorts">Shorts</string>
     <string name="app_tab_search">Search</string>
     <string name="app_tab_library">Library</string>
@@ -58,10 +58,10 @@
     <string name="app_new_video_unnamed">New video</string>
 
     <!-- The signed-in account's name when Google's page didn't give one. -->
-    <string name="app_account_fallback_name">YouTube account</string>
+    <string name="app_account_fallback_name">Video account</string>
     <!-- Errors shown on the signed-in feeds. %1$s is an HTTP status code ("403"). -->
-    <string name="app_error_session_rejected">YouTube rejected the session (%1$s). Try signing in again.</string>
-    <string name="app_error_youtube_returned">YouTube returned %1$s</string>
+    <string name="app_error_session_rejected">Server rejected the session (%1$s). Try signing in again.</string>
+    <string name="app_error_youtube_returned">Server returned %1$s</string>
     <!-- The live activity's notification channel, and its skip buttons. %1$s = seconds ("10"). -->
     <string name="app_live_channel">Playing in the background</string>
     <string name="app_live_channel_description">Playback controls while EZTube is off screen</string>

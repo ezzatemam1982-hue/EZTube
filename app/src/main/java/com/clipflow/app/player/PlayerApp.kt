@@ -188,6 +188,9 @@ fun ClipFlowPlayerApp() {
     val search = remember { SearchState(scope) }
     val appContext = LocalContext.current.applicationContext
     val lib = remember { LibraryData(scope, appContext) }
+    LaunchedEffect(Unit) {
+        AppTourState.checkFirstTime(appContext)
+    }
     val localeKey = AppLanguage.activeLocaleKey.ifEmpty { AppLanguage.innerTubeLocaleKey() }
     LaunchedEffect(Account.signedIn, PlayerWindowTracker.inDownloaderHub, localeKey) {
         if (Account.signedIn && !PlayerWindowTracker.inDownloaderHub) {
@@ -905,6 +908,9 @@ fun ClipFlowPlayerApp() {
             ScreenLockOverlay(state = player, fullscreen = showFullscreen)
         }
         AppUpdateDialogs()
+        if (AppTourState.isTourActive) {
+            AppSpotlightTour(onDismiss = { AppTourState.isTourActive = false })
+        }
         }
     }
 }

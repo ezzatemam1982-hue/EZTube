@@ -94,13 +94,13 @@
     <string name="ok">确定</string>
     <string name="embed_subs_summary">在视频中添加字幕</string>
     <string name="embed_thumb_summary">使用缩略图作为封面</string>
-    <string name="add_chapters_summary">将 YouTube/SponsorBlock 片段标记为视频章节</string>
+    <string name="add_chapters_summary">将 Video / SponsorBlock 片段标记为视频章节</string>
     <string name="command_download_notification_channel_description">使用 yt-dlp 命令时下载进度的通知</string>
     <string name="items_left">剩余项</string>
     <string name="history_is_empty">历史记录为空</string>
     <string name="link_copied_to_clipboard">链接已复制到剪贴板</string>
     <string name="api_key">使用 API 密钥</string>
-    <string name="api_key_summary">使用 YouTube API 获取视频推荐</string>
+    <string name="api_key_summary">使用 Online Video API 获取视频推荐</string>
     <string name="update_app_summary">打开应用时通知新版本（数据从官方 GitHub 仓库提取）</string>
     <string name="url">URL</string>
     <string name="show_download_card">显示下载卡片</string>
@@ -412,10 +412,10 @@
     <string name="continue_anyway">仍然继续</string>
     <string name="playlist_as_album">将播放列表名用作专辑元数据</string>
     <string name="playlist_as_album_summary">如果专辑元数据不存在，使用播放列表名</string>
-    <string name="data_fetching_extractor_youtube">数据获取提取工具（YouTube）</string>
+    <string name="data_fetching_extractor_youtube">数据获取提取工具（Online Video）</string>
     <string name="thumbnail">缩略图</string>
     <string name="items">项目</string>
-    <string name="other_youtube_extractor_args">其他 YouTube 提取器变量</string>
+    <string name="other_youtube_extractor_args">其他 Online Video 提取器变量</string>
     <string name="socket_timeout">Socket 超时</string>
     <string name="socket_timeout_description">放弃前等待多久，单位为秒</string>
     <string name="advanced">高级</string>
@@ -430,10 +430,10 @@
     <string name="data_fetching_extra_command_summary">将获取数据的命令模板作为附加命令开启</string>
     <string name="disable_write_info_json">停用写入信息 Json</string>
     <string name="disable_write_info_json_summary">每次重启/恢复下载，yt-dlp 都会从服务器重新下载 json 数据。（不推荐）</string>
-    <string name="ytdlp_watch_later">yt-dlp YouTube 稍后观看（需要 cookies）</string>
-    <string name="ytdlp_recommnedations">yt-dlp YouTube 推荐（需要 cookies）</string>
-    <string name="ytdlp_liked">yt-dlp YouTube 点赞的视频 （需要 cookies）</string>
-    <string name="ytdlp_watch_history">yt=dl[ YouTube 观看历史（需要 cookies）</string>
+    <string name="ytdlp_watch_later">yt-dlp Online Video 稍后观看（需要 cookies）</string>
+    <string name="ytdlp_recommnedations">yt-dlp Online Video 推荐（需要 cookies）</string>
+    <string name="ytdlp_liked">yt-dlp Online Video 点赞的视频 （需要 cookies）</string>
+    <string name="ytdlp_watch_history">yt=dl[ Online Video 观看历史（需要 cookies）</string>
     <string name="no_check_certificates">不验证 HTTPS 证书</string>
     <string name="live_stream">直播</string>
     <string name="live_from_start">从头直播</string>
@@ -447,7 +447,7 @@
     <string name="list">列表</string>
     <string name="grid">网格</string>
     <string name="player_client">播放器客户端</string>
-    <string name="player_client_summary">YouTube 播放器客户端 &amp; PO 令牌</string>
+    <string name="player_client_summary">Online Video 播放器客户端 &amp; PO 令牌</string>
     <string name="use_only_po_token">只使用 PO 令牌（忽略播放器客户端）</string>
     <string name="cache_directory">缓存文件夹</string>
     <string name="cache_directory_warning">更改缓存文件夹可能导致意外问题。如果应用无法写入配置的路径，它将使用默认的内部缓存目录</string>
@@ -495,7 +495,7 @@
     <string name="update_ytdlp_while_downloading">下载时更新 yt-dlp</string>
     <string name="update_ytdlp_while_downloading_summary">yt-dlp 添加 -U 参数将其在下载前更新到最新版</string>
     <string name="preview_filename">预览文件名</string>
-    <string name="potoken_guide">授权\n-----------------------\n1. 单击“授权”以在 WebView 中打开登录页面。\n2. 登录您的 Google 账户。\n3. 播放任何支持自动翻译字幕的视频。\n4. 打开自动翻译字幕功能，查看是否有效。\n 4.1 如果自动翻译字幕无效，请切换到另一个支持自动翻译字幕的视频，然后再次尝试步骤 4。\n5. 单击“确定”。\n\n不授权\n-----------------------\n1. 点击“不授权”。\n2. 输入任意YouTube视频网址。\n3. 等待视频加载，并播放视频至少3秒。\n4. 单击“确定”。</string>
+    <string name="potoken_guide">授权\n-----------------------\n1. 单击“授权”以在 WebView 中打开登录页面。\n2. 登录您的 Google 账户。\n3. 播放任何支持自动翻译字幕的视频。\n4. 打开自动翻译字幕功能，查看是否有效。\n 4.1 如果自动翻译字幕无效，请切换到另一个支持自动翻译字幕的视频，然后再次尝试步骤 4。\n5. 单击“确定”。\n\n不授权\n-----------------------\n1. 点击“不授权”。\n2. 输入任意Online Video视频网址。\n3. 等待视频加载，并播放视频至少3秒。\n4. 单击“确定”。</string>
     <string name="no_auth">不授权</string>
     <string name="auth">授权</string>
     <string name="prefer_drc_audio">偏好 DRC 音频</string>

@@ -48,7 +48,7 @@
     <string name="embed_thumb">Küçük resim kapakları</string>
     <string name="embed_thumb_summary">Küçük resmi kapak resmi olarak kullan</string>
     <string name="add_chapters">Videolardaki bölümler</string>
-    <string name="add_chapters_summary">YouTube / SponsorBlock segmentlerini video için bölümler olarak işaretle</string>
+    <string name="add_chapters_summary">Video / SponsorBlock segmentlerini video için bölümler olarak işaretle</string>
     <string name="save_thumb">Küçük resmi kaydet</string>
     <string name="save_thumb_summary">Küçük resmi indirme klasörüne kaydet</string>
     <string name="audio_format">Ses formatı</string>
@@ -65,7 +65,7 @@
     <string name="url">URL</string>
     <string name="link_copied_to_clipboard">Bağlantı panoya kopyalandı</string>
     <string name="api_key">API anahtarı kullan</string>
-    <string name="api_key_summary">YouTube API\'sından video önerileri</string>
+    <string name="api_key_summary">Online Video API\'sından video önerileri</string>
     <string name="update_app_summary">Uygulama açıldığında yeni sürümleri duyur. Veriler resmi GitHub Deposundan alınır</string>
     <string name="downloads">İndirmeler</string>
     <string name="remove_deleted">Silinmişleri kaldır</string>
@@ -416,10 +416,10 @@
     <string name="continue_anyway">Yine de devam et</string>
     <string name="playlist_as_album">Çalma listesi adını albüm meta verisi olarak kullan</string>
     <string name="playlist_as_album_summary">Albüm meta verisi mevcut değilse, bunun yerine çalma listesi adını kullan</string>
-    <string name="data_fetching_extractor_youtube">Veri alma çıkartıcısı (YouTube)</string>
+    <string name="data_fetching_extractor_youtube">Veri alma çıkartıcısı (Online Video)</string>
     <string name="disable_write_info_json">Bilgi yazma JSON\'unu devre dışı bırak</string>
     <string name="disable_write_info_json_summary">İndirmeyi her yeniden başlattığınızda / devam ettirdiğinizde, yt-dlp sunuculardan JSON verilerini yeniden indirir (önerilmez)</string>
-    <string name="other_youtube_extractor_args">Diğer YouTube çıkartıcı argümanları</string>
+    <string name="other_youtube_extractor_args">Diğer Online Video çıkartıcı argümanları</string>
     <string name="items">öge(ler)</string>
     <string name="socket_timeout">Soket zaman aşımı</string>
     <string name="advanced">Gelişmiş</string>
@@ -432,10 +432,10 @@
     <string name="deleted">Silindi</string>
     <string name="websites">Web Siteleri</string>
     <string name="data_fetching_extra_command">Veri alma ek komutu</string>
-    <string name="ytdlp_watch_later">yt-dlp YouTube daha sonra izlesi (çerezlere ihtiyaç duyar)</string>
-    <string name="ytdlp_recommnedations">yt-dlp YouTube önerileri (çerezlere ihtiyaç duyar)</string>
-    <string name="ytdlp_liked">yt-dlp YouTube beğenilen videoları (çerezlere ihtiyaç duyar)</string>
-    <string name="ytdlp_watch_history">yt-dlp YouTube izleme geçmişi (çerezlere ihtiyaç duyar)</string>
+    <string name="ytdlp_watch_later">yt-dlp Online Video daha sonra izlesi (çerezlere ihtiyaç duyar)</string>
+    <string name="ytdlp_recommnedations">yt-dlp Online Video önerileri (çerezlere ihtiyaç duyar)</string>
+    <string name="ytdlp_liked">yt-dlp Online Video beğenilen videoları (çerezlere ihtiyaç duyar)</string>
+    <string name="ytdlp_watch_history">yt-dlp Online Video izleme geçmişi (çerezlere ihtiyaç duyar)</string>
     <string name="data_fetching_extra_command_summary">Komut şablonlarının veri alma amacıyla ek komut olarak kullanılması için etkinleştirin</string>
     <string name="socket_timeout_description">Vazgeçmeden önce bekleme zamanı, saniye olarak</string>
     <string name="player_client">Oynatıcı istemcisi</string>
@@ -443,7 +443,7 @@
     <string name="layout">Düzen</string>
     <string name="list">Liste</string>
     <string name="grid">Izgara</string>
-    <string name="player_client_summary">YouTube Player Clients &amp; PO Token</string>
+    <string name="player_client_summary">Player Clients &amp; PO Token</string>
     <string name="no_check_certificates">HTTPS sertifika doğrulamasını bastır</string>
     <string name="live_stream">Canlı yayın</string>
     <string name="live_from_start">Baştan canlı yayın</string>
@@ -501,7 +501,7 @@
     <string name="preview_filename">Önizleme dosya adı</string>
     <string name="no_auth">Yetki yok</string>
     <string name="auth">Yetki</string>
-    <string name="potoken_guide">Doğrulama (Auth)\n-----------------------\n1. WebView\'da oturum açma sayfasını açmak için \'Doğrulamaya (Auth) tıklayın. \n2. Google Hesabınıza giriş yapın. \n3. Otomatik çevrilmiş altyazıları destekleyen herhangi bir videoyu oynatın.\n4. Otomatik çevrilmiş altyazıları açın ve çalışıp çalışmadığını kontrol edin.\n4.1 Otomatik çevrilmiş altyazılar çalışmıyorsa, otomatik çevrilmiş altyazıları destekleyen başka bir videoya geçin ve 4. adımı tekrar deneyin. \n5. Tamam\'a tıklayın. \n\nDoğrulama Yok (No_auth)\n-----------------------\n1. \'Doğrulama Yok\' (no_auth) tıklayın. \n2. Herhangi bir YouTube video URL\'si yazın.\n3. Videonun yüklenmesini bekleyin ve videoyu en az 3 saniye oynatın.\n4. Tamam\'a tıklayın.</string>
+    <string name="potoken_guide">Doğrulama (Auth)\n-----------------------\n1. WebView\'da oturum açma sayfasını açmak için \'Doğrulamaya (Auth) tıklayın. \n2. Google Hesabınıza giriş yapın. \n3. Otomatik çevrilmiş altyazıları destekleyen herhangi bir videoyu oynatın.\n4. Otomatik çevrilmiş altyazıları açın ve çalışıp çalışmadığını kontrol edin.\n4.1 Otomatik çevrilmiş altyazılar çalışmıyorsa, otomatik çevrilmiş altyazıları destekleyen başka bir videoya geçin ve 4. adımı tekrar deneyin. \n5. Tamam\'a tıklayın. \n\nDoğrulama Yok (No_auth)\n-----------------------\n1. \'Doğrulama Yok\' (no_auth) tıklayın. \n2. Herhangi bir Online Video video URL\'si yazın.\n3. Videonun yüklenmesini bekleyin ve videoyu en az 3 saniye oynatın.\n4. Tamam\'a tıklayın.</string>
     <string name="prefer_drc_audio">DRC Sesi Tercih Et</string>
     <string name="app_icon">Uygulama Simgesi</string>
     <string name="show_quick_download_share_menu">Paylaş menüsünde hemen indirmek için seçenek göster</string>

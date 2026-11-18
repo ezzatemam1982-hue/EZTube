@@ -70,17 +70,25 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Subscriptions
 import androidx.compose.material.icons.rounded.TravelExplore
 import androidx.compose.material.icons.rounded.VideoLibrary
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -529,6 +537,29 @@ private fun ChannelSearchBar(
                     modifier = Modifier.size(16.dp),
                 )
             }
+        } else {
+            val context = LocalContext.current
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .pressable(onClick = {
+                        val activity = context.findFragmentActivity()
+                        if (activity != null) {
+                            VoiceSearchBottomSheet.show(activity.supportFragmentManager, isOfflineSupported = false) { text ->
+                                onQueryChange(text)
+                            }
+                        }
+                    }),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_mic),
+                    contentDescription = stringResource(R.string.voice_search),
+                    tint = c.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
         }
     }
 }
@@ -658,6 +689,10 @@ fun LibraryScreen(
             )
             (pinned + lib.playlists).chunked(2)
         }
+        val scope = rememberCoroutineScope()
+        val context = LocalContext.current
+        var showCreatePlaylistDialog by remember { mutableStateOf(false) }
+        var newPlaylistTitle by remember { mutableStateOf("") }
         LazyColumn(
             state = rememberScrollToTop(scrollToTop),
             contentPadding = contentPadding.withTop(top),
@@ -671,6 +706,11 @@ fun LibraryScreen(
                         body = stringResource(R.string.ui_library_signed_out_body),
                         action = { PillButton(stringResource(R.string.ui_sign_in_with_google), onSignIn) },
                     )
+                }
+                item(key = "downloadsShortcutSignedOut") {
+                    DownloadsShortcutCard {
+                        InAppDownloadBridge.openDownloaderHub(context, "Downloads")
+                    }
                 }
                 return@LazyColumn
             }
@@ -695,12 +735,62 @@ fun LibraryScreen(
                 }
             }
             item(key = "playlistsTitle") { SectionTitle(stringResource(R.string.ui_playlists)) }
+            item(key = "newPlaylistAction") {
+                NewPlaylistActionCard {
+                    newPlaylistTitle = ""
+                    showCreatePlaylistDialog = true
+                }
+            }
             items(playlistRows, key = { row -> row.joinToString { it.id } }) { row ->
                 Row(Modifier.padding(horizontal = 16.dp, vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     row.forEach { pl -> PlaylistTile(pl, Modifier.weight(1f)) { onOpenPlaylist(pl) } }
                     if (row.size == 1) Spacer(Modifier.weight(1f))
                 }
             }
+            item(key = "downloadsShortcut") {
+                DownloadsShortcutCard {
+                    InAppDownloadBridge.openDownloaderHub(context, "Downloads")
+                }
+            }
+        }
+        if (showCreatePlaylistDialog) {
+            AlertDialog(
+                onDismissRequest = { showCreatePlaylistDialog = false },
+                title = { Text(stringResource(R.string.new_playlist_title)) },
+                text = {
+                    OutlinedTextField(
+                        value = newPlaylistTitle,
+                        onValueChange = { newPlaylistTitle = it },
+                        singleLine = true,
+                        placeholder = { Text(stringResource(R.string.new_playlist_title)) }
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            val title = newPlaylistTitle.trim()
+                            if (title.isNotEmpty()) {
+                                showCreatePlaylistDialog = false
+                                scope.launch {
+                                    runCatching {
+                                        if (signedIn) {
+                                            InnerTube.createPlaylist(title, "PRIVATE", "")
+                                        }
+                                        lib.loadPlaylists(showIndicator = true)
+                                    }
+                                }
+                            }
+                        }
+                    ) {
+                        Text(stringResource(android.R.string.ok), color = MaterialTheme.colorScheme.primary)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showCreatePlaylistDialog = false }) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                }
+            )
         }
         }
     }
@@ -748,6 +838,94 @@ private fun PlaylistTile(playlist: PlaylistRef, modifier: Modifier, onClick: () 
             Text(playlist.title, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             playlist.subtitle?.let { Text(it, color = c.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1) }
         }
+    }
+}
+
+@Composable
+private fun NewPlaylistActionCard(onClick: () -> Unit) {
+    val c = MaterialTheme.colorScheme
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(c.surfaceContainerHigh)
+            .pressable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(c.primary.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Add,
+                contentDescription = null,
+                tint = c.primary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Spacer(Modifier.width(14.dp))
+        Text(
+            text = stringResource(R.string.new_playlist_title),
+            color = c.onSurface,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 15.sp,
+        )
+    }
+}
+
+@Composable
+private fun DownloadsShortcutCard(onClick: () -> Unit) {
+    val c = MaterialTheme.colorScheme
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .background(c.surfaceContainerHigh)
+            .pressable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(c.primary.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.FolderOpen,
+                contentDescription = null,
+                tint = c.primary,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        Spacer(Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.downloads_shortcut_title),
+                color = c.onSurface,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = stringResource(R.string.downloads_shortcut_subtitle),
+                color = c.onSurfaceVariant,
+                fontSize = 12.5.sp,
+            )
+        }
+        Icon(
+            imageVector = Icons.Rounded.ChevronRight,
+            contentDescription = null,
+            tint = c.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
@@ -1003,6 +1181,10 @@ private fun SearchHistoryList(history: List<String>, contentPadding: PaddingValu
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    style = androidx.compose.material3.LocalTextStyle.current.copy(
+                        textDirection = androidx.compose.ui.text.style.TextDirection.Content,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Start
+                    )
                 )
                 Box(
                     modifier = Modifier.size(44.dp).pressable { SearchHistory.remove(query) },

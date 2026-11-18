@@ -58,7 +58,7 @@
     <string name="aria2_summary">Використовувати aria2c як завантажувач замість стандартного</string>
     <string name="embed_thumb_summary">Використовуйте мініатюру як обкладинку</string>
     <string name="add_chapters">Розділи у відео</string>
-    <string name="add_chapters_summary">Позначити сегменти YouTube / SponsorBlock як розділи для відео</string>
+    <string name="add_chapters_summary">Позначити сегменти Video / SponsorBlock як розділи для відео</string>
     <string name="audio_quality">Якість звуку</string>
     <string name="video_format">Формат відео</string>
     <string name="save_thumb">Зберегти мініатюру</string>
@@ -77,7 +77,7 @@
     <string name="api_key">Використати ключ API</string>
     <string name="download">Завантажити</string>
     <string name="video_quality">Якість відео</string>
-    <string name="api_key_summary">Відео рекомендації від YouTube API</string>
+    <string name="api_key_summary">Відео рекомендації від Online Video API</string>
     <string name="update_app_summary">Повідомляти про вихід нових версій програми при відкритті. Дані отримуються з офіційного репозиторію GitHub</string>
     <string name="remove_deleted">Видалити видалені</string>
     <string name="title">Назва</string>
@@ -412,8 +412,8 @@
     <string name="continue_anyway">Всеодно продовжити</string>
     <string name="playlist_as_album">Використовувати назву списку відтворення як метадані альбому</string>
     <string name="playlist_as_album_summary">Якщо метадані альбому відсутні, замість них використовуйте назву списку відтворення</string>
-    <string name="data_fetching_extractor_youtube">Інші аргументи екстрактора YouTube</string>
-    <string name="other_youtube_extractor_args">Інші аргументи на користь екстрактора YouTube</string>
+    <string name="data_fetching_extractor_youtube">Інші аргументи екстрактора Online Video</string>
+    <string name="other_youtube_extractor_args">Інші аргументи на користь екстрактора Online Video</string>
     <string name="items">предмет(и)</string>
     <string name="socket_timeout_description">Час очікування, перш ніж відмінити, в секундах</string>
     <string name="socket_timeout">Тайм-аут сокету</string>
@@ -430,10 +430,10 @@
     <string name="data_fetching_extra_command_summary">Увімкнути використання шаблонів команд для отримання даних як додаткових команд</string>
     <string name="disable_write_info_json_summary">Щоразу, коли ви перезапускаєте / відновлюєте завантаження, yt-dlp повторно завантажує дані json із серверів (не рекомендується)</string>
     <string name="disable_write_info_json">Вимкнути запис інформації json</string>
-    <string name="ytdlp_recommnedations">yt-dlp YouTube рекомендації (потрібні файли cookie)</string>
-    <string name="ytdlp_liked">yt-dlp Вподобані відео YouTube (потрібні файли cookie)</string>
-    <string name="ytdlp_watch_later">yt-dlp YouTube подивитися пізніше (потрібні файли cookie)</string>
-    <string name="ytdlp_watch_history">yt-dlp Історія переглядів YouTube (потрібні файли cookie)</string>
+    <string name="ytdlp_recommnedations">yt-dlp Online Video рекомендації (потрібні файли cookie)</string>
+    <string name="ytdlp_liked">yt-dlp Вподобані відео Online Video (потрібні файли cookie)</string>
+    <string name="ytdlp_watch_later">yt-dlp Online Video подивитися пізніше (потрібні файли cookie)</string>
+    <string name="ytdlp_watch_history">yt-dlp Історія переглядів Online Video (потрібні файли cookie)</string>
     <string name="live_stream">Пряма трансляція</string>
     <string name="live_from_start">Наживо з початку</string>
     <string name="retry_every">Повторювати кожні</string>
@@ -447,7 +447,7 @@
     <string name="layout">Макет</string>
     <string name="list">Список</string>
     <string name="grid">Сітка</string>
-    <string name="player_client_summary">YouTube Клієнт програвача та PO Token</string>
+    <string name="player_client_summary">Online Video Клієнт програвача та PO Token</string>
     <string name="cache_directory">Тека кешу</string>
     <string name="cache_directory_warning">Зміна теки кешу може спричинити неочікувані проблеми. Якщо застосунок не може записувати дані за налаштованим шляхом, вона звернеться до внутрішнього каталогу кешу за замовчуванням</string>
     <string name="use_only_po_token">Використовувати лише PO token (ігнорувати клієнт програвача)</string>
@@ -495,7 +495,7 @@
     <string name="update_ytdlp_while_downloading">Оновити yt-dlp під час завантаження</string>
     <string name="update_ytdlp_while_downloading_summary">Додайте -U до yt-dlp щоб оновити його до останньої версії перед завантаженням</string>
     <string name="preview_filename">Перед огляд імені файлу</string>
-    <string name="potoken_guide">Авторизація\n-----------------------\n1. Натисніть \'Авторизація\' щоб відкрити сторінку входу WebView.\n2. Увійдіть у свій обліковий запис Google.\n3. Відтворюйте будь-яке відео, яке підтримує субтитри з автоматичним перекладом.\n4. Увімкніть автоматичний переклад субтитрів і перевірте, чи це працює.\n\t4.1 Якщо субтитри з автоматичним перекладом не працюють, перейдіть на інше відео, яке підтримує субтитри з автоматичним перекладом, і повторіть крок 4.\n5. Натисніть OK.\n\nБез авторизації\n-----------------------\n1. Натисніть \'Без авторизації\'.\n2. Введіть url будь-якого відео YouTube.\n3. Зачекайте, поки відео завантажиться, і відтворіть його принаймні 3 секунди.\n4. Натисніть OK.</string>
+    <string name="potoken_guide">Авторизація\n-----------------------\n1. Натисніть \'Авторизація\' щоб відкрити сторінку входу WebView.\n2. Увійдіть у свій обліковий запис Google.\n3. Відтворюйте будь-яке відео, яке підтримує субтитри з автоматичним перекладом.\n4. Увімкніть автоматичний переклад субтитрів і перевірте, чи це працює.\n\t4.1 Якщо субтитри з автоматичним перекладом не працюють, перейдіть на інше відео, яке підтримує субтитри з автоматичним перекладом, і повторіть крок 4.\n5. Натисніть OK.\n\nБез авторизації\n-----------------------\n1. Натисніть \'Без авторизації\'.\n2. Введіть url будь-якого відео Online Video.\n3. Зачекайте, поки відео завантажиться, і відтворіть його принаймні 3 секунди.\n4. Натисніть OK.</string>
     <string name="no_auth">Без авторизації</string>
     <string name="auth">Авторизація</string>
     <string name="prefer_drc_audio">Віддавати перевагу DRC Аудіо</string>

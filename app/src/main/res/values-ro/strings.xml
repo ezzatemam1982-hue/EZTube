@@ -50,7 +50,7 @@
     <string name="add_chapters">Capitole din videoclipuri</string>
     <string name="embed_thumb_summary">Folosiți miniatura ca coperta</string>
     <string name="embed_subs_summary">Adaugă subtitrări în videoclip</string>
-    <string name="add_chapters_summary">Marcați segmentele YouTube / SponsorBlock ca capitole pentru videoclip</string>
+    <string name="add_chapters_summary">Marcați segmentele Video / SponsorBlock ca capitole pentru videoclip</string>
     <string name="shortcuts">Scurtături</string>
     <string name="save_thumb_summary">Salvați miniatura în dosarul de descărcare</string>
     <string name="logs">Jurnale</string>
@@ -88,7 +88,7 @@
     <string name="you_are_going_to_delete">Se șterge</string>
     <string name="link_copied_to_clipboard">Link copiat în clipboard</string>
     <string name="url">Adresă URL</string>
-    <string name="api_key_summary">Recomandări video din API-ul Youtube</string>
+    <string name="api_key_summary">Recomandări video din API-ul Online Video</string>
     <string name="you_are_going_to_delete_multiple_items">Ștergerea mai multor elemente</string>
     <string name="adjust_templates">Ajustați șabloanele</string>
     <string name="access_all_directories_summary">Lăsați aplicația să descarce în directoare care sunt restricționate în mod implicit</string>
@@ -418,7 +418,7 @@
     <string name="continue_anyway">Continuați oricum</string>
     <string name="playlist_as_album">Folosește numele playlist-ului ca metadată al albumului</string>
     <string name="playlist_as_album_summary">Dacă metadatele albumului nu sunt prezente, folosește în schimb numele de playlist</string>
-    <string name="data_fetching_extractor_youtube">Extractor de preluare a datelor (YouTube)</string>
+    <string name="data_fetching_extractor_youtube">Extractor de preluare a datelor (Online Video)</string>
     <string name="pause_all">Întrerupeți totul</string>
     <string name="resume_all">Reluați totul</string>
     <string name="package_name">Numele pachetului</string>
@@ -426,7 +426,7 @@
     <string name="status">Stare</string>
     <string name="deleted">Șters</string>
     <string name="websites">Site-uri web</string>
-    <string name="other_youtube_extractor_args">Alte argumente ale extractorului YouTube</string>
+    <string name="other_youtube_extractor_args">Alte argumente ale extractorului Online Video</string>
     <string name="items">element(e)</string>
     <string name="socket_timeout">Timeout socket</string>
     <string name="socket_timeout_description">Timpul de așteptare înainte de a renunța, în secunde</string>
@@ -434,10 +434,10 @@
     <string name="data_fetching_extra_command_summary">Activează utilizarea șabloanelor de comenzi pentru preluarea datelor ca comenzi suplimentare</string>
     <string name="disable_write_info_json">Dezactivați scrierea informațiilor în format JSON</string>
     <string name="disable_write_info_json_summary">De fiecare dată când reporniți/reluați descărcarea, yt-dlp va redescărca datele json de pe servere (nerecomandat)</string>
-    <string name="ytdlp_watch_later">yt-dlp Vizionare mai târziu YouTube (necesită cookie-uri)</string>
-    <string name="ytdlp_recommnedations">Recomandări YouTube yt-dlp (necesită cookie-uri)</string>
-    <string name="ytdlp_liked">yt-dlp Videoclipuri apreciate Youtube (necesită cookie-uri)</string>
-    <string name="ytdlp_watch_history">Istoricul vizionăre YouTube yt-dlp (necesită cookie-uri)</string>
+    <string name="ytdlp_watch_later">yt-dlp Vizionare mai târziu Online Video (necesită cookie-uri)</string>
+    <string name="ytdlp_recommnedations">Recomandări Online Video yt-dlp (necesită cookie-uri)</string>
+    <string name="ytdlp_liked">yt-dlp Videoclipuri apreciate Online Video (necesită cookie-uri)</string>
+    <string name="ytdlp_watch_history">Istoricul vizionăre Online Video yt-dlp (necesită cookie-uri)</string>
     <string name="no_check_certificates">Suprimă validării certificatului HTTPS</string>
     <string name="live_stream">Stream live</string>
     <string name="live_from_start">În direct de la început</string>
@@ -447,7 +447,7 @@
     <string name="prefer_container_over_codec_audio">Preferați containerul în locul codecului pentru descărcările audio</string>
     <string name="prefer_container_over_codec_audio_summary">Dacă această opțiune este activată, preferința pentru codecul audio preferat va fi ignorată și se va schimba doar containerul</string>
     <string name="player_client">Client redare</string>
-    <string name="player_client_summary">Clienți redare YouTube și token PO</string>
+    <string name="player_client_summary">Clienți redare Online Video și token PO</string>
     <string name="use_app_language_for_metadata">Folosește limba aplicației pentru metadate</string>
     <string name="layout">Aranjament</string>
     <string name="list">Listă</string>
@@ -486,7 +486,7 @@
     <string name="installed">Instalat</string>
     <string name="auto_update_ytdlp_summary">Se recomandă menținerea acestei opțiuni activate pentru ca aplicația să funcționeze corect, deoarece yt-dlp se actualizează destul de des! Datele sunt extrase din depozitul GitHub al yt-dlp.</string>
     <string name="preview_filename">Previziualizare nume fișier</string>
-    <string name="potoken_guide">Autentificare \n-----------------------\n1. Apăsați \'autentificare\' pentru a accesa pagina de conectare în WebView.\n2. Conectați-vă la contul vostru de Google.\n3. Redați orice video care permite subtitrări auto-generate.\n4. Porniți subtitrări auto-traduse și vedeți dacă funcționează.\n\t4.1 Dacă subtitrările auto-traduse nu funcționează, schimbați la un video care permite subtitrări auto-traduse și repetați pasul 4.\n5. Apăsați OK.\n\nNicio Autentificare\n-----------------------\n1. Apăsați \'Nicio Autentificare\'.\n2. Scrieți orice URL video YouTube \n3. Așteptați ca video-ul să se încarce și redați video-ul timp de cel puțin 3 secunde.\n4. Apăsați OK.</string>
+    <string name="potoken_guide">Autentificare \n-----------------------\n1. Apăsați \'autentificare\' pentru a accesa pagina de conectare în WebView.\n2. Conectați-vă la contul vostru de Google.\n3. Redați orice video care permite subtitrări auto-generate.\n4. Porniți subtitrări auto-traduse și vedeți dacă funcționează.\n\t4.1 Dacă subtitrările auto-traduse nu funcționează, schimbați la un video care permite subtitrări auto-traduse și repetați pasul 4.\n5. Apăsați OK.\n\nNicio Autentificare\n-----------------------\n1. Apăsați \'Nicio Autentificare\'.\n2. Scrieți orice URL video Online Video \n3. Așteptați ca video-ul să se încarce și redați video-ul timp de cel puțin 3 secunde.\n4. Apăsați OK.</string>
     <string name="no_auth">Nicio Autentificare</string>
     <string name="auth">Autentificare</string>
     <string name="app_icon">Iconiță Aplicație</string>

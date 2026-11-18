@@ -55,7 +55,7 @@
     <string name="url">Nettadresse</string>
     <string name="link_copied_to_clipboard">Lenkja kopiert til utklippstavla</string>
     <string name="api_key">Nytt ein API-lykel</string>
-    <string name="api_key_summary">Videoråd ifrå API-en til YouTube</string>
+    <string name="api_key_summary">Videoråd ifrå API-en til Online Video</string>
     <string name="update_app_summary">Sei ifrå om nye utgåver av appen når han vert opna</string>
     <string name="remove_duplicates">Ta bort like ting</string>
     <string name="sort_by">Skil</string>
@@ -171,7 +171,7 @@
     <string name="sponsorblock_sponsors">Sponsorar</string>
     <string name="sponsorblock_promos">Sjølvfremjingar</string>
     <string name="sponsorblock_previews">Forhandsvisingar</string>
-    <string name="add_chapters_summary">Merk YouTube/SponsorBlock-delar som kapittel i videoar</string>
+    <string name="add_chapters_summary">Merk Video / SponsorBlock-delar som kapittel i videoar</string>
     <string name="audio_quality_summary">0 (best) 10 (verst)</string>
     <string name="items_left">Ting att</string>
     <string name="video_format">Videoformat</string>
@@ -247,7 +247,7 @@
     <string name="high_contrast">Skarp bakgrunnslet</string>
     <string name="video_recommendations">Videoråd</string>
     <string name="format_source">Formatkjelde</string>
-    <string name="video_recommendations_summary">Vis rådde YouTube-videoar ifrå API-en til PIPED på heimeskjermen</string>
+    <string name="video_recommendations_summary">Vis rådde Online Video-videoar ifrå API-en til PIPED på heimeskjermen</string>
     <string name="preferred_search_engine">Søkjemotor</string>
     <string name="preferred_search_engine_summary">Søkjemotoren å nytte til søk i appen</string>
     <string name="undo">Angre</string>

@@ -73,7 +73,7 @@
     <string name="embed_thumb">Sampul gambar mini</string>
     <string name="embed_thumb_summary">Menggunakan gambar mini sebagai sampul</string>
     <string name="add_chapters">Bab dalam video</string>
-    <string name="add_chapters_summary">Menandai segmen YouTube / SponsorBlock sebagai bab-bab untuk video</string>
+    <string name="add_chapters_summary">Menandai segmen Video / SponsorBlock sebagai bab-bab untuk video</string>
     <string name="save_thumb">Simpan gambar mini</string>
     <string name="save_thumb_summary">Menyimpan gambar mini di folder unduhan</string>
     <string name="audio_format">Format audio</string>
@@ -92,7 +92,7 @@
     <string name="sponsorblock_intro">Intro</string>
     <string name="sponsorblock_outro">Outro</string>
     <string name="sponsorblock_promos">Promosi diri sendiri</string>
-    <string name="api_key_summary">Video rekomendasi dari API YouTube</string>
+    <string name="api_key_summary">Video rekomendasi dari API Online Video</string>
     <string name="update_app_summary">Beri tahu versi aplikasi yang baru saat aplikasi dibuka. Data tersebut diambil dari Repositori Github resmi</string>
     <string name="remove_duplicates">Buang duplikat</string>
     <string name="sort_by">Penyortiran</string>
@@ -409,7 +409,7 @@
     <string name="use_item_url_not_playlist_summary">Metadata daftar putar tidak akan ditanamkan jika ini diaktifkan</string>
     <string name="recode_video_summary">Mengubah berkas video ke format video yang ditentukan</string>
     <string name="recode_video">Ubah format video</string>
-    <string name="other_youtube_extractor_args">Argumen ekstraktor lainnya untuk YouTube</string>
+    <string name="other_youtube_extractor_args">Argumen ekstraktor lainnya untuk Online Video</string>
     <string name="items">item</string>
     <string name="socket_timeout">Batas waktu soket</string>
     <string name="socket_timeout_description">Waktu untuk menunggu sebelum menyerah, dalam satuan detik</string>
@@ -427,13 +427,13 @@
     <string name="playlist_as_album">Gunakan nama daftar putar sebagai metadata album</string>
     <string name="disable_write_info_json_summary">Setiap kali kamu memulai ulang/melanjutkan unduhan, yt-dlp akan mengunduh ulang data JSON dari server (tidak disarankan)</string>
     <string name="disable_write_info_json">Nonaktifkan penulisan infojson</string>
-    <string name="ytdlp_recommnedations">yt-dlp rekomendasi YouTube (perlu kuki)</string>
+    <string name="ytdlp_recommnedations">yt-dlp rekomendasi Online Video (perlu kuki)</string>
     <string name="data_fetching_extra_command">Perintah ekstra saat pengambilan data</string>
-    <string name="ytdlp_watch_later">yt-dlp tonton nanti di YouTube (perlu kuki)</string>
-    <string name="ytdlp_watch_history">yt-dlp riwayat tontonan YouTube (perlu kuki)</string>
-    <string name="ytdlp_liked">yt-dlp video yang disukai di YouTube (perlu kuki)</string>
+    <string name="ytdlp_watch_later">yt-dlp tonton nanti di Online Video (perlu kuki)</string>
+    <string name="ytdlp_watch_history">yt-dlp riwayat tontonan Online Video (perlu kuki)</string>
+    <string name="ytdlp_liked">yt-dlp video yang disukai di Online Video (perlu kuki)</string>
     <string name="data_fetching_extra_command_summary">Aktifkan templat perintah yang akan digunakan saat pengambilan data sebagai perintah ekstra</string>
-    <string name="data_fetching_extractor_youtube">Ekstraktor pengambilan data (YouTube)</string>
+    <string name="data_fetching_extractor_youtube">Ekstraktor pengambilan data (Online Video)</string>
     <string name="no_check_certificates">Memendam validasi sertifikat HTTPS</string>
     <string name="live_stream">Siaran langsung</string>
     <string name="retry_every">Coba lagi setiap</string>
@@ -447,7 +447,7 @@
     <string name="list">Daftar</string>
     <string name="grid">Kisi</string>
     <string name="use_app_language_for_metadata">Gunakan bahasa aplikasi untuk metadata</string>
-    <string name="player_client_summary">Klien Pemutar YouTube &amp; PO Token</string>
+    <string name="player_client_summary">Klien Pemutar Online Video &amp; PO Token</string>
     <string name="cache_directory_warning">Mengubah folder singgahan (cache) bisa menyebabkan masalah yang tidak terduga. Jika aplikasi tidak bisa menulis data ke jalur yang dikonfigurasi, aplikasi akan menggunakan direktori singgahan (cache) internal asali</string>
     <string name="use_format_sorting">Gunakan pengurutan prioritas format</string>
     <string name="retry_missing_downloads_desc">Unduh kembali butir-butir yang tidak ada dalam riwayat unduhan</string>
@@ -495,7 +495,7 @@
     <string name="update_ytdlp_while_downloading">Perbarui yt-dlp ketika sedang mengunduh</string>
     <string name="update_ytdlp_while_downloading_summary">Tambah -U ke yt-dlp untuk memperbaruinya ke versi terbaru sebelum mengunduh</string>
     <string name="preview_filename">Pratinjau nama berkas</string>
-    <string name="potoken_guide">Otentikasi\n-----------------------\n1. Klik \'Otentikasi\' untuk membuka halaman masuk di WebView.\n2. Masuk ke akun Google Anda.\n3. Putar video apa pun yang mendukung subtitle terjemahan otomatis.\n4. Aktifkan subtitle terjemahan otomatis dan lihat apakah berfungsi.\n\t4.1 Jika subtitle terjemahan otomatis tidak berfungsi, beralih ke video lain yang mendukung subtitle terjemahan otomatis dan ulangi langkah 4.\n5. Klik OK.\n\nTanpa Otentikasi\n-----------------------\n1. Klik ‘Tanpa Otentikasi’.\n2. Tulis URL video YouTube apa pun.\n3. Tunggu video dimuat dan putar video setidaknya selama 3 detik.\n3. Klik OK.</string>
+    <string name="potoken_guide">Otentikasi\n-----------------------\n1. Klik \'Otentikasi\' untuk membuka halaman masuk di WebView.\n2. Masuk ke akun Google Anda.\n3. Putar video apa pun yang mendukung subtitle terjemahan otomatis.\n4. Aktifkan subtitle terjemahan otomatis dan lihat apakah berfungsi.\n\t4.1 Jika subtitle terjemahan otomatis tidak berfungsi, beralih ke video lain yang mendukung subtitle terjemahan otomatis dan ulangi langkah 4.\n5. Klik OK.\n\nTanpa Otentikasi\n-----------------------\n1. Klik ‘Tanpa Otentikasi’.\n2. Tulis URL video Online Video apa pun.\n3. Tunggu video dimuat dan putar video setidaknya selama 3 detik.\n3. Klik OK.</string>
     <string name="no_auth">Tanpa Otentikasi</string>
     <string name="auth">Otentikasi</string>
     <string name="prefer_drc_audio">Utamakan audio DRC</string>

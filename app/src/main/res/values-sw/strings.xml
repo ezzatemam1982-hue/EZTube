@@ -51,7 +51,7 @@
     <string name="embed_thumb">Kava la thumbnail</string>
     <string name="embed_thumb_summary">Tumia thumbnail kama kava</string>
     <string name="add_chapters">Sura katika video</string>
-    <string name="add_chapters_summary">Tumia sehemu za YouTube / SponsorBlock kama sura za video</string>
+    <string name="add_chapters_summary">Tumia sehemu za Video / SponsorBlock kama sura za video</string>
     <string name="save_thumb">Hifadhi thumbnail</string>
     <string name="save_thumb_summary">Hifadhi thumbnail kwenye folda ya kupakua</string>
     <string name="audio_format">Format ya sauti</string>
@@ -68,7 +68,7 @@
     <string name="url">URL</string>
     <string name="link_copied_to_clipboard">Linki imenakiliwa kwenye kinakili</string>
     <string name="api_key">Tumia API key</string>
-    <string name="api_key_summary">Mapendekezo ya video kutoka kwenye API ya YouTube</string>
+    <string name="api_key_summary">Mapendekezo ya video kutoka kwenye API ya Online Video</string>
     <string name="update_app_summary">Tangaza matoleo mapya ya programu itakapofunguliwa. Data imetolewa kutoka kwa repo rasmi ya GitHub</string>
     <string name="downloads">Downloads</string>
     <string name="remove_deleted">Ondoa vilivyofutwa</string>
