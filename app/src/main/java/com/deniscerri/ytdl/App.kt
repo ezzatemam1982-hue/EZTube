@@ -33,6 +33,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import coil.ImageLoader
 import coil.ImageLoaderFactory
+import com.clipflow.app.player.AnalyticsTracker
 import com.clipflow.app.player.PlayerInitializer
 
 
@@ -47,6 +48,7 @@ class App : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        AnalyticsTracker.init(this)
 
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this@App)
         setDefaultValues()

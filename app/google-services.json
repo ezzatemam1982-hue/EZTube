@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "70500827715",
+    "project_id": "eztube-26c6e",
+    "storage_bucket": "eztube-26c6e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:70500827715:android:962420efe0d1d801b70af6",
+        "android_client_info": {
+          "package_name": "com.ezapps.eztube"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNcJDs53pA8N7604CJAMgmWPsYBWTMgPw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

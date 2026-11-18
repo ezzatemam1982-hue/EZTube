@@ -722,7 +722,7 @@
     <string name="app_version">Version</string>
     <string name="app_version_toast">EZTube is running version %s</string>
     <string name="check_app_updates">Check for app updates</string>
-    <string name="update_ytdlp_engine">Update download engine (yt-dlp)</string>
+    <string name="update_ytdlp_engine">Update download system</string>
     <string name="no_active_downloads">No active downloads</string>
     <string name="no_downloads_history">No downloaded files yet</string>
     <string name="queue_tab_running">Running</string>

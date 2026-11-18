@@ -242,19 +242,19 @@
     <string name="player_playlist_update_failed">تعذّر تحديث %1$s.</string>
     <string name="player_create_playlist_failed">تعذّر إنشاء قائمة التشغيل.</string>
     <string name="player_error_no_stream">لم يتم العثور على بث قابل للتشغيل لهذا الفيديو.</string>
-    <string name="player_error_connection">انقطع الاتصال. تحقق من الشبكة وحاول مرة أخرى.</string>
+    <string name="player_error_connection">تعذّر الاتصال بالإنترنت، يرجى التحقق من الشبكة والمحاولة مرة أخرى</string>
     <string name="player_error_refused">رفض YouTube البث. حاول مرة أخرى.</string>
-    <string name="player_error_unplayable">تعذّر تشغيل هذا الفيديو.</string>
-    <string name="player_error_age_restricted">هذا الفيديو مقيّد بعمر ويتطلب حساب YouTube للمشاهدة.</string>
+    <string name="player_error_unplayable">حدث خطأ أثناء تحميل المحتوى، اضغط للمحاولة مرة أخرى</string>
+    <string name="player_error_age_restricted">هذا الفيديو غير متاح أو خاص ولا يمكن تشغيله حالياً</string>
     <string name="player_error_geo">هذا الفيديو غير متاح في بلدك.</string>
     <string name="player_error_bot_check">يطلب YouTube تأكيد أنك لست روبوتاً.</string>
     <string name="player_error_bot_check_hint">تشغيل وضع الطيران ثم إيقافه غالباً ما يحل المشكلة.</string>
-    <string name="player_error_private">هذا الفيديو خاص.</string>
+    <string name="player_error_private">هذا الفيديو غير متاح أو خاص ولا يمكن تشغيله حالياً</string>
     <string name="player_error_members_only">هذا الفيديو متاح للمنتسبين فقط. لا يدعم EZTube تشغيل فيديوهات المنتسبين بعد.</string>
-    <string name="player_error_unavailable">هذا الفيديو غير متاح.</string>
+    <string name="player_error_unavailable">هذا الفيديو غير متاح أو خاص ولا يمكن تشغيله حالياً</string>
     <string name="player_error_rate_limited">يفرض YouTube حداً مؤقتاً على الطلبات الآن. حاول بعد دقيقة.</string>
-    <string name="player_error_offline">تعذّر الوصول إلى YouTube. تحقق من اتصالك.</string>
-    <string name="player_error_generic">حدث خطأ أثناء التحميل. حاول مرة أخرى.</string>
+    <string name="player_error_offline">تعذّر الاتصال بالإنترنت، يرجى التحقق من الشبكة والمحاولة مرة أخرى</string>
+    <string name="player_error_generic">حدث خطأ أثناء تحميل المحتوى، اضغط للمحاولة مرة أخرى</string>
     <string name="player_quality_auto">تلقائي</string>
     <string name="player_sb_sponsor">محتوى مدفوع (إعلان)</string>
     <string name="player_sb_selfpromo">ترويج ذاتي / غير مدفوع</string>
@@ -561,4 +561,20 @@
         <item quantity="many">التقديم %1$s ثانية</item>
         <item quantity="other">التقديم %1$s ثانية</item>
     </plurals>
+
+    <!-- Self updater and remote version control strings -->
+    <string name="app_update_required_title">تحديث إجباري مطلوب</string>
+    <string name="app_update_required_message">هذا الإصدار من التطبيق لم يعد مدعوماً. يرجى التحديث إلى أحدث إصدار لمتابعة الاستخدام.</string>
+    <string name="app_update_optional_title">تحديث جديد متاح لـ EZTube</string>
+    <string name="app_update_optional_message">يتوفر إصدار جديد من تطبيق EZTube (%1$s). هل ترغب في التحديث الآن؟</string>
+    <string name="app_update_now">تحديث الآن</string>
+    <string name="app_update_later">لاحقاً</string>
+    <string name="app_update_latest_installed">أنت تستخدم أحدث إصدار</string>
+    <string name="app_update_check_updates">فحص تحديثات التطبيق</string>
+    <string name="update_download_system_title">تحديث نظام التنزيل</string>
+    <string name="update_download_system_summary">يتم التحديث تلقائياً في الخلفية عند فتح التطبيق</string>
+    <string name="update_download_system_success">تم تحديث نظام التنزيل بنجاح</string>
+    <string name="update_download_system_checking">جارٍ فحص تحديثات نظام التنزيل…</string>
+    <string name="settings_official_website">الموقع الرسمي</string>
+    <string name="settings_support_email">الدعم الفني والمساعدة</string>
 </resources>

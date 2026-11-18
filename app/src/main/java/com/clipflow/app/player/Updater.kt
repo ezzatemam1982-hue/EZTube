@@ -3,6 +3,7 @@ package com.clipflow.app.player
 import com.deniscerri.ytdl.BuildConfig
 import com.deniscerri.ytdl.R
 
+import android.app.DownloadManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -14,13 +15,13 @@ import android.content.pm.PackageInstaller
 import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.Settings
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,18 +29,26 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SystemUpdateAlt
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,12 +68,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.FileProvider
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
@@ -75,37 +87,27 @@ import java.security.MessageDigest
 import java.util.Locale
 
 /**
- * Self-update from the GitHub releases (issue #13). Once a day the newest release's ClipFlow.apk is
- * looked up; when it's newer than this build, Home shows an Update button next to the profile
- * picture. Tapping it downloads the APK (checked against GitHub's size and sha256) and hands it to
- * PackageInstaller. The first update asks the user (and Android may first ask to allow installs from
- * ClipFlow); after that ClipFlow is its own installer and Android 12+ updates it without a prompt, then a
- * notification says it's done. Nothing newer = nothing shown. On Wi-Fi the APK is fetched ahead, so
- * the tap goes straight to installing. Logs "update check: …" / "update: …".
- *
- * What's new (issue #30): the button opens a sheet with the notes of every release newer than this
- * build (scripts/publish-apk.sh posts each version's CHANGELOG.md section as its release notes), and
- * the sheet's own Update button installs.
+ * Direct In-App Self-Updater with Remote Version Control for EZTube.
+ * Silently fetches release metadata and version control configuration in the background.
+ * Supports mandatory (Force Update) and optional update dialogs.
+ * Downloads the APK internally with percentage tracking and launches the package installer directly
+ * via FileProvider without ever opening an external browser or displaying GitHub URLs to the user.
  */
 object AppUpdate {
-    private const val TAG = "ClipFlow"
-    /** Newest first; enough to cover the notes of every release a phone may have skipped. */
-    internal const val RELEASES_URL = "https://api.github.com/repos/ezzatemam1982-hue/EZTube/releases?per_page=30"
+    private const val TAG = "EZTubeUpdate"
+
+    internal const val RELEASES_URL = AppUpdateConfig.RELEASES_API_URL
+    internal const val VERSION_CONTROL_URL = AppUpdateConfig.VERSION_CONTROL_URL
+
     private const val APK_ASSET = "ClipFlow.apk"
     private const val CHECK_EVERY_MS = 24 * 60 * 60 * 1000L
-    /** A check that failed (offline, rate limit) tries again after this, not a day later. */
     private const val RETRY_AFTER_MS = 60 * 60 * 1000L
+    private const val STARTUP_CHECK_DELAY_MS = 10_000L
+
     private const val KEY_NEXT_CHECK = "next_check"
     private const val KEY_RELEASE = "release"
-    /**
-     * The version that made the last check. A different one (just installed from GitHub, Drive or
-     * adb) checks at once: installing over the app keeps the daily timer, and an install from
-     * Drive showed no Update button until the next day (2026-10-29).
-     */
     private const val KEY_CHECKED_BY = "checked_by"
-    /** The version an install was started for: the next start of that version posts "updated". */
     private const val KEY_INSTALLING = "installing"
-    /** The install asked the user; Android's own dialog then offers Open, so no notification. */
     private const val KEY_PROMPTED = "prompted"
     private const val CHANNEL = "updates"
     internal const val ACTION_RESULT = "com.clipflow.UPDATE_RESULT"
@@ -115,32 +117,44 @@ object AppUpdate {
         val apkUrl: String,
         val size: Long,
         val sha256: String?,
-        /** Newest first: this release's notes and those of the releases between it and this build. */
         val notes: List<ReleaseNotes> = emptyList(),
+        val releaseBody: String = "",
     )
 
-    /** One release's notes as published (markdown); [sections] is what the sheet shows. */
     data class ReleaseNotes(val version: String, val body: String) {
         val sections by lazy { parseNotes(body) }
     }
 
-    /** "New" / "Fixed" / … (null before any heading) and its bullet points. */
     data class NoteSection(val title: String?, val items: List<String>)
+
+    data class VersionControl(
+        val latestVersion: String,
+        val minSupportedVersion: String,
+        val forceUpdate: Boolean,
+    )
 
     enum class Phase { Ready, Downloading, Installing, Failed }
 
-    /** The newer release, or null when this build is the newest (then nothing is shown). */
+    enum class UpdateType { None, Optional, Mandatory }
+
     var available by mutableStateOf<Release?>(null)
         private set
+    var updateType by mutableStateOf(UpdateType.None)
+        private set
+    val isMandatoryUpdate: Boolean get() = updateType == UpdateType.Mandatory
+    val isOptionalUpdate: Boolean get() = updateType == UpdateType.Optional
+
+    var showMandatoryDialog by mutableStateOf(false)
+    var showOptionalDialog by mutableStateOf(false)
+    var manualCheckMessage by mutableStateOf<String?>(null)
+
     var phase by mutableStateOf(Phase.Ready)
         private set
-    /** Download progress 0…1 (written from the download thread). */
     var progress by mutableFloatStateOf(0f)
         private set
-    /** A check is on its way (Settings › About shows it). */
     var checking by mutableStateOf(false)
         private set
-    /** The button pops in only the first time it shows in this process. */
+
     internal var announced = false
 
     private lateinit var app: Context
@@ -148,8 +162,8 @@ object AppUpdate {
     private val scope = MainScope()
     private var download: Deferred<File?>? = null
     private var downloadVersion: String? = null
-    /** Sent to "Install unknown apps"; the install carries on when the window comes back. */
     private var awaitingPermission = false
+    private var pendingApk: File? = null
 
     fun init(context: Context) {
         app = context.applicationContext
@@ -157,7 +171,6 @@ object AppUpdate {
         scope.launch {
             val saved = withContext(Dispatchers.IO) {
                 val release = savedRelease()?.takeIf { isNewer(it.version) }
-                // An installed update leaves its APK behind; keep only the one still to install.
                 val keep = release?.let { apkFile(it).name }
                 dir().listFiles()?.forEach { if (it.name != keep) it.delete() }
                 release
@@ -168,70 +181,318 @@ object AppUpdate {
         }
     }
 
-    /** Called whenever a window comes to the front; looks GitHub up at most once a day, and on a new version's first start. */
-    fun checkIfDue() = check(force = false)
-
-    /** Settings › About's tap: looks GitHub up now, whenever the last check was. */
-    fun checkNow() = check(force = true)
-
-    private fun check(force: Boolean) {
-        val newInstall = prefs.getString(KEY_CHECKED_BY, null) != BuildConfig.VERSION_NAME
-        if (checking || (!force && !newInstall && System.currentTimeMillis() < prefs.getLong(KEY_NEXT_CHECK, 0L))) return
-        checking = true
-        scope.launch {
-            val result = runCatching { withContext(Dispatchers.IO) { fetchLatest() } }
-            checking = false
-            val now = System.currentTimeMillis()
-            result.onFailure {
-                Log.w(TAG, "update check failed (${it.message}); trying again in an hour")
-                prefs.edit().putLong(KEY_NEXT_CHECK, now + RETRY_AFTER_MS).putString(KEY_CHECKED_BY, BuildConfig.VERSION_NAME).apply()
-                return@launch
-            }
-            val latest = result.getOrNull()
-            prefs.edit().putLong(KEY_NEXT_CHECK, now + CHECK_EVERY_MS).putString(KEY_CHECKED_BY, BuildConfig.VERSION_NAME)
-                .apply { if (latest != null) putString(KEY_RELEASE, latest.toJson()) else remove(KEY_RELEASE) }
-                .apply()
-            val newer = latest?.takeIf { isNewer(it.version) }
-            Log.i(TAG, "update check: latest ${latest?.version ?: "none"}, this ${BuildConfig.VERSION_NAME}" +
-                if (newer != null) " → update available" else "")
-            if (phase == Phase.Downloading || phase == Phase.Installing) return@launch
-            if (newer != available) { available = newer; phase = Phase.Ready }
-            if (newer != null && !metered()) apkFor(newer)
+    /** Called on app startup; waits 10s on Dispatchers.IO then runs silent background update check. */
+    fun checkIfDue() {
+        scope.launch(Dispatchers.IO) {
+            delay(STARTUP_CHECK_DELAY_MS)
+            check(force = false)
         }
     }
 
-    /** The What's new sheet's Update button. */
+    /** Manual check from Settings About: checks immediately and displays dialog or feedback. */
+    fun checkNow() {
+        scope.launch {
+            check(force = true)
+        }
+    }
+
+    fun dismissOptional() {
+        showOptionalDialog = false
+    }
+
+    private suspend fun check(force: Boolean) {
+        val newInstall = prefs.getString(KEY_CHECKED_BY, null) != BuildConfig.VERSION_NAME
+        if (checking || (!force && !newInstall && System.currentTimeMillis() < prefs.getLong(KEY_NEXT_CHECK, 0L))) return
+        checking = true
+
+        val (versionControl, latestRelease) = withContext(Dispatchers.IO) {
+            val vc = runCatching { fetchVersionControl() }.getOrNull()
+            val rel = runCatching { fetchLatest() }.getOrNull()
+            Pair(vc, rel)
+        }
+        checking = false
+
+        val now = System.currentTimeMillis()
+        if (versionControl == null && latestRelease == null) {
+            Log.w(TAG, "Update check failed: both version control and releases API were unreachable")
+            prefs.edit().putLong(KEY_NEXT_CHECK, now + RETRY_AFTER_MS)
+                .putString(KEY_CHECKED_BY, BuildConfig.VERSION_NAME).apply()
+            if (force) manualCheckMessage = "ERROR"
+            return
+        }
+
+        val currentVersion = BuildConfig.VERSION_NAME
+        val evaluatedType = when {
+            versionControl != null -> {
+                val vcType = evaluateUpdate(currentVersion, versionControl)
+                if (vcType == UpdateType.None && latestRelease != null && isNewer(latestRelease.version)) {
+                    UpdateType.Optional
+                } else {
+                    vcType
+                }
+            }
+            latestRelease != null && isNewer(latestRelease.version) -> UpdateType.Optional
+            else -> UpdateType.None
+        }
+
+        prefs.edit().putLong(KEY_NEXT_CHECK, now + CHECK_EVERY_MS)
+            .putString(KEY_CHECKED_BY, BuildConfig.VERSION_NAME)
+            .apply {
+                if (latestRelease != null) putString(KEY_RELEASE, latestRelease.toJson())
+                else remove(KEY_RELEASE)
+            }
+            .apply()
+
+        Log.i(TAG, "Update check: evaluated $evaluatedType, latestRelease=${latestRelease?.version}, current=$currentVersion")
+
+        if (phase == Phase.Downloading || phase == Phase.Installing) return
+
+        updateType = evaluatedType
+        if (evaluatedType != UpdateType.None) {
+            val resolvedRelease = latestRelease ?: Release(
+                version = versionControl?.latestVersion ?: currentVersion,
+                apkUrl = "",
+                size = 0L,
+                sha256 = null,
+            )
+            available = resolvedRelease
+            phase = Phase.Ready
+
+            if (evaluatedType == UpdateType.Mandatory) {
+                showMandatoryDialog = true
+                showOptionalDialog = false
+            } else {
+                showOptionalDialog = true
+                showMandatoryDialog = false
+                if (!metered() && resolvedRelease.apkUrl.isNotBlank()) {
+                    apkFor(resolvedRelease)
+                }
+            }
+        } else {
+            available = null
+            showMandatoryDialog = false
+            showOptionalDialog = false
+            if (force) {
+                manualCheckMessage = "UP_TO_DATE"
+            }
+        }
+    }
+
+    internal fun fetchVersionControl(): VersionControl? {
+        val request = Request.Builder()
+            .url(VERSION_CONTROL_URL)
+            .header("User-Agent", "EZTube/${BuildConfig.VERSION_NAME}")
+            .build()
+        Net.client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) return null
+            val body = response.body.string()
+            return parseVersionControl(body)
+        }
+    }
+
+    internal fun parseVersionControl(jsonString: String): VersionControl {
+        val json = JSONObject(jsonString)
+        val latest = json.optString("latest_version").trim().removePrefix("v").removePrefix("V")
+        val min = json.optString("min_supported_version", latest).trim().removePrefix("v").removePrefix("V")
+        val force = json.optBoolean("force_update", false)
+        return VersionControl(latestVersion = latest, minSupportedVersion = min, forceUpdate = force)
+    }
+
+    internal fun evaluateUpdate(currentVersion: String, vc: VersionControl): UpdateType {
+        val cmpLatest = compareVersions(vc.latestVersion, currentVersion)
+        val cmpMin = compareVersions(vc.minSupportedVersion, currentVersion)
+        val hasNewer = cmpLatest > 0
+        val isBelowMin = cmpMin > 0
+        return when {
+            isBelowMin || (vc.forceUpdate && hasNewer) -> UpdateType.Mandatory
+            hasNewer -> UpdateType.Optional
+            else -> UpdateType.None
+        }
+    }
+
+    /** 100% in-app APK download with progress bar and direct package installer launch. */
     fun install(context: Context) {
         val release = available ?: return
         if (phase == Phase.Downloading || phase == Phase.Installing) return
-        if (!app.packageManager.canRequestPackageInstalls()) {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !context.packageManager.canRequestPackageInstalls()) {
             awaitingPermission = true
             context.startActivity(
-                Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${app.packageName}"))
+                Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}"))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
             return
         }
+
         phase = Phase.Downloading
+        progress = 0f
         scope.launch {
-            val apk = apkFor(release).await()
-            if (apk == null) { phase = Phase.Failed; return@launch }
-            phase = Phase.Installing
-            runCatching { withContext(Dispatchers.IO) { commit(apk, release) } }.onFailure {
-                Log.w(TAG, "update: couldn't start the install", it)
+            val apk = withContext(Dispatchers.IO) {
+                downloadApkWithDownloadManager(context, release)
+            }
+            if (apk == null || !apk.exists()) {
                 phase = Phase.Failed
+                return@launch
+            }
+            phase = Phase.Installing
+            pendingApk = apk
+            launchInstaller(context, apk)
+        }
+    }
+
+    private suspend fun downloadApkWithDownloadManager(context: Context, release: Release): File? {
+        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
+        val destDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: updatesDir()
+        val targetFile = File(destDir, "EZTube-update.apk")
+        if (targetFile.exists()) {
+            targetFile.delete()
+        }
+
+        if (downloadManager == null) {
+            Log.w(TAG, "DownloadManager service unavailable, falling back to direct download")
+            return runCatching { downloadApkDirect(release) }.getOrNull()
+        }
+
+        return try {
+            val request = DownloadManager.Request(Uri.parse(release.apkUrl)).apply {
+                setTitle("EZTube ${release.version}")
+                setDescription(context.getString(R.string.app_update_downloading, ""))
+                setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                setMimeType("application/vnd.android.package-archive")
+                setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, "EZTube-update.apk")
+                setAllowedOverMetered(true)
+                setAllowedOverRoaming(true)
+            }
+
+            val downloadId = downloadManager.enqueue(request)
+            var completed = false
+            var failed = false
+
+            while (!completed && !failed) {
+                val query = DownloadManager.Query().setFilterById(downloadId)
+                val cursor = downloadManager.query(query)
+                if (cursor != null && cursor.moveToFirst()) {
+                    val statusIdx = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                    val downloadedIdx = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
+                    val totalIdx = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
+
+                    val status = if (statusIdx >= 0) cursor.getInt(statusIdx) else -1
+                    val downloaded = if (downloadedIdx >= 0) cursor.getLong(downloadedIdx) else 0L
+                    val total = if (totalIdx >= 0) cursor.getLong(totalIdx) else release.size
+
+                    if (total > 0 && downloaded > 0) {
+                        val frac = (downloaded.toFloat() / total).coerceIn(0f, 1f)
+                        withContext(Dispatchers.Main) {
+                            progress = frac
+                        }
+                    }
+
+                    when (status) {
+                        DownloadManager.STATUS_SUCCESSFUL -> {
+                            completed = true
+                            withContext(Dispatchers.Main) {
+                                progress = 1f
+                            }
+                        }
+                        DownloadManager.STATUS_FAILED -> {
+                            failed = true
+                            val reasonIdx = cursor.getColumnIndex(DownloadManager.COLUMN_REASON)
+                            val reason = if (reasonIdx >= 0) cursor.getInt(reasonIdx) else -1
+                            Log.w(TAG, "DownloadManager failed with reason $reason")
+                        }
+                    }
+                    cursor.close()
+                } else {
+                    cursor?.close()
+                }
+
+                if (!completed && !failed) {
+                    delay(300)
+                }
+            }
+
+            if (completed && targetFile.exists() && targetFile.length() > 0) {
+                targetFile
+            } else {
+                Log.w(TAG, "DownloadManager did not produce valid file, falling back to direct download")
+                runCatching { downloadApkDirect(release) }.getOrNull()
+            }
+        } catch (t: Throwable) {
+            Log.w(TAG, "DownloadManager failed (${t.message}), falling back to direct download", t)
+            runCatching { downloadApkDirect(release) }.getOrNull()
+        }
+    }
+
+    private fun downloadApkDirect(release: Release): File {
+        val updatesDir = updatesDir()
+        val target = File(updatesDir, "EZTube-update.apk")
+        val part = File(updatesDir, "EZTube-update.apk.part")
+
+        progress = 0f
+        val request = Request.Builder()
+            .url(release.apkUrl)
+            .header("User-Agent", "EZTube/${BuildConfig.VERSION_NAME}")
+            .build()
+        Net.client.newCall(request).execute().use { response ->
+            check(response.isSuccessful) { "HTTP ${response.code}" }
+            val body = checkNotNull(response.body) { "no body" }
+            val total = release.size.takeIf { it > 0 } ?: body.contentLength()
+            val digest = MessageDigest.getInstance("SHA-256")
+            var read = 0L
+            part.outputStream().use { out ->
+                body.byteStream().use { input ->
+                    val buffer = ByteArray(64 * 1024)
+                    while (true) {
+                        val n = input.read(buffer)
+                        if (n < 0) break
+                        out.write(buffer, 0, n)
+                        digest.update(buffer, 0, n)
+                        read += n
+                        if (total > 0) progress = (read.toFloat() / total).coerceIn(0f, 1f)
+                    }
+                }
+            }
+            if (target.exists()) target.delete()
+            check(part.renameTo(target)) { "couldn't rename ${part.name}" }
+        }
+        progress = 1f
+        return target
+    }
+
+    internal fun launchInstaller(context: Context, apk: File) {
+        runCatching {
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                apk,
+            )
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        }.onFailure {
+            Log.w(TAG, "update: launchInstaller failed", it)
+            phase = Phase.Failed
+        }
+    }
+
+    fun onWindowResumed(context: Context) {
+        if (!awaitingPermission) return
+        awaitingPermission = false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && context.packageManager.canRequestPackageInstalls()) {
+            val destDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: updatesDir()
+            val apk = pendingApk ?: File(destDir, "EZTube-update.apk").takeIf { it.exists() }
+                ?: File(updatesDir(), "EZTube-update.apk").takeIf { it.exists() }
+            if (apk != null) {
+                launchInstaller(context, apk)
+            } else {
+                install(context)
             }
         }
     }
 
-    /** Back from "Install unknown apps": install if it was allowed, else the button waits again. */
-    fun onWindowResumed(context: Context) {
-        if (!awaitingPermission) return
-        awaitingPermission = false
-        if (app.packageManager.canRequestPackageInstalls()) install(context)
-    }
-
-    /** PackageInstaller's answer to [commit] (via [UpdateReceiver]). */
     internal fun onInstallResult(context: Context, intent: Intent) {
         val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
         when (status) {
@@ -245,8 +506,8 @@ object AppUpdate {
                 prefs.edit().putBoolean(KEY_PROMPTED, true).apply()
                 context.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }
-            PackageInstaller.STATUS_SUCCESS -> Unit // this process is replaced; onUpdated runs in the new one
-            PackageInstaller.STATUS_FAILURE_ABORTED -> { // the user said no
+            PackageInstaller.STATUS_SUCCESS -> Unit
+            PackageInstaller.STATUS_FAILURE_ABORTED -> {
                 prefs.edit().remove(KEY_INSTALLING).remove(KEY_PROMPTED).apply()
                 phase = Phase.Ready
             }
@@ -258,13 +519,11 @@ object AppUpdate {
         }
     }
 
-    /** The new version's first start after [commit] installed it. */
     internal fun onUpdated(context: Context) {
         val version = prefs.getString(KEY_INSTALLING, null) ?: return
         val prompted = prefs.getBoolean(KEY_PROMPTED, false)
         prefs.edit().remove(KEY_INSTALLING).remove(KEY_PROMPTED).apply()
         Log.i(TAG, "update: now on ${BuildConfig.VERSION_NAME} (installed $version)")
-        // A silent update closed the app with no word; Android's own dialog already offered Open.
         if (prompted || !NotificationManagerCompat.from(context).areNotificationsEnabled()) return
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         manager.createNotificationChannel(NotificationChannel(CHANNEL, str(R.string.app_update_channel), NotificationManager.IMPORTANCE_DEFAULT))
@@ -278,7 +537,7 @@ object AppUpdate {
             .setSilent(true)
             .build()
         runCatching { NotificationManagerCompat.from(context).notify(1, notification) }
-            .onFailure { Log.w(TAG, "update: couldn't post the updated notification (${it.message})") }
+            .onFailure { Log.w(TAG, "update: couldn't post updated notification (${it.message})") }
     }
 
     private fun fetchLatest(): Release? {
@@ -288,25 +547,27 @@ object AppUpdate {
             .build()
         Net.client.newCall(request).execute().use { response ->
             check(response.isSuccessful) { "HTTP ${response.code}" }
-            return parseReleases(JSONArray(response.body.string()), BuildConfig.VERSION_NAME)
+            val body = response.body.string().trim()
+            return if (body.startsWith("[")) {
+                parseReleases(JSONArray(body), BuildConfig.VERSION_NAME)
+            } else {
+                parseRelease(JSONObject(body))
+            }
         }
     }
 
-    /**
-     * The releases list → the newest published release with an installable APK, carrying the notes of every
-     * release newer than [current] up to it (a phone that skipped versions sees all of their changes).
-     */
     internal fun parseReleases(json: JSONArray, current: String): Release? {
         val published = (0 until json.length()).map { json.getJSONObject(it) }
             .filter { !it.optBoolean("draft") && !it.optBoolean("prerelease") }
         val latest = published.mapNotNull { parseRelease(it) }.maxWithOrNull { a, b -> compareVersions(a.version, b.version) }
             ?: return null
         val notes = published
-            .map { ReleaseNotes(it.optString("tag_name").removePrefix("v"), it.optString("body")) }
+            .map { ReleaseNotes(it.optString("tag_name").trim().removePrefix("v").removePrefix("V"), it.optString("body")) }
             .filter { compareVersions(it.version, current) > 0 && compareVersions(it.version, latest.version) <= 0 }
             .filter { it.sections.isNotEmpty() }
             .sortedWith { a, b -> compareVersions(b.version, a.version) }
-        return latest.copy(notes = notes)
+        val body = latest.releaseBody.ifBlank { notes.firstOrNull()?.body.orEmpty() }
+        return latest.copy(notes = notes, releaseBody = body)
     }
 
     internal fun selectApkAssetName(assetNames: List<String>, abi: String? = null): String? {
@@ -315,12 +576,23 @@ object AppUpdate {
                 !it.contains("foss", ignoreCase = true) &&
                 !it.contains("izzy", ignoreCase = true)
         }
+        val isArmV7 = abi?.contains("v7", ignoreCase = true) == true
+        if (isArmV7) {
+            val legacy = apks.firstOrNull { it.contains("legacy", ignoreCase = true) || it.contains("armeabi-v7a", ignoreCase = true) }
+            if (legacy != null) return legacy
+        }
         return apks.firstOrNull {
             it.equals("EZTube.apk", ignoreCase = true) || it.equals(APK_ASSET, ignoreCase = true)
         } ?: abi?.takeIf { it.isNotBlank() }?.let { targetAbi ->
             apks.firstOrNull { it.contains(targetAbi, ignoreCase = true) }
-        } ?: apks.firstOrNull { it.contains("universal", ignoreCase = true) }
-            ?: apks.firstOrNull()
+        } ?: apks.firstOrNull {
+            !it.contains("legacy", ignoreCase = true) &&
+                it.matches(Regex("""EZTube-v?[0-9.]+\.apk""", RegexOption.IGNORE_CASE))
+        } ?: apks.firstOrNull { it.endsWith("arm64-v8a-release-github.apk", ignoreCase = true) }
+          ?: apks.firstOrNull { it.contains("arm64", ignoreCase = true) }
+          ?: apks.firstOrNull { it.contains("universal", ignoreCase = true) }
+          ?: apks.firstOrNull { !it.contains("legacy", ignoreCase = true) }
+          ?: apks.firstOrNull()
     }
 
     internal fun selectApkAsset(assets: List<JSONObject>, abi: String? = Build.SUPPORTED_ABIS.firstOrNull()): JSONObject? {
@@ -328,26 +600,22 @@ object AppUpdate {
         return assets.firstOrNull { it.optString("name") == chosen }
     }
 
-    /** The latest-release JSON → its installable APK, or null when it has none. */
     internal fun parseRelease(json: JSONObject, abi: String? = Build.SUPPORTED_ABIS.firstOrNull()): Release? {
-        val version = json.optString("tag_name").removePrefix("v").ifBlank { return null }
+        val version = json.optString("tag_name").trim().removePrefix("v").removePrefix("V").ifBlank { return null }
         val assets = json.optJSONArray("assets") ?: return null
         val assetList = (0 until assets.length()).map { assets.getJSONObject(it) }
         val apk = selectApkAsset(assetList, abi) ?: return null
+        val body = json.optString("body")
         return Release(
             version = version,
             apkUrl = apk.optString("browser_download_url").ifBlank { return null },
             size = apk.optLong("size"),
             sha256 = apk.optString("digest").takeIf { it.startsWith("sha256:") }?.removePrefix("sha256:"),
-            notes = listOf(ReleaseNotes(version, json.optString("body"))).filter { it.sections.isNotEmpty() },
+            notes = listOf(ReleaseNotes(version, body)).filter { it.sections.isNotEmpty() },
+            releaseBody = body,
         )
     }
 
-    /**
-     * A release body → its sections: "### New" headings and "- " bullets (a bullet's indented next lines
-     * join it). Everything after a "---" line is for the web page (install help), and so is any loose
-     * paragraph; bold, code and links keep only their text.
-     */
     internal fun parseNotes(body: String): List<NoteSection> {
         val sections = mutableListOf<NoteSection>()
         var title: String? = null
@@ -374,7 +642,6 @@ object AppUpdate {
         .replace(Regex("""\*\*(.+?)\*\*"""), "$1")
         .replace(Regex("""`([^`]+)`"""), "$1")
 
-    /** "0.5.55" vs "0.5.54" → positive; missing parts count as 0. */
     internal fun compareVersions(a: String, b: String): Int {
         fun parts(v: String) = v.trim().removePrefix("v").removePrefix("V")
             .substringBefore('-')
@@ -393,81 +660,17 @@ object AppUpdate {
 
     private fun metered() = app.getSystemService(ConnectivityManager::class.java)?.isActiveNetworkMetered != false
 
-    /** The APK on disk, downloading it once; a tap during a Wi-Fi prefetch waits for that one. */
     private fun apkFor(release: Release): Deferred<File?> {
         download?.takeIf { it.isActive && downloadVersion == release.version }?.let { return it }
         downloadVersion = release.version
         return scope.async(Dispatchers.IO) {
-            runCatching { downloadApk(release) }
+            runCatching { downloadApkDirect(release) }
                 .onFailure { Log.w(TAG, "update: download of ${release.version} failed (${it.message})") }
                 .getOrNull()
         }.also { download = it }
     }
 
-    private fun downloadApk(release: Release): File {
-        val file = apkFile(release)
-        if (file.length() == release.size && (release.sha256 == null || file.sha256() == release.sha256)) {
-            progress = 1f
-            return file
-        }
-        progress = 0f
-        val part = File(dir(), file.name + ".part")
-        val request = Request.Builder().url(release.apkUrl).header("User-Agent", "EZTube/${BuildConfig.VERSION_NAME}").build()
-        Net.client.newCall(request).execute().use { response ->
-            check(response.isSuccessful) { "HTTP ${response.code}" }
-            val body = checkNotNull(response.body) { "no body" }
-            val total = release.size.takeIf { it > 0 } ?: body.contentLength()
-            val digest = MessageDigest.getInstance("SHA-256")
-            var read = 0L
-            part.outputStream().use { out ->
-                body.byteStream().use { input ->
-                    val buffer = ByteArray(64 * 1024)
-                    while (true) {
-                        val n = input.read(buffer)
-                        if (n < 0) break
-                        out.write(buffer, 0, n)
-                        digest.update(buffer, 0, n)
-                        read += n
-                        if (total > 0) progress = (read.toFloat() / total).coerceIn(0f, 1f)
-                    }
-                }
-            }
-            check(release.size <= 0 || read == release.size) { "got $read bytes, expected ${release.size}" }
-            release.sha256?.let { check(digest.digest().hex() == it) { "sha256 mismatch" } }
-        }
-        check(part.renameTo(file)) { "couldn't rename ${part.name}" }
-        Log.i(TAG, "update: downloaded ${release.version} (${file.length()} bytes)")
-        return file
-    }
-
-    private fun commit(apk: File, release: Release) {
-        val installer = app.packageManager.packageInstaller
-        val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
-            setAppPackageName(app.packageName)
-            setSize(apk.length())
-            // Once ClipFlow installed itself, Android 12+ lets it update without asking.
-            if (Build.VERSION.SDK_INT >= 31) setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
-        }
-        val id = installer.createSession(params)
-        val session = installer.openSession(id)
-        try {
-            session.openWrite(APK_ASSET, 0, apk.length()).use { out ->
-                apk.inputStream().use { it.copyTo(out) }
-                session.fsync(out)
-            }
-            prefs.edit().putString(KEY_INSTALLING, release.version).putBoolean(KEY_PROMPTED, false).commit()
-            val result = Intent(app, UpdateReceiver::class.java).setAction(ACTION_RESULT)
-            // Mutable: PackageInstaller fills in the status extras.
-            val flags = PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE else 0)
-            Log.i(TAG, "update: installing ${release.version}")
-            session.commit(PendingIntent.getBroadcast(app, id, result, flags).intentSender)
-            session.close()
-        } catch (e: Exception) {
-            session.abandon()
-            throw e
-        }
-    }
-
+    fun updatesDir(): File = File(app.cacheDir, "updates").apply { mkdirs() }
     private fun dir() = File(app.cacheDir, "update").apply { mkdirs() }
     private fun apkFile(release: Release) = File(dir(), "ClipFlow-${release.version}.apk")
 
@@ -476,27 +679,21 @@ object AppUpdate {
             val o = JSONObject(it)
             val notes = o.optJSONArray("notes") ?: JSONArray()
             Release(
-                o.getString("version"), o.getString("url"), o.getLong("size"), o.optString("sha256").ifBlank { null },
+                o.getString("version"),
+                o.getString("url"),
+                o.getLong("size"),
+                o.optString("sha256").ifBlank { null },
                 (0 until notes.length()).map { notes.getJSONObject(it).let { n -> ReleaseNotes(n.getString("version"), n.getString("body")) } },
+                o.optString("body", ""),
             )
         }.getOrNull()
     }
 
     private fun Release.toJson() =
         JSONObject().put("version", version).put("url", apkUrl).put("size", size).put("sha256", sha256 ?: "")
+            .put("body", releaseBody)
             .put("notes", JSONArray(notes.map { JSONObject().put("version", it.version).put("body", it.body) }))
             .toString()
-
-    private fun File.sha256(): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        inputStream().use { input ->
-            val buffer = ByteArray(64 * 1024)
-            while (true) { val n = input.read(buffer); if (n < 0) break; digest.update(buffer, 0, n) }
-        }
-        return digest.digest().hex()
-    }
-
-    private fun ByteArray.hex() = joinToString("") { "%02x".format(it) }
 }
 
 /** PackageInstaller results, and the first start of a freshly installed version. */
@@ -510,8 +707,257 @@ class UpdateReceiver : BroadcastReceiver() {
 }
 
 /**
- * The header's Update pill, beside the profile picture; absent when there's nothing newer. A tap opens
- * [WhatsNewSheet]. While downloading it fills left to right with the percentage; "Retry" after a failure.
+ * Top-level Dialog host for EZTube's direct in-app updates.
+ * Renders mandatory non-dismissible dialogs, optional dismissible dialogs, and toasts.
+ */
+@Composable
+fun AppUpdateDialogs() {
+    val context = LocalContext.current
+    val phase = AppUpdate.phase
+    val progress = AppUpdate.progress
+
+    val manualMsg = AppUpdate.manualCheckMessage
+    LaunchedEffect(manualMsg) {
+        if (manualMsg == "UP_TO_DATE") {
+            android.widget.Toast.makeText(
+                context,
+                context.getString(R.string.app_update_latest_installed),
+                android.widget.Toast.LENGTH_SHORT,
+            ).show()
+            AppUpdate.manualCheckMessage = null
+        } else if (manualMsg == "ERROR") {
+            android.widget.Toast.makeText(
+                context,
+                context.getString(R.string.player_error_offline),
+                android.widget.Toast.LENGTH_SHORT,
+            ).show()
+            AppUpdate.manualCheckMessage = null
+        }
+    }
+
+    if (AppUpdate.showMandatoryDialog) {
+        BackHandler(enabled = true) {}
+        AlertDialog(
+            onDismissRequest = {},
+            properties = DialogProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false,
+            ),
+            icon = {
+                Icon(
+                    Icons.Rounded.SystemUpdateAlt,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(32.dp),
+                )
+            },
+            title = {
+                Text(
+                    stringResource(R.string.app_update_required_title),
+                    fontFamily = RoundedHeavy,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(
+                        stringResource(R.string.app_update_required_message),
+                        fontSize = 15.sp,
+                        lineHeight = 21.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    val mandatoryNotes = AppUpdate.available?.releaseBody?.trim().orEmpty()
+                    if (mandatoryNotes.isNotBlank()) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            stringResource(R.string.app_update_whats_new),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 140.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(8.dp)
+                                .verticalScroll(rememberScrollState()),
+                        ) {
+                            Text(
+                                text = mandatoryNotes,
+                                fontSize = 13.sp,
+                                lineHeight = 18.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    if (phase == AppUpdate.Phase.Downloading) {
+                        Spacer(Modifier.height(4.dp))
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+                        )
+                        Text(
+                            stringResource(R.string.app_update_downloading, (progress * 100).toInt().toString()),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    } else if (phase == AppUpdate.Phase.Installing) {
+                        Text(
+                            stringResource(R.string.app_update_installing),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    } else if (phase == AppUpdate.Phase.Failed) {
+                        Text(
+                            stringResource(R.string.player_error_offline),
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { AppUpdate.install(context) },
+                    enabled = phase != AppUpdate.Phase.Downloading && phase != AppUpdate.Phase.Installing,
+                ) {
+                    Text(
+                        if (phase == AppUpdate.Phase.Failed) {
+                            stringResource(R.string.app_update_try_again)
+                        } else {
+                            stringResource(R.string.app_update_now)
+                        },
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            },
+        )
+    } else if (AppUpdate.showOptionalDialog) {
+        val ver = AppUpdate.available?.version.orEmpty()
+        AlertDialog(
+            onDismissRequest = { AppUpdate.dismissOptional() },
+            properties = DialogProperties(
+                dismissOnBackPress = phase != AppUpdate.Phase.Downloading && phase != AppUpdate.Phase.Installing,
+                dismissOnClickOutside = phase != AppUpdate.Phase.Downloading && phase != AppUpdate.Phase.Installing,
+            ),
+            icon = {
+                Icon(
+                    Icons.Rounded.SystemUpdateAlt,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(32.dp),
+                )
+            },
+            title = {
+                Text(
+                    stringResource(R.string.app_update_optional_title),
+                    fontFamily = RoundedHeavy,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(
+                        stringResource(R.string.app_update_optional_message, ver),
+                        fontSize = 15.sp,
+                        lineHeight = 21.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    val optionalNotes = AppUpdate.available?.releaseBody?.trim().orEmpty()
+                    if (optionalNotes.isNotBlank()) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            stringResource(R.string.app_update_whats_new),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 140.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(8.dp)
+                                .verticalScroll(rememberScrollState()),
+                        ) {
+                            Text(
+                                text = optionalNotes,
+                                fontSize = 13.sp,
+                                lineHeight = 18.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    if (phase == AppUpdate.Phase.Downloading) {
+                        Spacer(Modifier.height(4.dp))
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+                        )
+                        Text(
+                            stringResource(R.string.app_update_downloading, (progress * 100).toInt().toString()),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    } else if (phase == AppUpdate.Phase.Installing) {
+                        Text(
+                            stringResource(R.string.app_update_installing),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    } else if (phase == AppUpdate.Phase.Failed) {
+                        Text(
+                            stringResource(R.string.player_error_offline),
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { AppUpdate.install(context) },
+                    enabled = phase != AppUpdate.Phase.Downloading && phase != AppUpdate.Phase.Installing,
+                ) {
+                    Text(
+                        if (phase == AppUpdate.Phase.Failed) {
+                            stringResource(R.string.app_update_try_again)
+                        } else {
+                            stringResource(R.string.app_update_now)
+                        },
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { AppUpdate.dismissOptional() },
+                    enabled = phase != AppUpdate.Phase.Downloading && phase != AppUpdate.Phase.Installing,
+                ) {
+                    Text(stringResource(R.string.app_update_later))
+                }
+            },
+        )
+    }
+}
+
+/**
+ * The header's Update pill, beside the profile picture; absent when there's nothing newer.
  */
 @Composable
 fun UpdateAction() {
@@ -573,12 +1019,6 @@ fun UpdateAction() {
     if (sheet) WhatsNewSheet(release, onDismiss = { sheet = false })
 }
 
-/**
- * What's new (issue #30): the notes of every release since this build, newest first (each under its
- * version when there are several), and the Update button under them, pinned while the notes scroll.
- * The button fills with the download and stays here through Installing; a silent update just closes
- * the app.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun WhatsNewSheet(release: AppUpdate.Release, onDismiss: () -> Unit) {
@@ -661,7 +1101,6 @@ private fun NoteSectionBlock(section: AppUpdate.NoteSection) {
         section.title?.let { Text(it, color = c.onSurfaceVariant, fontWeight = FontWeight.Bold, fontSize = 13.sp) }
         section.items.forEach { item ->
             Row {
-                // The dot sits on the first line's middle (15 sp text on 21 sp lines).
                 Box(Modifier.padding(top = 8.dp, end = 12.dp).size(5.dp).clip(CircleShape).background(c.primary))
                 Text(item, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.weight(1f))
             }

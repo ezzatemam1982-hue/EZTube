@@ -42,6 +42,7 @@ import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
 import com.anggrayudi.storage.file.getAbsolutePath
+import com.clipflow.app.player.AnalyticsTracker
 import com.clipflow.app.player.AppLanguage
 import com.clipflow.app.player.ClipFlowPlayerApp
 import com.clipflow.app.player.ClipFlowPlayerTheme
@@ -129,6 +130,7 @@ class MainActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AnalyticsTracker.init(this)
         val defaultPrefs = PreferenceManager.getDefaultSharedPreferences(this)
         if (!defaultPrefs.getBoolean(WelcomeActivity.PREF_COMPLETED, false)) {
             defaultPrefs.edit().putBoolean(WelcomeActivity.PREF_COMPLETED, true).apply()

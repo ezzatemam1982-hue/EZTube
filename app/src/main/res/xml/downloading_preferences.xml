@@ -4,6 +4,12 @@
 
 
     <PreferenceCategory app:title="@string/downloading">
+        <Preference
+            android:icon="@drawable/ic_update"
+            android:key="update_download_system"
+            android:summary="@string/update_download_system_summary"
+            android:title="@string/update_download_system_title" />
+
         <SwitchPreferenceCompat
             android:widgetLayout="@layout/preferece_material_switch"
             app:defaultValue="false"

@@ -637,7 +637,7 @@
     <string name="app_version">الإصدار</string>
     <string name="app_version_toast">أنت تستخدم إصدار EZTube %s</string>
     <string name="check_app_updates">فحص تحديثات التطبيق</string>
-    <string name="update_ytdlp_engine">تحديث محرك التنزيل (yt-dlp)</string>
+    <string name="update_ytdlp_engine">تحديث نظام التنزيل</string>
     <string name="no_downloads_history">لا توجد تنزيلات سابقة حتى الآن</string>
     <string name="subtitle_languages_title">لغات الترجمة المفضلة</string>
     <string name="subtitle_languages_friendly_summary">العربية، الإنجليزية (أو لغة الفيديو الأصلية)</string>

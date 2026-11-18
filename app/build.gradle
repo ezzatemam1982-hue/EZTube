@@ -8,6 +8,12 @@ plugins {
     id "org.jetbrains.kotlin.plugin.compose"
 }
 
+if (file("google-services.json").exists()) {
+    apply plugin: 'com.google.gms.google-services'
+} else {
+    logger.warn("google-services.json is missing in app/ folder! Firebase Analytics will not be configured via plugin.")
+}
+
 def properties = new Properties()
 def versionMajor = 1
 def versionMinor = 0
@@ -55,11 +61,11 @@ android {
         }
     }catch(IOException ignored){}
     defaultConfig {
-        applicationId "com.clipflow.app"
+        applicationId "com.ezapps.eztube"
         minSdk 24
         targetSdk 36
-        versionCode 3
-        versionName "1.0.3"
+        versionCode 306
+        versionName "1.0.5"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
@@ -111,18 +117,24 @@ android {
 
     android.applicationVariants.configureEach { variant ->
         variant.outputs.each { output ->
-            def baseAbiVersionCode = project.abiCodes.get(output.getFilter(com.android.build.OutputFile.ABI))
-            if (baseAbiVersionCode != null) {
-                output.versionCodeOverride = (100 * project.android.defaultConfig.versionCode) + baseAbiVersionCode
+            def baseAbiVersionCode = project.abiCodes.get(output.getFilter(com.android.build.OutputFile.ABI)) ?: 0
+            if (project.android.defaultConfig.versionCode >= 100) {
+                output.versionCodeOverride = project.android.defaultConfig.versionCode + baseAbiVersionCode
             } else {
-                output.versionCodeOverride = 100 * project.android.defaultConfig.versionCode
+                output.versionCodeOverride = (100 * project.android.defaultConfig.versionCode) + baseAbiVersionCode
             }
 
             def abi = output.getFilter(com.android.build.OutputFile.ABI) ?: "universal"
-            if (variant.flavorName == "github") {
-                output.outputFileName = "EZTube-${versionName}-${abi}-${variant.buildType.name}-${variant.flavorName}.apk"
+            if (variant.buildType.name == "release") {
+                if (abi == "arm64-v8a") {
+                    output.outputFileName = "EZTube-v${versionName}.apk"
+                } else if (abi == "armeabi-v7a") {
+                    output.outputFileName = "EZTube-v${versionName}-legacy.apk"
+                } else {
+                    output.outputFileName = "EZTube-v${versionName}-${abi}.apk"
+                }
             } else {
-                output.outputFileName = "EZTube-${versionName}-${variant.flavorName}-${abi}-${variant.buildType.name}.apk"
+                output.outputFileName = "EZTube-v${versionName}-${abi}-${variant.buildType.name}.apk"
             }
         }
     }
@@ -301,4 +313,8 @@ dependencies {
 
     implementation 'dev.rikka.shizuku:api:13.1.5'
     implementation 'dev.rikka.shizuku:provider:13.1.5'
+
+    // Firebase Analytics (Automated Real-Time User & DAU tracking)
+    implementation platform('com.google.firebase:firebase-bom:33.10.0')
+    implementation 'com.google.firebase:firebase-analytics-ktx'
 }

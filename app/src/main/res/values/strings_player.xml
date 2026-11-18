@@ -44,20 +44,20 @@
 
     <!-- ── Errors shown over the video ── -->
     <string name="player_error_no_stream">No playable stream was found for this video.</string>
-    <string name="player_error_connection">Lost the connection. Check your network and try again.</string>
+    <string name="player_error_connection">No internet connection. Please check your network and try again.</string>
     <string name="player_error_refused">YouTube refused the stream. Try again.</string>
-    <string name="player_error_unplayable">This video couldn\'t be played.</string>
+    <string name="player_error_unplayable">Something went wrong while loading. Tap to retry.</string>
     <!-- Errors from loading a video or a page (YouTube.friendlyError), shown in the player and on pages. -->
-    <string name="player_error_age_restricted">This video is age-restricted and needs a YouTube account to watch.</string>
+    <string name="player_error_age_restricted">This video is unavailable or private.</string>
     <string name="player_error_geo">This video isn\'t available in your country.</string>
     <string name="player_error_bot_check">YouTube is asking to confirm you\'re not a bot.</string>
     <string name="player_error_bot_check_hint">Turning airplane mode on and back off usually fixes it.</string>
-    <string name="player_error_private">This video is private.</string>
+    <string name="player_error_private">This video is unavailable or private.</string>
     <string name="player_error_members_only">This is a members-only video. EZTube can\'t play members-only videos yet.</string>
-    <string name="player_error_unavailable">This video isn\'t available.</string>
+    <string name="player_error_unavailable">This video is unavailable or private.</string>
     <string name="player_error_rate_limited">YouTube is rate-limiting requests right now. Try again in a minute.</string>
-    <string name="player_error_offline">Couldn\'t reach YouTube. Check your connection.</string>
-    <string name="player_error_generic">Something went wrong loading this. Try again.</string>
+    <string name="player_error_offline">No internet connection. Please check your network and try again.</string>
+    <string name="player_error_generic">Something went wrong while loading. Tap to retry.</string>
 
     <!-- First part of the quality sheet's technical "Playing …" line ("Auto · 1920×1080 · H.264 · itag 299"):
          the quality is chosen automatically. Keep short. -->

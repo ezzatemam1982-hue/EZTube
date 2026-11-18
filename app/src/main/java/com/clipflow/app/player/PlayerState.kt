@@ -998,9 +998,9 @@ class PlayerState(private val scope: CoroutineScope) {
             botCheck = false
             error = when (e.errorCode) {
                 PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
-                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT -> str(R.string.player_error_connection)
+                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT -> str(R.string.player_error_offline)
                 PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS -> str(R.string.player_error_refused)
-                else -> str(R.string.player_error_unplayable)
+                else -> str(R.string.player_error_generic)
             }
         }
     }

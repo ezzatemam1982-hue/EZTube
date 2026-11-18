@@ -104,4 +104,20 @@
     <string name="settings_downloader_title">Downloads &amp; Storage</string>
     <string name="settings_downloader_line">Save location, formats &amp; download rules</string>
     <string name="ui_back_to_stream">Stream</string>
+
+    <!-- Self updater and remote version control strings -->
+    <string name="app_update_required_title">Required Update</string>
+    <string name="app_update_required_message">This version of the app is no longer supported. Please update to continue.</string>
+    <string name="app_update_optional_title">New EZTube Update Available</string>
+    <string name="app_update_optional_message">A new version of EZTube (%1$s) is available. Would you like to update now?</string>
+    <string name="app_update_now">Update Now</string>
+    <string name="app_update_later">Later</string>
+    <string name="app_update_latest_installed">You\'re on the latest version</string>
+    <string name="app_update_check_updates">Check for updates</string>
+    <string name="update_download_system_title">Update download system</string>
+    <string name="update_download_system_summary">Updates automatically in the background on app launch</string>
+    <string name="update_download_system_success">Download system updated successfully</string>
+    <string name="update_download_system_checking">Checking for download system updates…</string>
+    <string name="settings_official_website">Official Website</string>
+    <string name="settings_support_email">Support &amp; Feedback</string>
 </resources>

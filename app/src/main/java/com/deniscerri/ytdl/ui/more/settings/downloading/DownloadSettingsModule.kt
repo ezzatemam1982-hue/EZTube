@@ -22,15 +22,76 @@ import com.deniscerri.ytdl.work.DownloadWorker
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import androidx.core.content.edit
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import com.deniscerri.ytdl.R
 import com.deniscerri.ytdl.ui.more.settings.SettingHost
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 object DownloadSettingsModule : SettingModule {
     override fun bindLogic(pref: Preference, host: SettingHost) {
         val context = pref.context
         val preferences = PreferenceManager.getDefaultSharedPreferences(context)
         when(pref.key) {
+            "update_download_system" -> {
+                pref.onPreferenceClickListener = Preference.OnPreferenceClickListener {
+                    val updateUtil = com.deniscerri.ytdl.util.UpdateUtil(context)
+                    host.hostLifecycleOwner.lifecycleScope.launch {
+                        val view = host.hostView
+                        pref.isEnabled = false
+                        pref.summary = context.getString(R.string.update_download_system_checking)
+                        runCatching {
+                            val res = updateUtil.updateYTDL()
+                            when (res.status) {
+                                com.deniscerri.ytdl.util.UpdateUtil.YTDLPUpdateStatus.DONE -> {
+                                    if (view != null && view.isAttachedToWindow) {
+                                        com.google.android.material.snackbar.Snackbar.make(
+                                            view,
+                                            context.getString(R.string.update_download_system_success),
+                                            com.google.android.material.snackbar.Snackbar.LENGTH_SHORT,
+                                        ).show()
+                                    }
+                                    withContext(Dispatchers.IO) {
+                                        java.io.File(FileUtil.getInfoJsonPath(context)).deleteRecursively()
+                                    }
+                                }
+                                com.deniscerri.ytdl.util.UpdateUtil.YTDLPUpdateStatus.ALREADY_UP_TO_DATE -> {
+                                    if (view != null && view.isAttachedToWindow) {
+                                        com.google.android.material.snackbar.Snackbar.make(
+                                            view,
+                                            context.getString(R.string.app_update_latest_installed),
+                                            com.google.android.material.snackbar.Snackbar.LENGTH_SHORT,
+                                        ).show()
+                                    }
+                                }
+                                com.deniscerri.ytdl.util.UpdateUtil.YTDLPUpdateStatus.ERROR -> {
+                                    if (view != null && view.isAttachedToWindow) {
+                                        com.google.android.material.snackbar.Snackbar.make(
+                                            view,
+                                            context.getString(R.string.player_error_offline),
+                                            com.google.android.material.snackbar.Snackbar.LENGTH_LONG,
+                                        ).show()
+                                    }
+                                }
+                                else -> Unit
+                            }
+                        }.onFailure {
+                            if (view != null && view.isAttachedToWindow) {
+                                com.google.android.material.snackbar.Snackbar.make(
+                                    view,
+                                    context.getString(R.string.player_error_offline),
+                                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG,
+                                ).show()
+                            }
+                        }
+                        pref.isEnabled = true
+                        pref.summary = context.getString(R.string.update_download_system_summary)
+                    }
+                    true
+                }
+            }
             "remember_download_type" -> {
                 val rememberDownloadType = pref as SwitchPreferenceCompat
                 rememberDownloadType.setOnPreferenceChangeListener { _, newValue ->

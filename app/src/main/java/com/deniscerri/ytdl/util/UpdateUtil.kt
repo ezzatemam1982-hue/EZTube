@@ -329,12 +329,19 @@ class UpdateUtil(var context: Context) {
                     !it.name.contains("foss", ignoreCase = true) &&
                     !it.name.contains("izzy", ignoreCase = true)
             }
+            val isArmV7 = abi?.contains("v7", ignoreCase = true) == true
+            if (isArmV7) {
+                val legacy = apks.firstOrNull { it.name.contains("legacy", ignoreCase = true) || it.name.contains("armeabi-v7a", ignoreCase = true) }
+                if (legacy != null) return legacy
+            }
             return abi?.takeIf { it.isNotBlank() }?.let { targetAbi ->
                 apks.firstOrNull { it.name.contains(targetAbi, ignoreCase = true) }
             } ?: apks.firstOrNull {
-                it.name.contains("universal", ignoreCase = true) ||
-                    it.name.equals("EZTube.apk", ignoreCase = true) ||
-                    it.name.equals("ClipFlow.apk", ignoreCase = true)
+                !it.name.contains("legacy", ignoreCase = true) &&
+                    (it.name.matches(Regex("""EZTube-v?[0-9.]+\.apk""", RegexOption.IGNORE_CASE)) ||
+                     it.name.equals("EZTube.apk", ignoreCase = true) ||
+                     it.name.equals("ClipFlow.apk", ignoreCase = true) ||
+                     it.name.contains("universal", ignoreCase = true))
             } ?: apks.firstOrNull()
         }
     }

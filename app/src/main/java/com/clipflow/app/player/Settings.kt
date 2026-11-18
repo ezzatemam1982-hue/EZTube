@@ -6,6 +6,7 @@ import com.deniscerri.ytdl.R
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.text.format.Formatter
 import android.view.inputmethod.InputMethodManager
@@ -85,10 +86,12 @@ import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.DataSaverOn
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.rounded.FastForward
 import androidx.compose.material.icons.rounded.Headphones
 import androidx.compose.material.icons.rounded.HighQuality
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.NotificationsNone
@@ -1080,8 +1083,13 @@ private fun phoneLanguageLabel(): String {
 }
 
 @Composable
-private fun updateStatus(): String = AppUpdate.available?.let { stringResource(R.string.settings_update_available, it.version) }
-    ?: stringResource(if (AppUpdate.checking) R.string.settings_checking else R.string.settings_up_to_date)
+private fun updateStatus(): String = when {
+    AppUpdate.checking -> stringResource(R.string.settings_checking)
+    AppUpdate.isMandatoryUpdate -> stringResource(R.string.app_update_required_title)
+    AppUpdate.isOptionalUpdate -> AppUpdate.available?.let { stringResource(R.string.settings_update_available, it.version) }
+        ?: stringResource(R.string.app_update_button)
+    else -> stringResource(R.string.settings_up_to_date)
+}
 
 // ── Search ────────────────────────────────────────────────────────────────────
 
@@ -2266,18 +2274,64 @@ private fun AboutPage(player: PlayerState) {
     }
     Spacer(Modifier.height(14.dp))
     val developerCredit = "${stringResource(R.string.developer_name)} (EZTube)"
+    val websiteUrl = "https://eztube.ezappx.com"
+    val supportEmail = "support@ezappx.com"
     val cacheLine = if (cacheBytes > 0L) {
         stringResource(R.string.settings_clear_cache_line, Formatter.formatShortFileSize(context, cacheBytes))
     } else {
         stringResource(R.string.settings_clear_cache_empty)
     }
     val clearedMessage = stringResource(R.string.settings_clear_cache_done)
-    Joined(3) { i, shape ->
+    Joined(5) { i, shape ->
         when (i) {
-            0 -> LinkSetting("version", shape, Icons.Rounded.SystemUpdateAlt, stringResource(R.string.settings_version, BuildConfig.VERSION_NAME), updateStatus()) {
-                if (AppUpdate.available != null) whatsNew = true else AppUpdate.checkNow()
+            0 -> LinkSetting(
+                "version",
+                shape,
+                Icons.Rounded.SystemUpdateAlt,
+                stringResource(R.string.app_update_check_updates),
+                "${stringResource(R.string.settings_version, BuildConfig.VERSION_NAME)} · ${updateStatus()}",
+            ) {
+                if (AppUpdate.isMandatoryUpdate) {
+                    AppUpdate.showMandatoryDialog = true
+                } else if (AppUpdate.isOptionalUpdate) {
+                    AppUpdate.showOptionalDialog = true
+                } else {
+                    AppUpdate.checkNow()
+                }
             }
-            1 -> LinkSetting("developer", shape, Icons.Rounded.Person, stringResource(R.string.developer), developerCredit) {
+            1 -> LinkSetting(
+                "website",
+                shape,
+                Icons.Rounded.Language,
+                stringResource(R.string.settings_official_website),
+                websiteUrl,
+            ) {
+                runCatching {
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse(websiteUrl))
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                }
+            }
+            2 -> LinkSetting(
+                "support_email",
+                shape,
+                Icons.Rounded.Email,
+                stringResource(R.string.settings_support_email),
+                supportEmail,
+            ) {
+                runCatching {
+                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                        data = Uri.parse("mailto:$supportEmail")
+                        putExtra(Intent.EXTRA_SUBJECT, "EZTube Support - v${BuildConfig.VERSION_NAME}")
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    context.startActivity(intent)
+                }.onFailure {
+                    android.widget.Toast.makeText(context, supportEmail, android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+            3 -> LinkSetting("developer", shape, Icons.Rounded.Person, stringResource(R.string.developer), developerCredit) {
                 android.widget.Toast.makeText(
                     context,
                     developerCredit,
@@ -2297,7 +2351,7 @@ private fun AboutPage(player: PlayerState) {
     if (whatsNew) AppUpdate.available?.let { WhatsNewSheet(it, onDismiss = { whatsNew = false }) }
 }
 
-private val PRESERVED_CACHE_ENTRIES = setOf("clipflow_yt_auth_cookies.txt", "update")
+private val PRESERVED_CACHE_ENTRIES = setOf("clipflow_yt_auth_cookies.txt", "update", "updates")
 
 private fun measureClearableCacheBytes(context: android.content.Context): Long {
     fun dirBytes(dir: File?): Long {

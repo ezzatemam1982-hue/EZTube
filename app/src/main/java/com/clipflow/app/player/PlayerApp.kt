@@ -904,6 +904,7 @@ fun ClipFlowPlayerApp() {
         if (lockActive) {
             ScreenLockOverlay(state = player, fullscreen = showFullscreen)
         }
+        AppUpdateDialogs()
         }
     }
 }
