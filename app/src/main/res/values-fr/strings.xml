@@ -613,4 +613,39 @@
     <string name="info_jsons_summary">Métadonnées vidéo enregistrées pour qu\'EZTube n\'ait pas à les récupérer à nouveau</string>
     <string name="ytdlp_cache">Cache du moteur de l\'app</string>
     <string name="ytdlp_cache_summary">Données temporaires du moteur qu\'EZTube réutilise entre les exécutions</string>
+
+    <string name="voice_search">Recherche vocale</string>
+    <string name="voice_search_listening">Écoute en cours…</string>
+    <string name="voice_search_speak_now">Parlez maintenant</string>
+    <string name="voice_search_tap_to_speak">Aucun son détecté. Appuyez sur le micro pour réessayer.</string>
+    <string name="voice_search_error_offline">Aucune connexion Internet. Vérifiez votre réseau et réessayez.</string>
+    <string name="voice_search_retry">Réessayer</string>
+    <string name="voice_search_permission_title">Autorisation du microphone requise</string>
+    <string name="voice_search_permission_message">EZTube a besoin de l\'accès à votre micro pour activer la recherche vocale. Veuillez l\'autoriser dans les paramètres.</string>
+    <string name="voice_search_open_settings">Ouvrir les paramètres</string>
+    <string name="voice_search_not_available">La reconnaissance vocale n\'est pas disponible sur cet appareil</string>
+
+    <string name="playback_group_quality">Qualité et données</string>
+    <string name="playback_group_behavior">Comportement du lecteur</string>
+    <string name="playback_group_controls">Commandes et gestes</string>
+    <string name="playback_group_extra">Options supplémentaires</string>
+
+    <string name="voice_search_language">Langue de recherche vocale</string>
+    <string name="voice_search_language_summary">Choisir la langue pour la reconnaissance vocale</string>
+    <string name="voice_search_select_language">Sélectionner la langue</string>
+
+    <string name="stop_and_exit">Arrêter et quitter</string>
+    <string name="stop_and_exit_dialog_desc">Arrêter tous les téléchargements actifs et fermer l\'application ?</string>
+
+    <string name="welcome_sheet_title">Bienvenue sur EZTube</string>
+    <string name="welcome_highlight_1_title">Sans pub &amp; Lecture en arrière-plan</string>
+    <string name="welcome_highlight_1_desc">Streaming en arrière-plan, PiP et audio uniquement</string>
+    <string name="welcome_highlight_2_title">Téléchargements intelligents</string>
+    <string name="welcome_highlight_2_desc">Gestionnaire vidéo et audio rapide avec choix des formats</string>
+    <string name="welcome_highlight_3_title">Recherche vocale multilingue</string>
+    <string name="welcome_highlight_3_desc">Recherchez des vidéos et téléchargements à la voix en 13 langues</string>
+    <string name="welcome_sheet_get_started">Démarrer</string>
+
+    <string name="info_tooltip_title">À propos de ce paramètre</string>
+    <string name="info_got_it">Compris</string>
 </resources>

@@ -14,6 +14,7 @@
         </item>
         <item name="snackbarStyle">@style/snackBarStyle</item>
         <item name="preferenceTheme">@style/PreferenceTheme</item>
+        <item name="materialSwitchStyle">@style/Widget.App.MaterialSwitch</item>
         <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>
     </style>
 

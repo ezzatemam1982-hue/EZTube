@@ -112,6 +112,7 @@ import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.ZoomOutMap
 import androidx.compose.material.icons.rounded.BrightnessMedium
+import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -119,11 +120,17 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
+import com.deniscerri.ytdl.ui.views.VoiceSearchBottomSheet
+import kotlin.math.roundToInt
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -297,7 +304,7 @@ fun SettingsScreen(
         find.key = target
         FoldingPage(
             title = stringResource(shown.titleRes),
-            summary = if (shown == SettingsPage.About) null else summaryOf(shown),
+            summary = if (shown == SettingsPage.About || (shown == SettingsPage.Account && Account.profile != null)) null else summaryOf(shown),
             scroll = scroll,
             find = find,
             findSeq = findSeq,
@@ -618,7 +625,21 @@ private fun SearchField(query: String, onQuery: (String) -> Unit, focus: FocusRe
                 Icon(Icons.Rounded.Close, stringResource(R.string.ui_clear_search), tint = c.onSurfaceVariant, modifier = Modifier.size(20.dp))
             }
         } else {
-            Spacer(Modifier.width(12.dp))
+            val activity = view.context.findActivity() as? androidx.fragment.app.FragmentActivity
+            Box(
+                Modifier
+                    .size(40.dp)
+                    .pressable {
+                        activity?.let { act ->
+                            VoiceSearchBottomSheet.show(act.supportFragmentManager, isOfflineSupported = true) { spoken ->
+                                onQuery(spoken)
+                            }
+                        }
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Rounded.Mic, stringResource(R.string.voice_search), tint = c.primary, modifier = Modifier.size(20.dp))
+            }
         }
     }
 }
@@ -644,10 +665,23 @@ private fun FrontPage(
     Box(Modifier.riseIn(entered, 3)) { QuickToggles(player) }
     Column(Modifier.riseIn(entered, 4)) {
         GroupLabel(stringResource(R.string.settings_group_downloads))
+        val freeSpaceStr = remember {
+            try {
+                val free = android.os.Environment.getExternalStorageDirectory().freeSpace
+                com.deniscerri.ytdl.util.FileUtil.convertFileSize(free)
+            } catch (e: Exception) {
+                null
+            }
+        }
+        val storageLine = if (freeSpaceStr != null) {
+            "${stringResource(R.string.settings_downloader_line)} · $freeSpaceStr"
+        } else {
+            stringResource(R.string.settings_downloader_line)
+        }
         Tile(
             icon = Icons.Rounded.Download,
             title = stringResource(R.string.settings_downloader_title),
-            line = stringResource(R.string.settings_downloader_line),
+            line = storageLine,
             shape = RoundedCornerShape(OuterCorner),
         ) { InAppDownloadBridge.openDownloaderSettings(context) }
     }
@@ -764,7 +798,7 @@ private fun AccountCard(onClick: () -> Unit, onAvatarClick: () -> Unit, onSigned
             Text(
                 profile?.name ?: stringResource(R.string.ui_sign_in),
                 color = c.onPrimaryContainer, fontWeight = FontWeight.Bold, fontSize = 16.sp,
-                maxLines = 2, overflow = TextOverflow.Ellipsis,
+                maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
             if (profile != null) {
                 val identity = listOfNotNull(profile.email, profile.handle?.takeIf { it != profile.email }).joinToString(" · ")
@@ -773,7 +807,7 @@ private fun AccountCard(onClick: () -> Unit, onAvatarClick: () -> Unit, onSigned
                     Text(
                         identity,
                         color = c.onPrimaryContainer.copy(alpha = 0.88f), fontSize = 13.sp,
-                        lineHeight = 17.sp, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                        lineHeight = 17.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -781,7 +815,7 @@ private fun AccountCard(onClick: () -> Unit, onAvatarClick: () -> Unit, onSigned
             Text(
                 if (profile != null) stringResource(R.string.settings_full_sync) else stringResource(R.string.ui_account_pitch_title),
                 color = c.onPrimaryContainer.copy(alpha = 0.78f), fontSize = 12.5.sp,
-                lineHeight = 16.5.sp, maxLines = 2,
+                lineHeight = 16.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
         }
         if (profile != null) {
@@ -791,7 +825,7 @@ private fun AccountCard(onClick: () -> Unit, onAvatarClick: () -> Unit, onSigned
                     .clip(CircleShape)
                     .background(c.surface)
                     .pressable(onClick = { Account.signOut(); onSignedOut() })
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
@@ -1287,7 +1321,17 @@ private fun SwitchSetting(
     val rtl = rememberRtlLanguage()
     val toggle = @Composable {
         CompositionLocalProvider(LocalLayoutDirection provides if (rtl) LayoutDirection.Rtl else LayoutDirection.Ltr) {
-            Switch(checked = checked, onCheckedChange = onChange, enabled = enabled, colors = SwitchDefaults.colors(checkedTrackColor = c.primary))
+            Switch(
+                checked = checked,
+                onCheckedChange = onChange,
+                enabled = enabled,
+                colors = SwitchDefaults.colors(
+                    checkedTrackColor = c.primary,
+                    uncheckedThumbColor = c.outline,
+                    uncheckedTrackColor = c.surfaceVariant,
+                    uncheckedBorderColor = c.outline
+                )
+            )
         }
     }
     SettingBox(key, shape, Modifier.pressable(enabled = enabled, pressedScale = 0.98f) { onChange(!checked) }) {
@@ -1484,84 +1528,116 @@ private fun Note(text: String) {
 // ── Categories ────────────────────────────────────────────────────────────────
 
 @Composable
+private fun DiscreteSliderSetting(
+    key: String,
+    shape: Shape,
+    title: String,
+    line: String?,
+    value: Int,
+    range: ClosedFloatingPointRange<Float> = 5f..60f,
+    steps: Int = 10,
+    icon: ImageVector? = null,
+    onValueChange: (Int) -> Unit,
+) {
+    val c = MaterialTheme.colorScheme
+    SettingBox(key, shape) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            if (icon != null) {
+                IconSquare(icon)
+                Spacer(Modifier.width(14.dp))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (line != null) {
+                    Spacer(Modifier.height(3.dp))
+                    Text(line, color = c.onSurfaceVariant, fontSize = 13.sp, lineHeight = 18.sp)
+                }
+            }
+            Spacer(Modifier.width(8.dp))
+            Surface(
+                shape = CircleShape,
+                color = c.primary,
+                contentColor = c.onPrimary,
+            ) {
+                Text(
+                    text = "${value}s",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Slider(
+            value = value.toFloat(),
+            onValueChange = { newVal ->
+                val stepped = (newVal.roundToInt() / 5) * 5
+                val clamped = stepped.coerceIn(5, 60)
+                if (clamped != value) {
+                    onValueChange(clamped)
+                }
+            },
+            valueRange = range,
+            steps = steps,
+            colors = SliderDefaults.colors(
+                thumbColor = c.primary,
+                activeTrackColor = c.primary,
+                inactiveTrackColor = c.surfaceVariant,
+            ),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+        )
+        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("5s", fontSize = 11.sp, color = c.onSurfaceVariant)
+            Text("60s", fontSize = 11.sp, color = c.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
 private fun PlaybackPage(player: PlayerState) {
     val context = LocalContext.current
     val pipSupported = LocalPictureInPicture.current?.supported != false
     val liveSupported = remember(context) { LiveControls.supported(context) }
-    // A TV (TvPlayer) has no playback pill, chapter list, picture-in-picture, pinch or live activity: only what still
-    // applies there is shown.
     val tv = LocalWindowLayout.current.tv
     var showQualityPicker by remember { mutableStateOf(false) }
-    val controls = when {
-        tv -> listOf(1)
-        pipSupported -> listOf(0, 1, 2, 3)
-        else -> listOf(0, 1, 2)
-    }
-    val picture = if (tv) listOf(0, 1, 2, 4) else listOf(0, 1, 2, 3, 4)
-    Spacer(Modifier.height(14.dp))
-    // The controls and how they behave.
-    Joined(controls.size) { i, shape ->
-        when (controls[i]) {
-            0 -> ChipsSetting(
-                "controls", shape,
-                stringResource(R.string.ui_player_controls),
-                stringResource(if (PlayerControls.inBar) R.string.ui_player_controls_in_bar_line else R.string.ui_player_controls_on_video_line),
-                listOf(true to stringResource(R.string.ui_player_controls_pill), false to stringResource(R.string.ui_player_controls_on_video)),
-                PlayerControls.inBar,
-                icon = Icons.Rounded.Tune,
-            ) { PlayerControls.set(it) }
-            // Its icon is the −/+ buttons' own glyph, so it changes with the pick (#36).
-            1 -> ChipGridSetting(
-                "seek", shape,
-                stringResource(R.string.settings_seek_step_title),
-                stringResource(R.string.settings_seek_step_line),
-                SeekStep.choices.map { it to stringResource(R.string.settings_seconds_short, it.toString()) },
-                SeekStep.seconds,
-                columns = 3,
-                icon = seekIcon(forward = true),
-            ) { SeekStep.set(it) }
-            2 -> SwitchSetting(
-                "chapters", shape,
-                stringResource(R.string.settings_chapters_open_title),
-                stringResource(R.string.settings_chapters_open_line),
-                ChaptersStayOpen.on,
-                icon = Icons.AutoMirrored.Rounded.FormatListBulleted,
-            ) { ChaptersStayOpen.set(it) }
-            else -> SwitchSetting(
-                "pip", shape,
-                stringResource(R.string.settings_auto_pip_title),
-                stringResource(R.string.settings_auto_pip_line),
-                AutoPip.on,
-                icon = Icons.Rounded.PictureInPictureAlt,
-            ) { AutoPip.set(it) }
-        }
-    }
-    Spacer(Modifier.height(14.dp))
-    // Speed, picture and sound.
-    Joined(picture.size) { i, shape ->
-        when (picture[i]) {
+
+    // 1. Quality & Data
+    GroupLabel(stringResource(R.string.playback_group_quality))
+    Joined(2) { i, shape ->
+        when (i) {
             0 -> LinkSetting(
                 "quality", shape,
                 Icons.Rounded.HighQuality,
                 stringResource(R.string.settings_default_quality_title),
                 defaultQualityLabel(QualityPreference.defaultMode),
             ) { showQualityPicker = true }
-            1 -> SwitchSetting(
+            else -> SwitchSetting(
                 "data_saver", shape,
                 stringResource(R.string.settings_data_saver_title),
                 stringResource(R.string.settings_data_saver_line),
                 DataSaver.enabled,
                 icon = Icons.Rounded.DataSaverOn,
             ) { player.setDataSaver(it) }
-            2 -> SwitchSetting(
-                "speed", shape,
-                stringResource(R.string.settings_speed_remember_title),
-                if (PlaybackSpeed.remember) stringResource(R.string.settings_speed_remember_on, PlaybackSpeed.label(PlaybackSpeed.saved))
-                else stringResource(R.string.settings_speed_remember_off),
-                PlaybackSpeed.remember,
-                icon = Icons.Rounded.Speed,
-            ) { if (it != PlaybackSpeed.remember) player.toggleRememberSpeed() }
-            3 -> SwitchSetting(
+        }
+    }
+
+    // 2. Player Behavior
+    val behaviorItems = buildList {
+        if (!tv && pipSupported) add("pip")
+        add("zoom")
+        add("audio")
+    }
+    GroupLabel(stringResource(R.string.playback_group_behavior))
+    Joined(behaviorItems.size) { i, shape ->
+        when (behaviorItems[i]) {
+            "pip" -> SwitchSetting(
+                "pip", shape,
+                stringResource(R.string.settings_auto_pip_title),
+                stringResource(R.string.settings_auto_pip_line),
+                AutoPip.on,
+                icon = Icons.Rounded.PictureInPictureAlt,
+            ) { AutoPip.set(it) }
+            "zoom" -> SwitchSetting(
                 "zoom", shape,
                 stringResource(R.string.settings_zoom_fill_title),
                 stringResource(if (FullscreenZoom.fill) R.string.settings_zoom_fill_on else R.string.settings_zoom_fill_off),
@@ -1577,18 +1653,40 @@ private fun PlaybackPage(player: PlayerState) {
             ) { player.setAudioOnly(it) }
         }
     }
-    // Fullscreen's side swipes (#62). A TV's player has no touch gestures.
-    if (!tv) {
-        Spacer(Modifier.height(14.dp))
-        Joined(2) { i, shape ->
-            if (i == 0) SwitchSetting(
+
+    // 3. Controls & Gestures
+    val controlItems = buildList {
+        add("seek")
+        if (!tv) add("controls")
+        if (!tv) add("swipe_brightness")
+        if (!tv) add("swipe_volume")
+    }
+    GroupLabel(stringResource(R.string.playback_group_controls))
+    Joined(controlItems.size) { i, shape ->
+        when (controlItems[i]) {
+            "seek" -> DiscreteSliderSetting(
+                "seek", shape,
+                stringResource(R.string.settings_seek_step_title),
+                stringResource(R.string.settings_seek_step_line),
+                value = SeekStep.seconds,
+                icon = seekIcon(forward = true),
+            ) { SeekStep.set(it) }
+            "controls" -> ChipsSetting(
+                "controls", shape,
+                stringResource(R.string.ui_player_controls),
+                stringResource(if (PlayerControls.inBar) R.string.ui_player_controls_in_bar_line else R.string.ui_player_controls_on_video_line),
+                listOf(true to stringResource(R.string.ui_player_controls_pill), false to stringResource(R.string.ui_player_controls_on_video)),
+                PlayerControls.inBar,
+                icon = Icons.Rounded.Tune,
+            ) { PlayerControls.set(it) }
+            "swipe_brightness" -> SwitchSetting(
                 "swipe_brightness", shape,
                 stringResource(R.string.settings_swipe_brightness_title),
                 stringResource(R.string.settings_swipe_brightness_line),
                 FullscreenSwipes.brightness,
                 icon = Icons.Rounded.BrightnessMedium,
             ) { FullscreenSwipes.turnBrightness(it) }
-            else SwitchSetting(
+            else -> SwitchSetting(
                 "swipe_volume", shape,
                 stringResource(R.string.settings_swipe_volume_title),
                 stringResource(R.string.settings_swipe_volume_line),
@@ -1597,9 +1695,35 @@ private fun PlaybackPage(player: PlayerState) {
             ) { FullscreenSwipes.turnVolume(it) }
         }
     }
+
+    // 4. Extra Options
+    val extraItems = buildList {
+        add("chapters")
+        add("speed")
+    }
+    GroupLabel(stringResource(R.string.playback_group_extra))
+    Joined(extraItems.size) { i, shape ->
+        when (extraItems[i]) {
+            "chapters" -> SwitchSetting(
+                "chapters", shape,
+                stringResource(R.string.settings_chapters_open_title),
+                stringResource(R.string.settings_chapters_open_line),
+                ChaptersStayOpen.on,
+                icon = Icons.AutoMirrored.Rounded.FormatListBulleted,
+            ) { ChaptersStayOpen.set(it) }
+            else -> SwitchSetting(
+                "speed", shape,
+                stringResource(R.string.settings_speed_remember_title),
+                if (PlaybackSpeed.remember) stringResource(R.string.settings_speed_remember_on, PlaybackSpeed.label(PlaybackSpeed.saved))
+                else stringResource(R.string.settings_speed_remember_off),
+                PlaybackSpeed.remember,
+                icon = Icons.Rounded.Speed,
+            ) { if (it != PlaybackSpeed.remember) player.toggleRememberSpeed() }
+        }
+    }
+
     if (!tv && liveSupported) {
         Spacer(Modifier.height(14.dp))
-        // Off screen.
         LiveActivitySetting(player)
     }
     if (showQualityPicker) {
@@ -1931,6 +2055,18 @@ private fun LanguagePage() {
     val context = LocalContext.current
     val chosen = AppLanguage.pickedChoice
     val options = listOf("" to phoneLanguageLabel()) + AppLanguage.choices.map { it.tag to it.name }
+
+    var showVoiceLangDialog by remember { mutableStateOf(false) }
+    val voicePrefs = remember { context.getSharedPreferences("voice_search", android.content.Context.MODE_PRIVATE) }
+    var currentVoiceLang by remember {
+        mutableStateOf(
+            voicePrefs.getString("voice_search_language", null) ?: AppLanguage.locale.language
+        )
+    }
+    val currentVoiceLangName = remember(currentVoiceLang) {
+        VoiceSearchBottomSheet.VOICE_LANGUAGES.firstOrNull { it.first.equals(currentVoiceLang, ignoreCase = true) }?.second ?: "English"
+    }
+
     Spacer(Modifier.height(14.dp))
     Joined(options.size) { i, shape ->
         val (tag, label) = options[i]
@@ -1948,6 +2084,41 @@ private fun LanguagePage() {
         }
     }
     Note(stringResource(R.string.language_line))
+
+    Spacer(Modifier.height(18.dp))
+    GroupLabel(stringResource(R.string.voice_search_language))
+    Joined(1) { _, shape ->
+        LinkSetting(
+            "voice_lang", shape,
+            Icons.Rounded.Mic,
+            stringResource(R.string.voice_search_language),
+            currentVoiceLangName,
+        ) {
+            showVoiceLangDialog = true
+        }
+    }
+
+    if (showVoiceLangDialog) {
+        val names = VoiceSearchBottomSheet.VOICE_LANGUAGES.map { it.second }.toTypedArray()
+        val currentIndex = VoiceSearchBottomSheet.VOICE_LANGUAGES.indexOfFirst { it.first.equals(currentVoiceLang, ignoreCase = true) }.coerceAtLeast(0)
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(context)
+            .setTitle(R.string.voice_search_select_language)
+            .setSingleChoiceItems(names, currentIndex) { dialog, which ->
+                val selected = VoiceSearchBottomSheet.VOICE_LANGUAGES[which]
+                voicePrefs.edit().putString("voice_search_language", selected.first).apply()
+                currentVoiceLang = selected.first
+                dialog.dismiss()
+                showVoiceLangDialog = false
+            }
+            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                dialog.dismiss()
+                showVoiceLangDialog = false
+            }
+            .setOnDismissListener {
+                showVoiceLangDialog = false
+            }
+            .show()
+    }
 }
 
 @Composable
@@ -2078,10 +2249,14 @@ private fun AccountPage(player: PlayerState, onSignIn: () -> Unit, onSignedOut: 
                         Spacer(Modifier.height(6.dp))
                         Text(stringResource(R.string.settings_full_sync), color = c.primary, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
                         Spacer(Modifier.height(14.dp))
-                        TextButton(onClick = { showAvatarPicker = true }) {
-                            Icon(Icons.Rounded.PhotoLibrary, null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text(stringResource(R.string.avatar_picker_cd), fontWeight = FontWeight.SemiBold)
+                        OutlinedButton(
+                            onClick = { showAvatarPicker = true },
+                            shape = CircleShape,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, c.outlineVariant),
+                        ) {
+                            Icon(Icons.Rounded.PhotoLibrary, null, modifier = Modifier.size(18.dp), tint = c.primary)
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.avatar_picker_cd), fontWeight = FontWeight.SemiBold, color = c.onSurface)
                         }
                         Spacer(Modifier.height(8.dp))
                         PillButton(stringResource(R.string.ui_sign_out), { Account.signOut(); onSignedOut() }, Icons.AutoMirrored.Rounded.Logout)

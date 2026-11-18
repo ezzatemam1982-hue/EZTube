@@ -589,4 +589,33 @@
     <string name="voice_search_permission_message">يحتاج تطبيق EZTube إلى إذن الميكروفون لتشغيل البحث الصوتي. يرجى تفعيل الإذن من إعدادات التطبيق.</string>
     <string name="voice_search_open_settings">فتح الإعدادات</string>
     <string name="voice_search_not_available">خدمة التعرف على الصوت غير متوفرة على هذا الجهاز</string>
+
+    <!-- Playback Screen Logical Groups -->
+    <string name="playback_group_quality">الجودة والبيانات</string>
+    <string name="playback_group_behavior">سلوك المشغل</string>
+    <string name="playback_group_controls">عناصر التحكم والإيماءات</string>
+    <string name="playback_group_extra">خيارات إضافية</string>
+
+    <!-- Voice Search Language Selector -->
+    <string name="voice_search_language">لغة البحث الصوتي</string>
+    <string name="voice_search_language_summary">اختر لغة التعرف على الصوت</string>
+    <string name="voice_search_select_language">اختر اللغة</string>
+
+    <!-- Stop & Exit -->
+    <string name="stop_and_exit">إيقاف وخروج</string>
+    <string name="stop_and_exit_dialog_desc">إيقاف جميع التنزيلات النشطة وإغلاق التطبيق بالكامل؟</string>
+
+    <!-- Welcome Bottom Sheet -->
+    <string name="welcome_sheet_title">مرحباً بك في EZTube</string>
+    <string name="welcome_highlight_1_title">تشغيل في الخلفية وبدون إعلانات</string>
+    <string name="welcome_highlight_1_desc">بث في الخلفية ونافذة منبثقة (PiP) وتشغيل الصوت فقط</string>
+    <string name="welcome_highlight_2_title">تنزيل ذكي وسريع</string>
+    <string name="welcome_highlight_2_desc">مدير تنزيل فيديو وصوت فائق السرعة مع تخصيص الصيغ</string>
+    <string name="welcome_highlight_3_title">بحث صوتي متعدد اللغات</string>
+    <string name="welcome_highlight_3_desc">ابحث عن مقاطع الفيديو والتنزيلات بصوتك بـ 13 لغة</string>
+    <string name="welcome_sheet_get_started">ابدأ الآن</string>
+
+    <!-- Info Tooltip / Dialog -->
+    <string name="info_tooltip_title">حول هذا الإعداد</string>
+    <string name="info_got_it">حسناً</string>
 </resources>

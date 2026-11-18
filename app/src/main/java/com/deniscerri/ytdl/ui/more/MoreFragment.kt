@@ -37,10 +37,10 @@ class MoreFragment : Fragment() {
     private lateinit var commandTemplates: TextView
     private lateinit var downloadQueue: TextView
     private lateinit var downloads: TextView
-    private lateinit var cookies: TextView
+    private lateinit var cookies: View
     private lateinit var observeSources: TextView
-    private lateinit var terminateApp: TextView
-    private lateinit var settings: TextView
+    private lateinit var terminateApp: View
+    private lateinit var settings: View
     private lateinit var mainActivity: MainActivity
     private lateinit var downloadViewModel: DownloadViewModel
     override fun onCreateView(
@@ -147,7 +147,7 @@ class MoreFragment : Fragment() {
 
         lateinit var dialog: AlertDialog
         val terminateDialog = MaterialAlertDialogBuilder(requireContext())
-        terminateDialog.setTitle(getString(R.string.kill_app))
+        terminateDialog.setTitle(getString(R.string.stop_and_exit))
         val dialogView = layoutInflater.inflate(R.layout.dialog_terminate_app, null)
         val checkbox = dialogView.findViewById<CheckBox>(R.id.doNotShowAgain)
         terminateDialog.setView(dialogView)

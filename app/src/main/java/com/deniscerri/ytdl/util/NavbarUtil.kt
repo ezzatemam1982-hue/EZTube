@@ -110,6 +110,14 @@ object NavbarUtil {
     fun NavigationBarView.applyNavBarStyle(): Int {
         setLabelVisibility()
 
+        androidx.core.content.ContextCompat.getColorStateList(this.context, R.color.bottom_nav_indicator_color)?.let {
+            this.itemActiveIndicatorColor = it
+        }
+        androidx.core.content.ContextCompat.getColorStateList(this.context, R.color.bottom_nav_item_tint)?.let {
+            this.itemIconTintList = it
+            this.itemTextColor = it
+        }
+
         val navBarItems = getNavBarItems(this.context)
 
         val menuItems = mutableListOf<MenuItem>()

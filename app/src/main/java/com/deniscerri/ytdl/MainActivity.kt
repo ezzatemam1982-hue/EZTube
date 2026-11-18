@@ -180,6 +180,14 @@ class MainActivity : BaseActivity() {
         applyHubVisibility()
         window.decorView.post {
             (application as? App)?.notifyFirstUiRendered()
+            if (!preferences.getBoolean("pref_welcome_sheet_v105_shown", false)) {
+                window.decorView.postDelayed({
+                    if (!isFinishing && !isDestroyed) {
+                        com.deniscerri.ytdl.ui.views.WelcomeBottomSheet.show(supportFragmentManager)
+                        preferences.edit().putBoolean("pref_welcome_sheet_v105_shown", true).apply()
+                    }
+                }, 400)
+            }
         }
 
         navHostFragment = supportFragmentManager.findFragmentById(R.id.frame_layout) as NavHostFragment

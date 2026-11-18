@@ -500,4 +500,39 @@
     <string name="info_jsons_summary">Metadados de vídeo salvos para que o EZTube não precise buscá-los novamente</string>
     <string name="ytdlp_cache">Cache do motor do app</string>
     <string name="ytdlp_cache_summary">Dados temporários do motor que o EZTube reutiliza entre execuções</string>
+
+    <string name="voice_search">Pesquisa por voz</string>
+    <string name="voice_search_listening">Ouvindo…</string>
+    <string name="voice_search_speak_now">Fale agora</string>
+    <string name="voice_search_tap_to_speak">Não entendi. Toque no microfone para tentar novamente.</string>
+    <string name="voice_search_error_offline">Sem conexão com a internet. Verifique sua rede e tente novamente.</string>
+    <string name="voice_search_retry">Tentar novamente</string>
+    <string name="voice_search_permission_title">Permissão de microfone necessária</string>
+    <string name="voice_search_permission_message">O EZTube precisa de acesso ao seu microfone para ativar a pesquisa por voz. Conceda a permissão nas configurações.</string>
+    <string name="voice_search_open_settings">Abrir configurações</string>
+    <string name="voice_search_not_available">O reconhecimento de voz não está disponível neste dispositivo</string>
+
+    <string name="playback_group_quality">Qualidade e dados</string>
+    <string name="playback_group_behavior">Comportamento do reprodutor</string>
+    <string name="playback_group_controls">Controles e gestos</string>
+    <string name="playback_group_extra">Opções adicionais</string>
+
+    <string name="voice_search_language">Idioma da pesquisa por voz</string>
+    <string name="voice_search_language_summary">Escolha o idioma para o reconhecimento de voz</string>
+    <string name="voice_search_select_language">Selecionar idioma</string>
+
+    <string name="stop_and_exit">Parar e sair</string>
+    <string name="stop_and_exit_dialog_desc">Parar todos os downloads ativos e fechar o aplicativo?</string>
+
+    <string name="welcome_sheet_title">Bem-vindo ao EZTube</string>
+    <string name="welcome_highlight_1_title">Sem anúncios &amp; Reprodução em segundo plano</string>
+    <string name="welcome_highlight_1_desc">Transmissão em segundo plano, PiP e apenas áudio</string>
+    <string name="welcome_highlight_2_title">Downloads inteligentes</string>
+    <string name="welcome_highlight_2_desc">Gerenciador de vídeo e áudio de alta velocidade com controle de formatos</string>
+    <string name="welcome_highlight_3_title">Pesquisa por voz multilíngue</string>
+    <string name="welcome_highlight_3_desc">Pesquise vídeos e downloads por voz em 13 idiomas</string>
+    <string name="welcome_sheet_get_started">Começar</string>
+
+    <string name="info_tooltip_title">Sobre esta configuração</string>
+    <string name="info_got_it">Entendi</string>
 </resources>

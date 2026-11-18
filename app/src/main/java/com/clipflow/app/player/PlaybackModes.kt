@@ -195,7 +195,7 @@ object PlayerControls {
  * (headphones, the notification) takes it when the service starts.
  */
 object SeekStep {
-    val choices = listOf(5, 10, 15, 20, 25, 30)
+    val choices = (5..60 step 5).toList()
     private const val KEY = "seek_step"
     private var prefs: SharedPreferences? = null
 

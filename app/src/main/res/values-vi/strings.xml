@@ -671,4 +671,39 @@
     <string name="embed_lyrics_summary">Lấy lời bài hát từ lrclib.net và nhúng chúng vào các bản tải xuống âm thanh</string>
     <string name="save_lrc_file_summary">Lưu lời bài hát đã đồng bộ dưới dạng tệp .lrc bên cạnh các tệp âm thanh đã tải xuống</string>
     <string name="crop_unsupported">Không thể cắt xén cho mục này</string>
+
+    <string name="voice_search">Tìm kiếm giọng nói</string>
+    <string name="voice_search_listening">Đang nghe…</string>
+    <string name="voice_search_speak_now">Nói ngay bây giờ</string>
+    <string name="voice_search_tap_to_speak">Không nhận dạng được. Chạm vào micrô để thử lại.</string>
+    <string name="voice_search_error_offline">Không có kết nối Internet. Kiểm tra mạng và thử lại.</string>
+    <string name="voice_search_retry">Thử lại</string>
+    <string name="voice_search_permission_title">Yêu cầu quyền truy cập micrô</string>
+    <string name="voice_search_permission_message">EZTube cần quyền truy cập micrô để tìm kiếm bằng giọng nói. Vui lòng cấp quyền trong cài đặt.</string>
+    <string name="voice_search_open_settings">Mở cài đặt</string>
+    <string name="voice_search_not_available">Nhận dạng giọng nói không khả dụng trên thiết bị này</string>
+
+    <string name="playback_group_quality">Chất lượng &amp; dữ liệu</string>
+    <string name="playback_group_behavior">Hoạt động của trình phát</string>
+    <string name="playback_group_controls">Điều khiển &amp; cử chỉ</string>
+    <string name="playback_group_extra">Tùy chọn bổ sung</string>
+
+    <string name="voice_search_language">Ngôn ngữ tìm kiếm giọng nói</string>
+    <string name="voice_search_language_summary">Chọn ngôn ngữ nhận dạng giọng nói</string>
+    <string name="voice_search_select_language">Chọn ngôn ngữ</string>
+
+    <string name="stop_and_exit">Dừng &amp; thoát</string>
+    <string name="stop_and_exit_dialog_desc">Dừng tất cả các bản tải xuống đang hoạt động và đóng ứng dụng?</string>
+
+    <string name="welcome_sheet_title">Chào mừng bạn đến với EZTube</string>
+    <string name="welcome_highlight_1_title">Không quảng cáo &amp; Phát trong nền</string>
+    <string name="welcome_highlight_1_desc">Phát trực tuyến trong nền, PiP và chế độ chỉ nghe âm thanh</string>
+    <string name="welcome_highlight_2_title">Tải xuống thông minh</string>
+    <string name="welcome_highlight_2_desc">Trình quản lý video &amp; âm thanh tốc độ cao kèm tùy chỉnh định dạng</string>
+    <string name="welcome_highlight_3_title">Tìm kiếm giọng nói đa ngôn ngữ</string>
+    <string name="welcome_highlight_3_desc">Tìm kiếm video và bản tải xuống bằng giọng nói với 13 ngôn ngữ</string>
+    <string name="welcome_sheet_get_started">Bắt đầu</string>
+
+    <string name="info_tooltip_title">Về cài đặt này</string>
+    <string name="info_got_it">Đã hiểu</string>
 </resources>

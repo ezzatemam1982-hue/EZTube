@@ -710,4 +710,39 @@
     <string name="lyrics_offset">Offset</string>
     <string name="save_lrc_file_summary">Salva i testi sincronizzati come file .lrc nella stessa cartella dei brani scaricati</string>
     <string name="crop_unsupported">Il ritaglio non è disponibile per questo elemento</string>
+
+    <string name="voice_search">Ricerca vocale</string>
+    <string name="voice_search_listening">In ascolto…</string>
+    <string name="voice_search_speak_now">Parla ora</string>
+    <string name="voice_search_tap_to_speak">Non ho capito. Tocca il microfono per riprovare.</string>
+    <string name="voice_search_error_offline">Nessuna connessione internet. Controlla la rete e riprova.</string>
+    <string name="voice_search_retry">Riprova</string>
+    <string name="voice_search_permission_title">Autorizzazione microfono richiesta</string>
+    <string name="voice_search_permission_message">EZTube ha bisogno dell\'accesso al microfono per la ricerca vocale. Concedi il permesso nelle impostazioni.</string>
+    <string name="voice_search_open_settings">Apri impostazioni</string>
+    <string name="voice_search_not_available">Il riconoscimento vocale non è disponibile su questo dispositivo</string>
+
+    <string name="playback_group_quality">Qualità e dati</string>
+    <string name="playback_group_behavior">Comportamento del lettore</string>
+    <string name="playback_group_controls">Controlli e gesti</string>
+    <string name="playback_group_extra">Opzioni aggiuntive</string>
+
+    <string name="voice_search_language">Lingua di ricerca vocale</string>
+    <string name="voice_search_language_summary">Scegli la lingua per il riconoscimento vocale</string>
+    <string name="voice_search_select_language">Seleziona lingua</string>
+
+    <string name="stop_and_exit">Ferma ed esci</string>
+    <string name="stop_and_exit_dialog_desc">Interrompere tutti i download attivi e chiudere l\'app?</string>
+
+    <string name="welcome_sheet_title">Benvenuto su EZTube</string>
+    <string name="welcome_highlight_1_title">Senza pubblicità &amp; Riproduzione in background</string>
+    <string name="welcome_highlight_1_desc">Streaming in background, PiP e solo audio</string>
+    <string name="welcome_highlight_2_title">Download intelligenti</string>
+    <string name="welcome_highlight_2_desc">Gestore video e audio ad alta velocità con controllo dei formati</string>
+    <string name="welcome_highlight_3_title">Ricerca vocale multilingue</string>
+    <string name="welcome_highlight_3_desc">Cerca video e download con la voce in 13 lingue</string>
+    <string name="welcome_sheet_get_started">Inizia</string>
+
+    <string name="info_tooltip_title">Informazioni su questa impostazione</string>
+    <string name="info_got_it">Ho capito</string>
 </resources>

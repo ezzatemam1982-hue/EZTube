@@ -728,4 +728,39 @@
     <string name="all_artists_in_album_artist_summary">Сохранять всех исполнителей в поле «исполнитель альбома» вместо сохранения только первого из них</string>
     <string name="press_cancel">Нажмите здесь для отмены</string>
     <string name="fetching_data">Получение данных...</string>
+
+    <string name="voice_search">Голосовой поиск</string>
+    <string name="voice_search_listening">Слушаю…</string>
+    <string name="voice_search_speak_now">Говорите сейчас</string>
+    <string name="voice_search_tap_to_speak">Не удалось распознать речь. Нажмите микрофон и повторите.</string>
+    <string name="voice_search_error_offline">Нет подключения к интернету. Проверьте сеть и повторите.</string>
+    <string name="voice_search_retry">Повторить</string>
+    <string name="voice_search_permission_title">Требуется доступ к микрофону</string>
+    <string name="voice_search_permission_message">EZTube требуется доступ к микрофону для голосового поиска. Предоставьте разрешение в настройках.</string>
+    <string name="voice_search_open_settings">Открыть настройки</string>
+    <string name="voice_search_not_available">Распознавание речи недоступно на этом устройстве</string>
+
+    <string name="playback_group_quality">Качество и трафик</string>
+    <string name="playback_group_behavior">Поведение плеера</string>
+    <string name="playback_group_controls">Управление и жесты</string>
+    <string name="playback_group_extra">Дополнительные параметры</string>
+
+    <string name="voice_search_language">Язык голосового поиска</string>
+    <string name="voice_search_language_summary">Выберите язык для распознавания речи</string>
+    <string name="voice_search_select_language">Выбор языка</string>
+
+    <string name="stop_and_exit">Остановить и выйти</string>
+    <string name="stop_and_exit_dialog_desc">Остановить все активные загрузки и закрыть приложение?</string>
+
+    <string name="welcome_sheet_title">Добро пожаловать в EZTube</string>
+    <string name="welcome_highlight_1_title">Без рекламы и фоновый режим</string>
+    <string name="welcome_highlight_1_desc">Фоновое воспроизведение, картинка в картинке (PiP) и режим «только аудио»</string>
+    <string name="welcome_highlight_2_title">Умные загрузки</string>
+    <string name="welcome_highlight_2_desc">Быстрый менеджер видео и аудио с выбором форматов</string>
+    <string name="welcome_highlight_3_title">Мультиязычный голосовой поиск</string>
+    <string name="welcome_highlight_3_desc">Ищите видео и загрузки голосом на 13 языках</string>
+    <string name="welcome_sheet_get_started">Начать</string>
+
+    <string name="info_tooltip_title">Об этой настройке</string>
+    <string name="info_got_it">Понятно</string>
 </resources>

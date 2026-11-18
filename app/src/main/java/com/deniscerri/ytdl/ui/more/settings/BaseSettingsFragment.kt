@@ -1,14 +1,25 @@
 package com.deniscerri.ytdl.ui.more.settings
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.res.ColorStateList
+import android.graphics.Rect
 import android.os.Bundle
+import android.text.TextUtils
 import android.util.Log
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.TextViewCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
@@ -18,7 +29,10 @@ import androidx.preference.PreferenceGroup
 import androidx.preference.PreferenceGroupAdapter
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
+import androidx.recyclerview.widget.RecyclerView
+import com.deniscerri.ytdl.R
 import com.deniscerri.ytdl.util.ApkInstallUtil
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 
 abstract class BaseSettingsFragment : PreferenceFragmentCompat(), SettingHost {
@@ -88,21 +102,122 @@ abstract class BaseSettingsFragment : PreferenceFragmentCompat(), SettingHost {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        listView.clipToPadding = false
+        val initialBottomPadding = listView.paddingBottom
         ViewCompat.setOnApplyWindowInsetsListener(listView) { v, insets ->
-            val systemBars = insets.getInsets(
-                WindowInsetsCompat.Type.systemBars()
+            val navBars = insets.getInsets(
+                WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime()
             )
-
-
             v.setPadding(
                 v.paddingLeft,
                 v.paddingTop,
                 v.paddingRight,
-                v.paddingBottom + systemBars.bottom
+                initialBottomPadding + navBars.bottom
             )
-
             insets
         }
+
+        listView.addItemDecoration(object : RecyclerView.ItemDecoration() {
+            private val marginH = (16 * resources.displayMetrics.density).toInt()
+            private val marginV = (4 * resources.displayMetrics.density).toInt()
+
+            override fun getItemOffsets(
+                outRect: Rect,
+                v: View,
+                parent: RecyclerView,
+                state: RecyclerView.State
+            ) {
+                val pos = parent.getChildAdapterPosition(v)
+                if (pos != RecyclerView.NO_POSITION) {
+                    val adapter = parent.adapter as? PreferenceGroupAdapter
+                    val pref = adapter?.getItem(pos)
+                    if (pref != null && pref !is PreferenceCategory && v.findViewById<View>(R.id.status_card) == null) {
+                        outRect.set(marginH, marginV, marginH, marginV)
+                    }
+                }
+            }
+        })
+
+        listView.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
+            override fun onChildViewAttachedToWindow(v: View) {
+                val holder = listView.getChildViewHolder(v)
+                val pos = holder.bindingAdapterPosition
+                val adapter = listView.adapter as? PreferenceGroupAdapter
+                val pref = if (pos != RecyclerView.NO_POSITION) adapter?.getItem(pos) else null
+
+                if (pref != null && pref !is PreferenceCategory && v.findViewById<View>(R.id.status_card) == null) {
+                    v.setBackgroundResource(R.drawable.bg_settings_card)
+                }
+
+                val titleView = v.findViewById<TextView>(android.R.id.title)
+                if (titleView != null) {
+                    titleView.maxLines = 1
+                    titleView.ellipsize = TextUtils.TruncateAt.END
+                    TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
+                        titleView,
+                        12,
+                        16,
+                        1,
+                        TypedValue.COMPLEX_UNIT_SP
+                    )
+                }
+
+                val summaryView = v.findViewById<TextView>(android.R.id.summary)
+                val summaryText = summaryView?.text
+                val hasDescription = !summaryText.isNullOrBlank()
+
+                var infoIcon = v.findViewWithTag<ImageView>("pref_info_button")
+                if (hasDescription && pref !is PreferenceCategory) {
+                    summaryView?.visibility = View.GONE
+
+                    if (infoIcon == null) {
+                        infoIcon = ImageView(v.context).apply {
+                            tag = "pref_info_button"
+                            val size = (36 * resources.displayMetrics.density).toInt()
+                            val p = (8 * resources.displayMetrics.density).toInt()
+                            layoutParams = LinearLayout.LayoutParams(size, size).apply {
+                                gravity = Gravity.CENTER_VERTICAL
+                                marginStart = (4 * resources.displayMetrics.density).toInt()
+                                marginEnd = (4 * resources.displayMetrics.density).toInt()
+                            }
+                            setPadding(p, p, p, p)
+                            setImageResource(R.drawable.ic_info)
+                            val outValue = TypedValue()
+                            context.theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true)
+                            setBackgroundResource(outValue.resourceId)
+
+                            val colorAttr = TypedValue()
+                            context.theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, colorAttr, true)
+                            imageTintList = ColorStateList.valueOf(colorAttr.data)
+                        }
+                        val widgetFrame = v.findViewById<ViewGroup>(android.R.id.widget_frame)
+                        if (widgetFrame != null && v is ViewGroup) {
+                            val index = v.indexOfChild(widgetFrame)
+                            if (index >= 0) {
+                                v.addView(infoIcon, index)
+                            } else {
+                                v.addView(infoIcon)
+                            }
+                        } else if (v is ViewGroup) {
+                            v.addView(infoIcon)
+                        }
+                    }
+
+                    infoIcon.visibility = View.VISIBLE
+                    infoIcon.setOnClickListener {
+                        MaterialAlertDialogBuilder(v.context)
+                            .setTitle(pref?.title ?: v.context.getString(R.string.info_tooltip_title))
+                            .setMessage(summaryText)
+                            .setPositiveButton(R.string.info_got_it, null)
+                            .show()
+                    }
+                } else {
+                    infoIcon?.visibility = View.GONE
+                }
+            }
+
+            override fun onChildViewDetachedFromWindow(v: View) {}
+        })
 
         val keyToHighlight = arguments?.getString("highlight_key")
         if (keyToHighlight != null) {

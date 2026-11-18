@@ -143,11 +143,12 @@ fun HomeScreen(
             ScreenHeader(
                 title = stringResource(R.string.app_name),
                 brandMark = true,
-                leadingActions = {
-                    AccountAction(onAccount)
+                actions = {
                     DownloadsAction()
+                    AccountAction(onAccount)
+                    UpdateAction()
                 },
-            ) { UpdateAction() }
+            )
         },
     ) { top ->
         if (signedIn) {

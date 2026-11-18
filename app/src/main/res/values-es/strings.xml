@@ -651,4 +651,28 @@
     <string name="voice_search_permission_message">EZTube necesita acceso a tu micrófono para habilitar la búsqueda por voz. Concede este permiso en los ajustes de la aplicación.</string>
     <string name="voice_search_open_settings">Abrir ajustes</string>
     <string name="voice_search_not_available">El servicio de reconocimiento de voz no está disponible en este dispositivo</string>
+
+    <string name="playback_group_quality">Calidad y datos</string>
+    <string name="playback_group_behavior">Comportamiento del reproductor</string>
+    <string name="playback_group_controls">Controles y gestos</string>
+    <string name="playback_group_extra">Opciones adicionales</string>
+
+    <string name="voice_search_language">Idioma de búsqueda por voz</string>
+    <string name="voice_search_language_summary">Elige el idioma para el reconocimiento de voz</string>
+    <string name="voice_search_select_language">Seleccionar idioma</string>
+
+    <string name="stop_and_exit">Detener y salir</string>
+    <string name="stop_and_exit_dialog_desc">¿Detener todas las descargas activas y cerrar la app?</string>
+
+    <string name="welcome_sheet_title">Bienvenido a EZTube</string>
+    <string name="welcome_highlight_1_title">Sin anuncios y reproducción en segundo plano</string>
+    <string name="welcome_highlight_1_desc">Transmisión en segundo plano, PiP y solo audio</string>
+    <string name="welcome_highlight_2_title">Descargas inteligentes</string>
+    <string name="welcome_highlight_2_desc">Gestor de video y audio de alta velocidad con control de formatos</string>
+    <string name="welcome_highlight_3_title">Búsqueda por voz multilingüe</string>
+    <string name="welcome_highlight_3_desc">Busca videos y descargas por voz en 13 idiomas</string>
+    <string name="welcome_sheet_get_started">Empezar</string>
+
+    <string name="info_tooltip_title">Acerca de este ajuste</string>
+    <string name="info_got_it">Entendido</string>
 </resources>

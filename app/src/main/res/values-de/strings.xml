@@ -544,4 +544,28 @@
     <string name="voice_search_permission_message">EZTube benötigt Zugriff auf dein Mikrofon, um die Sprachsuche zu aktivieren. Bitte erteile diese Berechtigung in den App-Einstellungen.</string>
     <string name="voice_search_open_settings">Einstellungen öffnen</string>
     <string name="voice_search_not_available">Spracherkennungsdienst ist auf diesem Gerät nicht verfügbar</string>
+
+    <string name="playback_group_quality">Qualität &amp; Daten</string>
+    <string name="playback_group_behavior">Player-Verhalten</string>
+    <string name="playback_group_controls">Steuerung &amp; Gesten</string>
+    <string name="playback_group_extra">Weitere Optionen</string>
+
+    <string name="voice_search_language">Sprache für Sprachsuche</string>
+    <string name="voice_search_language_summary">Sprache für die Spracherkennung wählen</string>
+    <string name="voice_search_select_language">Sprache auswählen</string>
+
+    <string name="stop_and_exit">Beenden &amp; Schließen</string>
+    <string name="stop_and_exit_dialog_desc">Alle aktiven Downloads anhalten und App beenden?</string>
+
+    <string name="welcome_sheet_title">Willkommen bei EZTube</string>
+    <string name="welcome_highlight_1_title">Werbefrei &amp; Hintergrundwiedergabe</string>
+    <string name="welcome_highlight_1_desc">Hintergrund-Streaming, Bild-in-Bild und reines Audio</string>
+    <string name="welcome_highlight_2_title">Intelligente Downloads</string>
+    <string name="welcome_highlight_2_desc">Schneller Video- und Audio-Manager mit Formatkontrolle</string>
+    <string name="welcome_highlight_3_title">Mehrsprachige Sprachsuche</string>
+    <string name="welcome_highlight_3_desc">Videos und Downloads per Sprache in 13 Sprachen suchen</string>
+    <string name="welcome_sheet_get_started">Loslegen</string>
+
+    <string name="info_tooltip_title">Info zu dieser Einstellung</string>
+    <string name="info_got_it">Verstanden</string>
 </resources>

@@ -531,4 +531,39 @@
     <string name="info_jsons_summary">保存済みの動画メタデータにより、EZTube が再取得する必要がなくなります</string>
     <string name="ytdlp_cache">アプリエンジンのキャッシュ</string>
     <string name="ytdlp_cache_summary">実行間で EZTube が再利用する一時エンジンデータ</string>
+
+    <string name="voice_search">音声検索</string>
+    <string name="voice_search_listening">聞き取り中…</string>
+    <string name="voice_search_speak_now">今すぐお話しください</string>
+    <string name="voice_search_tap_to_speak">認識できませんでした。マイクをタップしてもう一度お試しください。</string>
+    <string name="voice_search_error_offline">インターネット接続がありません。ネットワークを確認してもう一度お試しください。</string>
+    <string name="voice_search_retry">再試行</string>
+    <string name="voice_search_permission_title">マイクの権限が必要です</string>
+    <string name="voice_search_permission_message">EZTube の音声検索を使用するにはマイクへのアクセス権が必要です。設定から許可してください。</string>
+    <string name="voice_search_open_settings">設定を開く</string>
+    <string name="voice_search_not_available">このデバイスでは音声認識がサポートされていません</string>
+
+    <string name="playback_group_quality">画質とデータ</string>
+    <string name="playback_group_behavior">プレイヤーの動作</string>
+    <string name="playback_group_controls">操作とジェスチャー</string>
+    <string name="playback_group_extra">その他のオプション</string>
+
+    <string name="voice_search_language">音声検索の言語</string>
+    <string name="voice_search_language_summary">音声認識の言語を選択</string>
+    <string name="voice_search_select_language">言語を選択</string>
+
+    <string name="stop_and_exit">停止して終了</string>
+    <string name="stop_and_exit_dialog_desc">すべてのアクティブなダウンロードを停止してアプリを終了しますか？</string>
+
+    <string name="welcome_sheet_title">EZTube へようこそ</string>
+    <string name="welcome_highlight_1_title">広告なし＆バックグラウンド再生</string>
+    <string name="welcome_highlight_1_desc">バックグラウンド再生、PiP、音声のみモード</string>
+    <string name="welcome_highlight_2_title">スマートダウンロード</string>
+    <string name="welcome_highlight_2_desc">フォーマット制御付きの高速動画・音声マネージャー</string>
+    <string name="welcome_highlight_3_title">多言語音声検索</string>
+    <string name="welcome_highlight_3_desc">13言語で声を使って動画やダウンロードを検索</string>
+    <string name="welcome_sheet_get_started">はじめる</string>
+
+    <string name="info_tooltip_title">この設定について</string>
+    <string name="info_got_it">了解</string>
 </resources>

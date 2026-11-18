@@ -5,10 +5,13 @@ import android.app.Activity
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
+import android.text.TextUtils
 import android.util.LayoutDirection
 import android.util.Log
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.widget.TextView
@@ -19,12 +22,16 @@ import androidx.core.text.TextDirectionHeuristicsCompat
 import androidx.core.text.layoutDirection
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.TextViewCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
+import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceGroupAdapter
 import androidx.preference.PreferenceManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.deniscerri.ytdl.R
@@ -57,20 +64,78 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        listView.clipToPadding = false
+        val initialBottomPadding = listView.paddingBottom
         ViewCompat.setOnApplyWindowInsetsListener(listView) { v, insets ->
-            val systemBars = insets.getInsets(
-                WindowInsetsCompat.Type.systemBars()
+            val navBars = insets.getInsets(
+                WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime()
             )
 
             v.setPadding(
                 v.paddingLeft,
                 v.paddingTop,
                 v.paddingRight,
-                v.paddingBottom + systemBars.bottom
+                initialBottomPadding + navBars.bottom
             )
 
             insets
         }
+
+        listView.addItemDecoration(object : RecyclerView.ItemDecoration() {
+            private val marginH = (16 * resources.displayMetrics.density).toInt()
+            private val marginV = (4 * resources.displayMetrics.density).toInt()
+
+            override fun getItemOffsets(
+                outRect: Rect,
+                v: View,
+                parent: RecyclerView,
+                state: RecyclerView.State
+            ) {
+                val pos = parent.getChildAdapterPosition(v)
+                if (pos != RecyclerView.NO_POSITION) {
+                    val adapter = parent.adapter as? PreferenceGroupAdapter
+                    val pref = adapter?.getItem(pos)
+                    if (pref != null && pref !is PreferenceCategory) {
+                        outRect.set(marginH, marginV, marginH, marginV)
+                    }
+                }
+            }
+        })
+
+        listView.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
+            override fun onChildViewAttachedToWindow(v: View) {
+                val holder = listView.getChildViewHolder(v)
+                val pos = holder.bindingAdapterPosition
+                val adapter = listView.adapter as? PreferenceGroupAdapter
+                val pref = if (pos != RecyclerView.NO_POSITION) adapter?.getItem(pos) else null
+
+                if (pref != null && pref !is PreferenceCategory) {
+                    v.setBackgroundResource(R.drawable.bg_settings_card)
+                }
+
+                val titleView = v.findViewById<TextView>(android.R.id.title)
+                if (titleView != null) {
+                    titleView.maxLines = 1
+                    titleView.ellipsize = TextUtils.TruncateAt.END
+                    TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
+                        titleView,
+                        12,
+                        16,
+                        1,
+                        TypedValue.COMPLEX_UNIT_SP
+                    )
+                }
+
+                val summaryView = v.findViewById<TextView>(android.R.id.summary)
+                if (summaryView != null) {
+                    summaryView.visibility = View.VISIBLE
+                    summaryView.maxLines = 2
+                    summaryView.ellipsize = TextUtils.TruncateAt.END
+                }
+            }
+
+            override fun onChildViewDetachedFromWindow(v: View) {}
+        })
     }
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey)

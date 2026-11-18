@@ -165,6 +165,20 @@ class SettingsActivity : BaseActivity(), SettingHost {
         searchView.addTransitionListener { _, _, _ -> syncSettingsBackCallback() }
         syncSettingsBackCallback()
 
+        searchBar.inflateMenu(R.menu.menu_search_bar_voice)
+        searchBar.setOnMenuItemClickListener { menuItem ->
+            if (menuItem.itemId == R.id.action_voice_search) {
+                com.deniscerri.ytdl.ui.views.VoiceSearchBottomSheet.show(supportFragmentManager, isOfflineSupported = true) { spoken ->
+                    searchBar.performClick()
+                    searchView.show()
+                    searchView.setText(spoken)
+                }
+                true
+            } else {
+                false
+            }
+        }
+
         searchAdapter = SettingsSearchAdapter(emptyList(), this)
         binding.searchSuggestionsRecycler.layoutManager = LinearLayoutManager(context)
         binding.searchSuggestionsRecycler.adapter = searchAdapter

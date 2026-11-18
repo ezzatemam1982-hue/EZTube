@@ -73,8 +73,14 @@
         <item name="android:windowIsFloating">false</item>
     </style>
 
+    <style name="Widget.App.MaterialSwitch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
+        <item name="thumbTint">@color/switch_thumb_tint</item>
+        <item name="trackTint">@color/switch_track_tint</item>
+        <item name="trackDecorationTint">@color/switch_track_decoration_tint</item>
+    </style>
+
     <style name="PreferenceTheme" parent="PreferenceThemeOverlay">
-        <item name="singleLineTitle">false</item>
+        <item name="singleLineTitle">true</item>
     </style>
 
     <style name="MyZeroSizeTextAppearance">

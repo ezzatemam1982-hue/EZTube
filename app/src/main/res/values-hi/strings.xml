@@ -508,4 +508,39 @@
     <string name="info_jsons_summary">सहेजा गया वीडियो मेटाडेटा ताकि EZTube को इसे फिर से न लाना पड़े</string>
     <string name="ytdlp_cache">ऐप इंजन कैश</string>
     <string name="ytdlp_cache_summary">अस्थायी इंजन डेटा जिसे EZTube बार-बार उपयोग करता है</string>
+
+    <string name="voice_search">ध्वनि खोज</string>
+    <string name="voice_search_listening">सुन रहा है…</string>
+    <string name="voice_search_speak_now">अब बोलें</string>
+    <string name="voice_search_tap_to_speak">आवाज़ सुनाई नहीं दी। पुनः प्रयास के लिए माइक छुएं।</string>
+    <string name="voice_search_error_offline">इंटरनेट कनेक्शन नहीं है। कृपया नेटवर्क जांचें और पुनः प्रयास करें।</string>
+    <string name="voice_search_retry">पुनः प्रयास करें</string>
+    <string name="voice_search_permission_title">माइक्रोफ़ोन अनुमति आवश्यक है</string>
+    <string name="voice_search_permission_message">EZTube को ध्वनि खोज के लिए माइक्रोफ़ोन की आवश्यकता है। कृपया सेटिंग में अनुमति दें।</string>
+    <string name="voice_search_open_settings">सेटिंग खोलें</string>
+    <string name="voice_search_not_available">इस डिवाइस पर ध्वनि पहचान उपलब्ध नहीं है</string>
+
+    <string name="playback_group_quality">गुणवत्ता और डेटा</string>
+    <string name="playback_group_behavior">प्लेयर व्यवहार</string>
+    <string name="playback_group_controls">नियंत्रण और जेस्चर</string>
+    <string name="playback_group_extra">अतिरिक्त विकल्प</string>
+
+    <string name="voice_search_language">ध्वनि खोज भाषा</string>
+    <string name="voice_search_language_summary">ध्वनि पहचान के लिए भाषा चुनें</string>
+    <string name="voice_search_select_language">भाषा चुनें</string>
+
+    <string name="stop_and_exit">रोकें और बाहर निकलें</string>
+    <string name="stop_and_exit_dialog_desc">सभी सक्रिय डाउनलोड रोकें और ऐप बंद करें?</string>
+
+    <string name="welcome_sheet_title">EZTube में आपका स्वागत है</string>
+    <string name="welcome_highlight_1_title">विज्ञापन-मुक्त और बैकग्राउंड प्ले</string>
+    <string name="welcome_highlight_1_desc">बैकग्राउंड स्ट्रीमिंग, PiP और केवल-ऑडियो मोड</string>
+    <string name="welcome_highlight_2_title">स्मार्ट डाउनलोड</string>
+    <string name="welcome_highlight_2_desc">प्रारूप नियंत्रण के साथ तेज़ वीडियो और ऑडियो प्रबंधक</string>
+    <string name="welcome_highlight_3_title">बहुभाषी ध्वनि खोज</string>
+    <string name="welcome_highlight_3_desc">13 भाषाओं में अपनी आवाज़ से वीडियो और डाउनलोड खोजें</string>
+    <string name="welcome_sheet_get_started">शुरू करें</string>
+
+    <string name="info_tooltip_title">इस सेटिंग के बारे में</string>
+    <string name="info_got_it">समझ गए</string>
 </resources>

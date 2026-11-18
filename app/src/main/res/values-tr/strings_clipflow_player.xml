@@ -174,4 +174,39 @@
     <string name="settings_clear_cache_line">%1$s önbellekte · geçici dosyaları temizlemek için dokunun</string>
     <string name="settings_clear_cache_empty">Önbellekte geçici dosya yok</string>
     <string name="settings_clear_cache_done">Önbellek temizlendi</string>
+
+    <string name="voice_search">Sesli arama</string>
+    <string name="voice_search_listening">Dinleniyor…</string>
+    <string name="voice_search_speak_now">Şimdi konuşun</string>
+    <string name="voice_search_tap_to_speak">Anlaşılamadı. Tekrar denemek için mikrofona dokunun.</string>
+    <string name="voice_search_error_offline">İnternet bağlantısı yok. Ağınızı kontrol edin ve tekrar deneyin.</string>
+    <string name="voice_search_retry">Yeniden dene</string>
+    <string name="voice_search_permission_title">Mikrofon izni gerekli</string>
+    <string name="voice_search_permission_message">EZTube sesli aramayı kullanabilmek için mikrofon erişimine ihtiyaç duyar. Lütfen ayarlardan izin verin.</string>
+    <string name="voice_search_open_settings">Ayarları aç</string>
+    <string name="voice_search_not_available">Bu cihazda ses tanıma hizmeti kullanılamıyor</string>
+
+    <string name="playback_group_quality">Kalite ve veriler</string>
+    <string name="playback_group_behavior">Oynatıcı davranışı</string>
+    <string name="playback_group_controls">Denetimler ve hareketler</string>
+    <string name="playback_group_extra">Ek seçenekler</string>
+
+    <string name="voice_search_language">Sesli arama dili</string>
+    <string name="voice_search_language_summary">Ses tanıma için dil seçin</string>
+    <string name="voice_search_select_language">Dil Seçin</string>
+
+    <string name="stop_and_exit">Durdur ve çık</string>
+    <string name="stop_and_exit_dialog_desc">Tüm etkin indirmeler durdurulup uygulama kapatılsın mı?</string>
+
+    <string name="welcome_sheet_title">EZTube\'a Hoş Geldiniz</string>
+    <string name="welcome_highlight_1_title">Reklamsız ve Arka Planda Çalma</string>
+    <string name="welcome_highlight_1_desc">Arka planda oynatma, PiP ve yalnızca ses modu</string>
+    <string name="welcome_highlight_2_title">Akıllı İndirmeler</string>
+    <string name="welcome_highlight_2_desc">Biçim kontrollü, yüksek hızlı video ve ses yöneticisi</string>
+    <string name="welcome_highlight_3_title">Çok Dilli Sesli Arama</string>
+    <string name="welcome_highlight_3_desc">13 dilde sesinizle video ve indirme arayın</string>
+    <string name="welcome_sheet_get_started">Başlayın</string>
+
+    <string name="info_tooltip_title">Bu ayar hakkında</string>
+    <string name="info_got_it">Anladım</string>
 </resources>

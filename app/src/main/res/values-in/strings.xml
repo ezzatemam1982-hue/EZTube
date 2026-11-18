@@ -696,4 +696,39 @@
     <string name="update_checked_just_now">Baru saja diperiksa</string>
     <string name="update_not_checked_yet">Masih belum diperiksa</string>
     <string name="optional">Opsional</string>
+
+    <string name="voice_search">Pencarian suara</string>
+    <string name="voice_search_listening">Mendengarkan…</string>
+    <string name="voice_search_speak_now">Bicara sekarang</string>
+    <string name="voice_search_tap_to_speak">Tidak terdengar. Ketuk mikrofon untuk mencoba lagi.</string>
+    <string name="voice_search_error_offline">Tidak ada koneksi internet. Periksa jaringan Anda dan coba lagi.</string>
+    <string name="voice_search_retry">Coba lagi</string>
+    <string name="voice_search_permission_title">Izin mikrofon diperlukan</string>
+    <string name="voice_search_permission_message">EZTube memerlukan akses mikrofon untuk pencarian suara. Harap berikan izin di pengaturan.</string>
+    <string name="voice_search_open_settings">Buka pengaturan</string>
+    <string name="voice_search_not_available">Pengenalan suara tidak tersedia di perangkat ini</string>
+
+    <string name="playback_group_quality">Kualitas &amp; data</string>
+    <string name="playback_group_behavior">Perilaku pemutar</string>
+    <string name="playback_group_controls">Kontrol &amp; gestur</string>
+    <string name="playback_group_extra">Opsi tambahan</string>
+
+    <string name="voice_search_language">Bahasa pencarian suara</string>
+    <string name="voice_search_language_summary">Pilih bahasa untuk pengenalan suara</string>
+    <string name="voice_search_select_language">Pilih Bahasa</string>
+
+    <string name="stop_and_exit">Hentikan &amp; keluar</string>
+    <string name="stop_and_exit_dialog_desc">Hentikan semua unduhan aktif dan tutup aplikasi?</string>
+
+    <string name="welcome_sheet_title">Selamat Datang di EZTube</string>
+    <string name="welcome_highlight_1_title">Bebas Iklan &amp; Putar di Latar Belakang</string>
+    <string name="welcome_highlight_1_desc">Streaming latar belakang, PiP, dan mode audio saja</string>
+    <string name="welcome_highlight_2_title">Unduhan Pintar</string>
+    <string name="welcome_highlight_2_desc">Pengelola video &amp; audio berkecepatan tinggi dengan kontrol format</string>
+    <string name="welcome_highlight_3_title">Pencarian Suara Multibahasa</string>
+    <string name="welcome_highlight_3_desc">Cari video dan unduhan dengan suara dalam 13 bahasa</string>
+    <string name="welcome_sheet_get_started">Mulai</string>
+
+    <string name="info_tooltip_title">Tentang setelan ini</string>
+    <string name="info_got_it">Mengerti</string>
 </resources>

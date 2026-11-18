@@ -132,4 +132,33 @@
     <string name="voice_search_permission_message">EZTube needs access to your microphone to enable voice search. Please grant this permission in app settings.</string>
     <string name="voice_search_open_settings">Open Settings</string>
     <string name="voice_search_not_available">Voice recognition is not available on this device</string>
+
+    <!-- Playback Screen Logical Groups -->
+    <string name="playback_group_quality">Quality &amp; data</string>
+    <string name="playback_group_behavior">Player behavior</string>
+    <string name="playback_group_controls">Controls &amp; gestures</string>
+    <string name="playback_group_extra">Extra options</string>
+
+    <!-- Voice Search Language Selector -->
+    <string name="voice_search_language">Voice search language</string>
+    <string name="voice_search_language_summary">Choose language for speech recognition</string>
+    <string name="voice_search_select_language">Select Language</string>
+
+    <!-- Stop & Exit -->
+    <string name="stop_and_exit">Stop &amp; exit</string>
+    <string name="stop_and_exit_dialog_desc">Stop all active downloads and close the app?</string>
+
+    <!-- Welcome Bottom Sheet -->
+    <string name="welcome_sheet_title">Welcome to EZTube</string>
+    <string name="welcome_highlight_1_title">Ad-Free &amp; Background Play</string>
+    <string name="welcome_highlight_1_desc">Background streaming, PiP, and audio-only playback</string>
+    <string name="welcome_highlight_2_title">Smart Downloads</string>
+    <string name="welcome_highlight_2_desc">High-speed video &amp; audio manager with format control</string>
+    <string name="welcome_highlight_3_title">Multilingual Voice Search</string>
+    <string name="welcome_highlight_3_desc">Search videos and downloads by voice in 13 languages</string>
+    <string name="welcome_sheet_get_started">Get Started</string>
+
+    <!-- Info Tooltip / Dialog -->
+    <string name="info_tooltip_title">About this setting</string>
+    <string name="info_got_it">Got it</string>
 </resources>

@@ -123,6 +123,27 @@ class VoiceSearchBottomSheet : BottomSheetDialogFragment() {
         }
         languageBadge.text = displayLang
 
+        languageBadge.setOnClickListener {
+            val currentTag = getActiveLanguageTag()
+            val currentIndex = VOICE_LANGUAGES.indexOfFirst { it.first.equals(currentTag, ignoreCase = true) }.coerceAtLeast(0)
+            val names = VOICE_LANGUAGES.map { it.second }.toTypedArray()
+
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.voice_search_select_language)
+                .setSingleChoiceItems(names, currentIndex) { dialog, which ->
+                    val selected = VOICE_LANGUAGES[which]
+                    requireContext().getSharedPreferences("voice_search", Context.MODE_PRIVATE)
+                        .edit()
+                        .putString("voice_search_language", selected.first)
+                        .apply()
+                    languageBadge.text = selected.first.uppercase(Locale.ROOT)
+                    dialog.dismiss()
+                    checkNetworkAndStartRecognition()
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
+
         closeBtn.setOnClickListener {
             stopRecognition()
             dismissAllowingStateLoss()
@@ -147,10 +168,15 @@ class VoiceSearchBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun getActiveLanguageTag(): String {
+        val prefs = context?.getSharedPreferences("voice_search", Context.MODE_PRIVATE)
+        val saved = prefs?.getString("voice_search_language", null)
+        if (!saved.isNullOrEmpty()) {
+            return saved
+        }
         return try {
-            AppLanguage.locale.toLanguageTag()
+            AppLanguage.locale.language
         } catch (e: Throwable) {
-            Locale.getDefault().toLanguageTag()
+            Locale.getDefault().language
         }
     }
 
@@ -400,6 +426,31 @@ class VoiceSearchBottomSheet : BottomSheetDialogFragment() {
     companion object {
         const val TAG = "VoiceSearchBottomSheet"
         private const val ARG_OFFLINE_SUPPORTED = "arg_offline_supported"
+
+        val VOICE_LANGUAGES = listOf(
+            "en" to "English",
+            "ar" to "العربية",
+            "de" to "Deutsch",
+            "es" to "Español",
+            "fr" to "Français",
+            "hi" to "हिन्दी",
+            "in" to "Bahasa Indonesia",
+            "it" to "Italiano",
+            "ja" to "日本語",
+            "pt" to "Português",
+            "ru" to "Русский",
+            "tr" to "Türkçe",
+            "vi" to "Tiếng Việt",
+        )
+
+        @JvmStatic
+        fun newInstance(isOfflineSupported: Boolean = false): VoiceSearchBottomSheet {
+            return VoiceSearchBottomSheet().apply {
+                arguments = Bundle().apply {
+                    putBoolean(ARG_OFFLINE_SUPPORTED, isOfflineSupported)
+                }
+            }
+        }
 
         @JvmStatic
         fun show(
