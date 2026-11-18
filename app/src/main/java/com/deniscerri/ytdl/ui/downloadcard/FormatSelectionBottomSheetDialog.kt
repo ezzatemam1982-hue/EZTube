@@ -12,6 +12,8 @@ import android.view.Window
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -118,6 +120,19 @@ class FormatSelectionBottomSheetDialog(
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.layoutManager = GridLayoutManager(context, 1)
         recyclerView.adapter = adapter
+        recyclerView.clipToPadding = false
+
+        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
+            val navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            val extraBottom = (28 * resources.displayMetrics.density).toInt()
+            recyclerView.setPadding(
+                recyclerView.paddingLeft,
+                recyclerView.paddingTop,
+                recyclerView.paddingRight,
+                navBars.bottom + extraBottom
+            )
+            insets
+        }
 
         refreshBtn = view.findViewById(R.id.format_refresh)
         okBtn = view.findViewById(R.id.format_ok)
@@ -347,7 +362,7 @@ class FormatSelectionBottomSheetDialog(
 
                 val availableSources = resources.getStringArray(R.array.formats_source)
                 val availableSourcesValues = resources.getStringArray(R.array.formats_source_values)
-                val currentSource = currentFormatSource ?: sharedPreferences.getString("formats_source", "yt-dlp")
+                val currentSource = currentFormatSource ?: if (items.all { it.url.isYoutubeURL() }) "newpipe" else "yt-dlp"
                 formatSourceLinear.isVisible = true
                 availableSources.forEachIndexed { idx, it ->
                     val txt = requireActivity().layoutInflater.inflate(R.layout.selectable_textview_filter, null) as TextView

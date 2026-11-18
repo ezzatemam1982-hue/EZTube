@@ -236,12 +236,37 @@ class DownloadAudioFragment(private var resultItem: ResultItem? = null, private 
                 val chosenFormat = downloadItem.format
                 val filesize = UiUtil.populateFormatCard(requireContext(), formatCard, chosenFormat, null, showSize = downloadItem.downloadSections.isEmpty())
                 formatViewModel.checkFreeSpace(filesize, downloadItem.downloadPath)
+
+                fun updateLiveSummaryPill(format: Format, totalBytes: Long) {
+                    val pill = view.findViewById<TextView>(R.id.live_summary_pill) ?: return
+                    val ext = if (downloadItem.container.isNotBlank() && downloadItem.container != getString(R.string.defaultValue)) {
+                        downloadItem.container.uppercase()
+                    } else {
+                        format.container.ifBlank { "M4A" }.uppercase()
+                    }
+                    val quality = format.format_note.ifBlank { format.tbr ?: "AUTO" }.uppercase()
+                    val sizeText = if (totalBytes > 0) FileUtil.convertFileSize(totalBytes) else ""
+                    val summary = buildString {
+                        append(ext)
+                        append(" · ")
+                        append(quality)
+                        if (sizeText.isNotEmpty() && sizeText != "?") {
+                            append(" · ~ ")
+                            append(sizeText)
+                        }
+                    }
+                    pill.text = summary
+                    pill.visibility = View.VISIBLE
+                }
+                updateLiveSummaryPill(chosenFormat, filesize)
+
                 val listener = object : OnFormatClickListener {
                     override fun onFormatClick(formatTuple: FormatTuple) {
                         formatTuple.format?.apply {
                             downloadItem.format = this
                             val filesize = UiUtil.populateFormatCard(requireContext(), formatCard, this, null, showSize = downloadItem.downloadSections.isEmpty())
                             formatViewModel.checkFreeSpace(filesize, downloadItem.downloadPath)
+                            updateLiveSummaryPill(this, filesize)
                         }
                     }
                 }
@@ -297,6 +322,7 @@ class DownloadAudioFragment(private var resultItem: ResultItem? = null, private 
                             }
                             selectedThumbnailPrefs = null
                         }
+                        updateLiveSummaryPill(downloadItem.format, filesize)
                     }
 
 

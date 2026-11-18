@@ -228,4 +228,8 @@
     <string name="ui_feed_empty_body">Сервер не вернул видео для этой ленты. Потяните вниз для повтора.</string>
     <string name="video_bot_check_waiting">Сервис проверяет подключение. Повторная попытка…</string>
     <string name="video_open_in_youtube">Открыть во внешнем приложении</string>
+    <string name="action_mute">Отключить звук</string>
+    <string name="action_unmute">Включить звук</string>
+    <string name="backup_summary">Экспорт настроек, истории и плейлистов в файл</string>
+    <string name="restore_summary">Импорт настроек, истории и плейлистов из резервной копии</string>
 </resources>

@@ -107,7 +107,7 @@ abstract class BaseSettingsFragment : PreferenceFragmentCompat(), SettingHost {
 
         listView.clipToPadding = false
         val initialBottomPadding = listView.paddingBottom
-        val extraBottom = (24 * resources.displayMetrics.density).toInt()
+        val extraBottom = (80 * resources.displayMetrics.density).toInt()
         ViewCompat.setOnApplyWindowInsetsListener(listView) { v, insets ->
             val navBars = insets.getInsets(
                 WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime()
@@ -162,9 +162,14 @@ abstract class BaseSettingsFragment : PreferenceFragmentCompat(), SettingHost {
                 }
 
                 val iconView = v.findViewById<ImageView>(android.R.id.icon)
+                val iconFrame = v.findViewById<View>(android.R.id.icon_frame)
                 if (iconView != null && iconView.visibility == View.VISIBLE && iconView.drawable != null) {
-                    val iconSize = (38 * resources.displayMetrics.density).toInt()
-                    val iconPadding = (8 * resources.displayMetrics.density).toInt()
+                    val density = resources.displayMetrics.density
+                    val iconSize = (38 * density).toInt()
+                    val iconPadding = (8 * density).toInt()
+                    val spacing = (16 * density).toInt()
+                    val containerWidth = (38 * density).toInt()
+
                     iconView.layoutParams = iconView.layoutParams.apply {
                         width = iconSize
                         height = iconSize
@@ -172,17 +177,36 @@ abstract class BaseSettingsFragment : PreferenceFragmentCompat(), SettingHost {
                     iconView.setPadding(iconPadding, iconPadding, iconPadding, iconPadding)
                     val bgDrawable = android.graphics.drawable.GradientDrawable().apply {
                         setColor(0xFF262626.toInt())
-                        cornerRadius = 10 * resources.displayMetrics.density
+                        cornerRadius = 10 * density
                     }
                     iconView.background = bgDrawable
                     val colorAttr = TypedValue()
                     v.context.theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, colorAttr, true)
                     iconView.imageTintList = ColorStateList.valueOf(colorAttr.data)
+
+                    // Ensure uniform 38dp container width and 16dp horizontal spacing across all cards
+                    // so SeekBarPreference (Concurrent fragments/downloads) aligns with List/Switch cards
+                    if (iconFrame != null) {
+                        iconFrame.minimumWidth = containerWidth
+                        (iconFrame.layoutParams as? ViewGroup.MarginLayoutParams)?.let { lp ->
+                            lp.width = containerWidth
+                            lp.marginEnd = spacing
+                            iconFrame.layoutParams = lp
+                        }
+                        iconFrame.setPadding(0, 0, 0, 0)
+                    } else {
+                        (iconView.layoutParams as? ViewGroup.MarginLayoutParams)?.let { lp ->
+                            lp.marginEnd = spacing
+                            iconView.layoutParams = lp
+                        }
+                    }
                 }
 
                 val titleView = v.findViewById<TextView>(android.R.id.title)
                 if (titleView != null) {
+                    titleView.isSingleLine = false
                     titleView.maxLines = 2
+                    titleView.setHorizontallyScrolling(false)
                     titleView.ellipsize = TextUtils.TruncateAt.END
                     TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
                         titleView,
@@ -240,8 +264,42 @@ abstract class BaseSettingsFragment : PreferenceFragmentCompat(), SettingHost {
                         if (seekBar != null) {
                             val titleParent = titleView?.parent as? ViewGroup
                             if (titleParent != null && infoIcon.parent == null) {
-                                val index = titleParent.indexOfChild(titleView)
-                                titleParent.addView(infoIcon, (index + 1).coerceAtMost(titleParent.childCount))
+                                infoIcon.id = View.generateViewId()
+                                val density = resources.displayMetrics.density
+                                val iconSize = (32 * density).toInt()
+                                val p = (6 * density).toInt()
+                                infoIcon.setPadding(p, p, p, p)
+                                if (titleParent is android.widget.RelativeLayout) {
+                                    val seekbarVal = titleParent.findViewById<View>(androidx.preference.R.id.seekbar_value)
+                                    val lp = android.widget.RelativeLayout.LayoutParams(iconSize, iconSize).apply {
+                                        if (seekbarVal != null) {
+                                            addRule(android.widget.RelativeLayout.START_OF, androidx.preference.R.id.seekbar_value)
+                                            addRule(android.widget.RelativeLayout.CENTER_VERTICAL, androidx.preference.R.id.seekbar_value)
+                                        } else {
+                                            addRule(android.widget.RelativeLayout.ALIGN_PARENT_END)
+                                            addRule(android.widget.RelativeLayout.ALIGN_TOP, android.R.id.title)
+                                        }
+                                        marginEnd = (6 * density).toInt()
+                                        marginStart = (6 * density).toInt()
+                                    }
+                                    infoIcon.layoutParams = lp
+                                    (titleView.layoutParams as? android.widget.RelativeLayout.LayoutParams)?.let { tLp ->
+                                        tLp.addRule(android.widget.RelativeLayout.START_OF, infoIcon.id)
+                                    }
+                                    titleParent.addView(infoIcon)
+                                } else if (titleParent is LinearLayout) {
+                                    val lp = LinearLayout.LayoutParams(iconSize, iconSize).apply {
+                                        gravity = Gravity.CENTER_VERTICAL
+                                        marginStart = (6 * density).toInt()
+                                        marginEnd = (6 * density).toInt()
+                                    }
+                                    infoIcon.layoutParams = lp
+                                    (titleView.layoutParams as? LinearLayout.LayoutParams)?.weight = 1f
+                                    val index = titleParent.indexOfChild(titleView)
+                                    titleParent.addView(infoIcon, (index + 1).coerceAtMost(titleParent.childCount))
+                                } else {
+                                    titleParent.addView(infoIcon)
+                                }
                             }
                         } else {
                             val widgetFrame = v.findViewById<ViewGroup>(android.R.id.widget_frame)

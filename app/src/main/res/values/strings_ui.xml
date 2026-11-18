@@ -223,4 +223,6 @@
     <string name="tour_step5_title">Profile &amp; Settings</string>
     <string name="tour_step5_desc">Sign in to sync your subscriptions and history, and customize playback &amp; themes.</string>
     <string name="tour_replay_button">App Guide &amp; Tour</string>
+    <string name="action_mute">Mute</string>
+    <string name="action_unmute">Unmute</string>
 </resources>

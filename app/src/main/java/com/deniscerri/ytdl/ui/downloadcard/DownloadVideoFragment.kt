@@ -263,6 +263,29 @@ class DownloadVideoFragment(private var resultItem: ResultItem? = null, private 
                 )
                 formatViewModel.checkFreeSpace(filesize, downloadItem.downloadPath)
 
+                fun updateLiveSummaryPill(format: Format, totalBytes: Long) {
+                    val pill = view.findViewById<TextView>(R.id.live_summary_pill) ?: return
+                    val ext = if (downloadItem.container.isNotBlank() && downloadItem.container != getString(R.string.defaultValue)) {
+                        downloadItem.container.uppercase()
+                    } else {
+                        format.container.ifBlank { "MP4" }.uppercase()
+                    }
+                    val quality = format.format_note.ifBlank { "AUTO" }.uppercase()
+                    val sizeText = if (totalBytes > 0) FileUtil.convertFileSize(totalBytes) else ""
+                    val summary = buildString {
+                        append(ext)
+                        append(" · ")
+                        append(quality)
+                        if (sizeText.isNotEmpty() && sizeText != "?") {
+                            append(" · ~ ")
+                            append(sizeText)
+                        }
+                    }
+                    pill.text = summary
+                    pill.visibility = View.VISIBLE
+                }
+                updateLiveSummaryPill(chosenFormat, filesize)
+
                 val listener = object : OnFormatClickListener {
                     override fun onFormatClick(formatTuple: FormatTuple) {
                         formatTuple.format?.apply {
@@ -277,6 +300,7 @@ class DownloadVideoFragment(private var resultItem: ResultItem? = null, private 
                             showSize = downloadItem.downloadSections.isEmpty()
                         )
                         formatViewModel.checkFreeSpace(filesize, downloadItem.downloadPath)
+                        updateLiveSummaryPill(downloadItem.format, filesize)
                     }
                 }
                 formatCard.setOnClickListener{
@@ -324,11 +348,23 @@ class DownloadVideoFragment(private var resultItem: ResultItem? = null, private 
                             downloadItem.videoPreferences.recodeVideo = false
                             view.findViewById<Chip>(R.id.recode_video)?.createBadge(requireContext(), 0)
                         }
+                        updateLiveSummaryPill(downloadItem.format, filesize)
                     }
                 if (downloadItem.videoPreferences.compatibilityMode) {
                     containerAutoCompleteTextView.setText("mp4",false)
                     downloadItem.container = "mp4"
                 }
+
+                // Collapsible More Options accordion for Adjust video
+                val moreOptionsHeader = view.findViewById<View>(R.id.more_options_header)
+                val moreOptionsContainer = view.findViewById<View>(R.id.more_options_container)
+                val moreOptionsTitle = view.findViewById<TextView>(R.id.more_options_title)
+                moreOptionsHeader?.setOnClickListener {
+                    val expand = moreOptionsContainer?.visibility != View.VISIBLE
+                    moreOptionsContainer?.visibility = if (expand) View.VISIBLE else View.GONE
+                    moreOptionsTitle?.text = if (expand) "Fewer options ▴" else "More options ▾"
+                }
+
                 view.findViewById<LinearLayout>(R.id.adjust).apply {
                     visibility = if (shownFields.contains("adjust_video")) View.VISIBLE else View.GONE
                     if (isVisible){

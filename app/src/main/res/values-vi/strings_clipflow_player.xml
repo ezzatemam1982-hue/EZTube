@@ -222,4 +222,8 @@
     <string name="ui_feed_empty_body">Máy chủ không trả về video cho nguồn cấp dữ liệu này. Kéo xuống để thử lại.</string>
     <string name="video_bot_check_waiting">Dịch vụ đang kiểm tra kết nối này. Đang thử lại…</string>
     <string name="video_open_in_youtube">Mở trong ứng dụng bên ngoài</string>
+    <string name="action_mute">Tắt tiếng</string>
+    <string name="action_unmute">Bật tiếng</string>
+    <string name="backup_summary">Xuất cài đặt, nhật ký và danh sách phát ra tệp</string>
+    <string name="restore_summary">Nhập cài đặt, nhật ký và danh sách phát từ tệp sao lưu</string>
 </resources>

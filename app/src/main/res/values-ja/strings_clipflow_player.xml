@@ -222,4 +222,8 @@
     <string name="ui_feed_empty_body">動画を読み込めませんでした。下に引っ張って再試行してください。</string>
     <string name="video_bot_check_waiting">接続を確認しています。再試行中…</string>
     <string name="video_open_in_youtube">外部アプリで開く</string>
+    <string name="action_mute">ミュート</string>
+    <string name="action_unmute">ミュート解除</string>
+    <string name="backup_summary">設定、履歴、再生リストをファイルにエクスポート</string>
+    <string name="restore_summary">バックアップから設定、履歴、再生リストをインポート</string>
 </resources>

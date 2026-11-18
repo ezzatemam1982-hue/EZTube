@@ -64,7 +64,7 @@ android {
         applicationId "com.ezapps.eztube"
         minSdk 24
         targetSdk 36
-        versionCode 306
+        versionCode 307
         versionName "1.0.5"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

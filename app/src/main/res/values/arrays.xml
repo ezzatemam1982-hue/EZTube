@@ -153,8 +153,8 @@
     </array>
 
     <array name="formats_source">
-        <item>NewPipe</item>
-        <item>yt-dlp</item>
+        <item>Fast</item>
+        <item>Advanced</item>
     </array>
 
     <array name="formats_source_values">

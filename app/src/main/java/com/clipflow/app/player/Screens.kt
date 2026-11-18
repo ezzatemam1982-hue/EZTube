@@ -38,6 +38,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -411,12 +412,25 @@ private fun ChannelRail(channels: List<ChannelRef>) {
     ) {
         items(channels, key = { it.id }) { ch ->
             Column(
-                Modifier.width(64.dp).pressable { openChannel("https://www.youtube.com/channel/${ch.id}") },
+                Modifier.width(72.dp).pressable { openChannel("https://www.youtube.com/channel/${ch.id}") },
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 ChannelAvatar(ch.avatar, ch.name, size = 56)
                 Spacer(Modifier.height(6.dp))
-                Text(ch.name, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = c.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    text = ch.name,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = c.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    style = androidx.compose.material3.LocalTextStyle.current.copy(
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        textDirection = androidx.compose.ui.text.style.TextDirection.Content
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
@@ -711,6 +725,7 @@ fun LibraryScreen(
                     DownloadsShortcutCard {
                         InAppDownloadBridge.openDownloaderHub(context, "Downloads")
                     }
+                    Spacer(Modifier.navigationBarsPadding().height(80.dp))
                 }
                 return@LazyColumn
             }
@@ -751,6 +766,9 @@ fun LibraryScreen(
                 DownloadsShortcutCard {
                     InAppDownloadBridge.openDownloaderHub(context, "Downloads")
                 }
+            }
+            item(key = "libraryBottomSpacer") {
+                Spacer(Modifier.navigationBarsPadding().height(80.dp))
             }
         }
         if (showCreatePlaylistDialog) {
@@ -1181,10 +1199,7 @@ private fun SearchHistoryList(history: List<String>, contentPadding: PaddingValu
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    style = androidx.compose.material3.LocalTextStyle.current.copy(
-                        textDirection = androidx.compose.ui.text.style.TextDirection.Content,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Start
-                    )
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Start,
                 )
                 Box(
                     modifier = Modifier.size(44.dp).pressable { SearchHistory.remove(query) },

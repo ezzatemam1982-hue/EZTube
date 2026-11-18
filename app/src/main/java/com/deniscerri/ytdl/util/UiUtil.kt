@@ -123,12 +123,29 @@ object UiUtil {
     //return filesize
     fun populateFormatCard(context: Context, formatCard : MaterialCardView, chosenFormat: Format, audioFormats: List<Format>? = null, showSize: Boolean = true) : Long {
         var formatNote = chosenFormat.format_note
-        if (formatNote.isEmpty()) formatNote = context.getString(R.string.defaultValue)
-        else if (formatNote == "best") formatNote = context.getString(R.string.best_quality)
-        else if (formatNote == "worst") formatNote = context.getString(R.string.worst_quality)
+        val isDefaultNote = formatNote.isBlank() || formatNote.equals("default", ignoreCase = true) || formatNote.equals(context.getString(R.string.defaultValue), ignoreCase = true)
+        val isBest = formatNote.equals("best", ignoreCase = true)
+        val isWorst = formatNote.equals("worst", ignoreCase = true)
+
+        if (isDefaultNote) {
+            formatNote = "AUTO"
+        } else if (isBest) {
+            formatNote = context.getString(R.string.best_quality)
+        } else if (isWorst) {
+            formatNote = context.getString(R.string.worst_quality)
+        } else {
+            // Append FPS tag if >= 50 and not already in formatNote
+            val fpsVal = chosenFormat.fps?.toIntOrNull() ?: 0
+            if (fpsVal >= 50 && !formatNote.contains(fpsVal.toString())) {
+                formatNote = "${formatNote}$fpsVal"
+            }
+        }
 
         var container = chosenFormat.container
-        if (container == "Default" || container.isBlank()) container = context.getString(R.string.defaultValue)
+        val isDefaultContainer = container.isBlank() || container.equals("default", ignoreCase = true) || container.equals(context.getString(R.string.defaultValue), ignoreCase = true)
+        if (isDefaultContainer) {
+            container = if (isDefaultNote) "AUTO" else "BEST"
+        }
 
         formatCard.findViewById<TextView>(R.id.container).text = container.uppercase()
         formatCard.findViewById<TextView>(R.id.format_note).text = formatNote.uppercase()
@@ -146,17 +163,32 @@ object UiUtil {
                 formatCard.callOnClick()
             }
         }
-        val codec =
-            if (chosenFormat.encoding != "") {
-                chosenFormat.encoding.uppercase()
-            }else if (chosenFormat.vcodec != "none" && chosenFormat.vcodec != ""){
-                chosenFormat.vcodec.uppercase()
-            } else {
-                chosenFormat.acodec.uppercase()
-            }
+        val rawCodec = if (chosenFormat.encoding.isNotBlank()) {
+            chosenFormat.encoding
+        } else if (chosenFormat.vcodec != "none" && chosenFormat.vcodec.isNotBlank()) {
+            chosenFormat.vcodec
+        } else {
+            chosenFormat.acodec
+        }
+        val cleanCodec = when {
+            rawCodec.contains("avc", ignoreCase = true) || rawCodec.contains("h264", ignoreCase = true) -> "AVC"
+            rawCodec.contains("vp09", ignoreCase = true) || rawCodec.contains("vp9", ignoreCase = true) -> "VP9"
+            rawCodec.contains("av01", ignoreCase = true) || rawCodec.contains("av1", ignoreCase = true) -> "AV1"
+            rawCodec.contains("opus", ignoreCase = true) -> "OPUS"
+            rawCodec.contains("mp4a", ignoreCase = true) || rawCodec.contains("aac", ignoreCase = true) -> "AAC"
+            rawCodec.contains("mp3", ignoreCase = true) -> "MP3"
+            rawCodec.contains("flac", ignoreCase = true) -> "FLAC"
+            rawCodec == "none" || rawCodec.isBlank() -> ""
+            else -> rawCodec.take(5).uppercase()
+        }
 
         formatCard.findViewById<TextView>(R.id.codec).apply {
-            visibility = View.GONE
+            if (cleanCodec.isNotEmpty() && !isDefaultNote && cleanCodec != container.uppercase()) {
+                visibility = View.VISIBLE
+                text = cleanCodec
+            } else {
+                visibility = View.GONE
+            }
             setOnClickListener {
                 formatCard.callOnClick()
             }
@@ -171,12 +203,13 @@ object UiUtil {
             val defaults = (getTag(R.id.file_size) as? Pair<android.content.res.ColorStateList?, android.content.res.ColorStateList>)
                 ?: (androidx.core.view.ViewCompat.getBackgroundTintList(this) to textColors).also { setTag(R.id.file_size, it) }
             var approxShown = false
-            if (showSize) {
+            if (showSize && filesize > 0L) {
+                visibility = View.VISIBLE
                 val readable = FileUtil.convertFileSize(filesize)
                 approxShown = isApprox && readable != "?"
                 text = if (approxShown) "~ $readable" else readable
-            }else{
-                text = "?"
+            } else {
+                visibility = View.GONE
             }
             if (approxShown) {
                 androidx.core.view.ViewCompat.setBackgroundTintList(

@@ -226,4 +226,8 @@
     <string name="ui_feed_empty_body">Nenhum vídeo retornado para este feed. Puxe para baixo para tentar de novo.</string>
     <string name="video_bot_check_waiting">O serviço está verificando esta conexão. Tentando novamente…</string>
     <string name="video_open_in_youtube">Abrir em app externo</string>
+    <string name="action_mute">Silenciar</string>
+    <string name="action_unmute">Ativar som</string>
+    <string name="backup_summary">Exportar configurações, histórico e listas de reprodução para um arquivo</string>
+    <string name="restore_summary">Importar configurações, histórico e listas de reprodução de um backup</string>
 </resources>

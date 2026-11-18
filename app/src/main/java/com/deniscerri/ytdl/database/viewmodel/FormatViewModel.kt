@@ -140,7 +140,30 @@ class FormatViewModel(private val application: Application) : AndroidViewModel(a
                                 it.value.sortedByDescending { l -> l.filesize }
                             }
                     }
-                    FormatSorting.filesize -> chosenFormats
+                    FormatSorting.filesize -> {
+                        // Clean & Sort Advanced Format List:
+                        // 1. Hide confusing unlabeled rows (raw dimensions without label or "DEFAULT, LOW AUDIO")
+                        val filtered = chosenFormats.filter { f ->
+                            val note = f.format_note.trim().lowercase()
+                            val isConfusingAudio = note.contains("default, low audio") || note == "low audio"
+                            val isRawDimensionsOnly = Regex("""^\d{3,4}x\d{3,4}$""").matches(note) && chosenFormats.any { other ->
+                                other != f && (other.height == f.height || other.format_note.contains("${f.height}p", ignoreCase = true))
+                            }
+                            !isConfusingAudio && !isRawDimensionsOnly
+                        }
+                        // 2. Sort Video formats strictly descending by resolution (2160P -> 144P)
+                        //    and Audio formats strictly descending by bitrate (158kbps -> 50kbps)
+                        val videos = filtered.filter { it.isVideo() }.sortedWith(
+                            compareByDescending<Format> { it.height ?: extractResolution(it.format_note) }
+                                .thenByDescending { it.fps?.toIntOrNull() ?: 0 }
+                                .thenByDescending { it.filesize }
+                        )
+                        val audios = filtered.filter { !it.isVideo() }.sortedWith(
+                            compareByDescending<Format> { extractBitrate(it) }
+                                .thenByDescending { it.filesize }
+                        )
+                        videos + audios
+                    }
                 }
 
                 //filter category
@@ -345,5 +368,28 @@ class FormatViewModel(private val application: Application) : AndroidViewModel(a
                 }
             }
         }
+    }
+
+    private fun Format.isVideo(): Boolean = this.vcodec.isNotBlank() && this.vcodec != "none"
+
+    private fun extractResolution(note: String): Int {
+        val clean = note.lowercase()
+        val pMatch = Regex("""(\d{3,4})p""").find(clean)
+        if (pMatch != null) return pMatch.groupValues[1].toIntOrNull() ?: 0
+        val xMatch = Regex("""\d+x(\d{3,4})""").find(clean)
+        if (xMatch != null) return xMatch.groupValues[1].toIntOrNull() ?: 0
+        val numMatch = Regex("""\b(2160|1440|1080|720|480|360|240|144)\b""").find(clean)
+        if (numMatch != null) return numMatch.groupValues[1].toIntOrNull() ?: 0
+        return 0
+    }
+
+    private fun extractBitrate(f: Format): Double {
+        f.tbr?.toDoubleOrNull()?.let { if (it > 0.0) return it }
+        val clean = f.format_note.lowercase()
+        val kMatch = Regex("""(\d+(\.\d+)?)k""").find(clean)
+        if (kMatch != null) return kMatch.groupValues[1].toDoubleOrNull() ?: 0.0
+        val bpsMatch = Regex("""(\d+)kbps""").find(clean)
+        if (bpsMatch != null) return bpsMatch.groupValues[1].toDoubleOrNull() ?: 0.0
+        return if (f.filesize > 0) f.filesize.toDouble() / 1024.0 else 0.0
     }
 }

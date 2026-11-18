@@ -224,4 +224,8 @@
     <string name="ui_feed_empty_body">Keine Videos für diesen Feed. Zum Aktualisieren herunterziehen.</string>
     <string name="video_bot_check_waiting">Dienst prüft die Verbindung. Erneuter Versuch…</string>
     <string name="video_open_in_youtube">In externer App öffnen</string>
+    <string name="action_mute">Stummschalten</string>
+    <string name="action_unmute">Stummschaltung aufheben</string>
+    <string name="backup_summary">Einstellungen, Verlauf und Wiedergabelisten in eine Datei exportieren</string>
+    <string name="restore_summary">Einstellungen, Verlauf und Wiedergabelisten aus Sicherung importieren</string>
 </resources>

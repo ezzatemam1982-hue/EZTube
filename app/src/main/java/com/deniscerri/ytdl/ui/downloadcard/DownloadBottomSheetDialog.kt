@@ -15,13 +15,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.edit
 import androidx.core.os.bundleOf
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import com.deniscerri.ytdl.util.Extensions.loadThumbnail
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.ViewModelProvider
@@ -134,6 +138,36 @@ class DownloadBottomSheetDialog : BottomSheetDialogFragment() {
         dialog.setContentView(view)
         dialog.window?.navigationBarColor = SurfaceColors.SURFACE_1.getColor(requireActivity())
         parentActivity = activity as BaseActivity
+
+        ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
+            val navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            val extraBottom = (28 * resources.displayMetrics.density).toInt()
+            v.setPadding(v.paddingLeft, v.paddingTop, v.paddingRight, navBars.bottom + extraBottom)
+            insets
+        }
+
+        val previewCard = view.findViewById<View>(R.id.video_preview_card)
+        if (result.title.isNotBlank() && Patterns.WEB_URL.matcher(result.url).matches()) {
+            previewCard?.visibility = View.VISIBLE
+            val previewThumb = view.findViewById<ImageView>(R.id.preview_thumbnail)
+            val previewTitle = view.findViewById<TextView>(R.id.preview_title)
+            val previewAuthor = view.findViewById<TextView>(R.id.preview_author)
+            val previewDuration = view.findViewById<TextView>(R.id.preview_duration)
+
+            previewTitle?.text = result.title
+            previewAuthor?.text = result.author.ifBlank { result.website }
+            if (result.duration.isNotBlank() && result.duration != "0" && result.duration != "00:00") {
+                previewDuration?.visibility = View.VISIBLE
+                previewDuration?.text = result.duration
+            } else {
+                previewDuration?.visibility = View.GONE
+            }
+            if (previewThumb != null && result.thumb.isNotBlank()) {
+                previewThumb.loadThumbnail(hideThumb = false, imageURL = result.thumb)
+            }
+        } else {
+            previewCard?.visibility = View.GONE
+        }
 
         dialog.setOnShowListener {
             behavior = BottomSheetBehavior.from(view.parent as View)

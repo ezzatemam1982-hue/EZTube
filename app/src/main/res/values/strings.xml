@@ -763,4 +763,6 @@
     <string name="link_copied">Link copied</string>
     <string name="open_downloads_folder">Open downloads folder</string>
     <string name="no_file_manager_found">No file manager app found</string>
+    <string name="backup_summary">Export your settings, history, and playlists to a file</string>
+    <string name="restore_summary">Import settings, history, and playlists from a backup file</string>
 </resources>

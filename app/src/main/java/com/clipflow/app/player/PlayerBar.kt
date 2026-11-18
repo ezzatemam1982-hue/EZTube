@@ -56,6 +56,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.automirrored.rounded.VolumeOff
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.ClosedCaption
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
@@ -193,7 +195,7 @@ private const val QualityPickedMs = 420L
 /** Springs for the bar's values; a tiny visibility threshold so nothing snaps at the end (0.5.7). */
 private val BarSpring = spring(dampingRatio = 0.78f, stiffness = 420f, visibilityThreshold = 0.0005f)
 
-internal enum class BarTool { Speed, Quality, Audio, Captions, Downloads, Pip, Lock, Fullscreen, Next }
+internal enum class BarTool { Speed, Quality, Audio, Captions, Mute, Downloads, Pip, Lock, Fullscreen, Next }
 
 /** What the bar can turn into besides the card. */
 internal enum class BarPanel { Quality, Speed, Audio, Chapters, Captions }
@@ -204,6 +206,7 @@ internal fun barTools(player: PlayerState, pip: PipController?): List<BarTool> =
     add(BarTool.Quality)
     if (player.details?.audioTracks.orEmpty().size > 1) add(BarTool.Audio)
     if (player.captions.tracks.isNotEmpty()) add(BarTool.Captions)
+    add(BarTool.Mute)
     add(BarTool.Downloads)
     if (pip?.supported == true) add(BarTool.Pip)
     add(BarTool.Lock)
@@ -745,6 +748,7 @@ internal fun BarCard(bar: PlayerBarState, player: PlayerState, gate: () -> Float
                             }
                             BarTool.Audio -> Icon(Icons.Rounded.GraphicEq, null, tint = ink, modifier = glyph)
                             BarTool.Captions -> Icon(Icons.Rounded.ClosedCaption, null, tint = ink, modifier = glyph)
+                            BarTool.Mute -> Icon(if (player.isMuted) Icons.AutoMirrored.Rounded.VolumeOff else Icons.AutoMirrored.Rounded.VolumeUp, null, tint = ink, modifier = glyph)
                             BarTool.Downloads -> Icon(Icons.Rounded.FolderOpen, null, tint = ink, modifier = glyph)
                             BarTool.Pip -> Icon(Icons.Rounded.PictureInPictureAlt, null, tint = ink, modifier = glyph)
                             BarTool.Lock -> Icon(Icons.Rounded.LockOpen, null, tint = ink, modifier = glyph)
@@ -756,10 +760,11 @@ internal fun BarCard(bar: PlayerBarState, player: PlayerState, gate: () -> Float
                                 BarTool.Speed -> stringResource(R.string.bar_tool_speed)
                                 BarTool.Quality -> stringResource(R.string.bar_tool_quality)
                                 BarTool.Audio -> stringResource(R.string.bar_tool_audio)
+                                BarTool.Captions -> player.captions.choice?.takeIf { player.captions.on }?.label ?: stringResource(R.string.bar_tool_captions)
+                                BarTool.Mute -> stringResource(if (player.isMuted) R.string.action_unmute else R.string.action_mute)
                                 BarTool.Downloads -> stringResource(R.string.ui_downloads)
                                 BarTool.Pip -> stringResource(R.string.bar_tool_pip)
                                 BarTool.Lock -> stringResource(R.string.bar_tool_lock)
-                                BarTool.Captions -> player.captions.choice?.takeIf { player.captions.on }?.label ?: stringResource(R.string.bar_tool_captions)
                                 BarTool.Fullscreen -> stringResource(R.string.bar_tool_fullscreen)
                                 BarTool.Next -> stringResource(R.string.bar_tool_next)
                             },
@@ -1350,6 +1355,7 @@ internal fun pickTool(tool: BarTool, bar: PlayerBarState, player: PlayerState, p
         BarTool.Audio -> bar.openPanel(BarPanel.Audio)
         // Turns captions on at once (Derek: no second press), and opens the list to pick another language.
         BarTool.Captions -> { player.captions.turn(true); bar.openPanel(BarPanel.Captions) }
+        BarTool.Mute -> player.toggleMute(context)
         BarTool.Downloads -> {
             bar.closeAll()
             InAppDownloadBridge.openDownloaderHub(context)

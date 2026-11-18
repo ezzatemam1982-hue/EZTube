@@ -11,6 +11,7 @@ import androidx.core.view.forEach
 import androidx.core.view.get
 import androidx.preference.PreferenceManager
 import com.deniscerri.ytdl.R
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationBarView
 
 
@@ -116,6 +117,11 @@ object NavbarUtil {
         androidx.core.content.ContextCompat.getColorStateList(this.context, R.color.bottom_nav_item_tint)?.let {
             this.itemIconTintList = it
             this.itemTextColor = it
+        }
+
+        if (this is BottomNavigationView) {
+            this.background = androidx.core.content.ContextCompat.getDrawable(this.context, R.drawable.bg_floating_pill_navbar)
+            androidx.core.view.ViewCompat.setElevation(this, 8 * resources.displayMetrics.density)
         }
 
         val navBarItems = getNavBarItems(this.context)

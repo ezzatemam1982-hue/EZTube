@@ -628,4 +628,8 @@
     <string name="info_jsons_summary">EZTube\'un tekrar indirmemesi için kaydedilen video meta verileri</string>
     <string name="ytdlp_cache">Uygulama motoru önbelleği</string>
     <string name="ytdlp_cache_summary">EZTube\'un çalıştırmalar arasında yeniden kullandığı geçici motor verileri</string>
+    <string name="action_mute">Sesi kapat</string>
+    <string name="action_unmute">Sesi aç</string>
+    <string name="backup_summary">Ayarları, geçmişi ve oynatma listelerini bir dosyaya aktar</string>
+    <string name="restore_summary">Ayarları, geçmişi ve oynatma listelerini yedekten içe aktar</string>
 </resources>

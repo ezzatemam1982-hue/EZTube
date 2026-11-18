@@ -77,6 +77,8 @@ import androidx.compose.material.icons.rounded.FastForward
 import androidx.compose.material.icons.rounded.FastRewind
 import androidx.compose.material.icons.rounded.FitScreen
 import androidx.compose.material.icons.rounded.Fullscreen
+import androidx.compose.material.icons.automirrored.rounded.VolumeOff
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.FullscreenExit
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
@@ -237,13 +239,6 @@ fun VideoContent(
     val context = LocalContext.current
     var showGesturesGuide by remember {
         mutableStateOf(PlayerGesturesGuideState.shouldShow(context))
-    }
-    var wasPlayingBeforeGuide by remember { mutableStateOf(false) }
-    LaunchedEffect(showGesturesGuide, state.isPlaying) {
-        if (showGesturesGuide && state.isPlaying) {
-            wasPlayingBeforeGuide = true
-            state.pause()
-        }
     }
 
     LaunchedEffect(interactive) { if (!interactive) { controlsVisible = false; burstActive = false } }
@@ -460,9 +455,27 @@ fun VideoContent(
                 Modifier
                     .fillMaxSize()
                     .graphicsLayer {
-                        val s = if (fullscreen) zoom.value.coerceAtLeast(0.5f) else 1f
-                        scaleX = s
-                        scaleY = s
+                        if (!fullscreen) {
+                            scaleX = 1f
+                            scaleY = 1f
+                        } else if (scaleSelection.pinchScale != null || scaleSelection.mode == FullscreenAspectMode.Zoom) {
+                            val s = zoom.value.coerceAtLeast(0.5f)
+                            scaleX = s
+                            scaleY = s
+                        } else if (scaleSelection.mode == FullscreenAspectMode.Fit) {
+                            scaleX = 1f
+                            scaleY = 1f
+                        } else {
+                            // FullscreenAspectMode.Fill: RESIZE_MODE_FILL stretches to fill bounds without cropping
+                            val stageW = stage.width.toFloat()
+                            val stageH = stage.height.toFloat()
+                            val aspect = state.videoAspect
+                            val targetScale = resolveFullscreenScale(scaleSelection, stageW, stageH, aspect)
+                            val k = if (targetScale <= 1.005f) 1f else ((zoom.value - 1f) / (targetScale - 1f)).coerceIn(0f, 1f)
+                            val stretch = stretchScales(stageW, stageH, 0f, 0f, aspect, zoom = k)
+                            scaleX = stretch.scaleX
+                            scaleY = stretch.scaleY
+                        }
                     }
                     .clipToBounds(),
             ) {
@@ -729,6 +742,18 @@ fun VideoContent(
                                 )
                             }
                         }
+                        OverlayTile(
+                            description = stringResource(if (state.isMuted) R.string.action_unmute else R.string.action_mute),
+                            enabled = enabled,
+                            size = 34.dp,
+                            filled = state.isMuted,
+                            onClick = {
+                                touched()
+                                state.toggleMute(context)
+                            }
+                        ) { ink ->
+                            Icon(if (state.isMuted) Icons.AutoMirrored.Rounded.VolumeOff else Icons.AutoMirrored.Rounded.VolumeUp, null, tint = ink, modifier = Modifier.size(19.dp))
+                        }
                         OverlayTile(stringResource(R.string.video_lock_screen), enabled, 34.dp, onClick = {
                             controlsVisible = false
                             drop = null
@@ -837,9 +862,6 @@ fun VideoContent(
             PlayerGesturesOverlay(
                 onDismiss = {
                     showGesturesGuide = false
-                    if (wasPlayingBeforeGuide && !state.isPlaying) {
-                        state.togglePlay()
-                    }
                 }
             )
         }

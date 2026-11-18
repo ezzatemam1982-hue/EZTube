@@ -195,7 +195,7 @@ object PlayerControls {
  * (headphones, the notification) takes it when the service starts.
  */
 object SeekStep {
-    val choices = (5..60 step 5).toList()
+    val choices = listOf(5, 10, 15, 20, 25, 30)
     private const val KEY = "seek_step"
     private var prefs: SharedPreferences? = null
 
@@ -267,13 +267,13 @@ object FullscreenZoom {
     private const val KEY = "zoom_fill"
     private var prefs: SharedPreferences? = null
 
-    /** True: every video fills the screen in fullscreen until cycled/pinched back. */
+    /** True by default (Fill / RESIZE_MODE_FILL mode) so video stretches to fill screen without cropping vertical edges or captions. */
     var fill by mutableStateOf(true)
         private set
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
-        fill = prefs?.getBoolean(KEY, true) != false
+        fill = prefs?.getBoolean(KEY, true) ?: true
     }
 
     fun set(on: Boolean) {

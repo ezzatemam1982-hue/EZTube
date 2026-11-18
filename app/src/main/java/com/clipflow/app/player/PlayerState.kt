@@ -4,6 +4,7 @@ import com.deniscerri.ytdl.BuildConfig
 import com.deniscerri.ytdl.R
 
 import android.content.ComponentName
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -72,6 +73,25 @@ class PlayerState(private val scope: CoroutineScope) {
     /** The player's playback speed (see [PlaybackSpeed]). */
     var speed by mutableFloatStateOf(1f)
         private set
+
+    /** Fast mute toggle: 0 volume when muted, restored when unmuted. */
+    var isMuted by mutableStateOf(false)
+        private set
+    private var preMuteVolume: Float = 1.0f
+
+    fun toggleMute(context: Context? = null) {
+        val player = controller ?: return
+        if (isMuted) {
+            val restore = if (preMuteVolume > 0f) preMuteVolume else 1.0f
+            player.volume = restore
+            isMuted = false
+        } else {
+            val currentVol = player.volume
+            preMuteVolume = if (currentVol > 0f) currentVol else 1.0f
+            player.volume = 0f
+            isMuted = true
+        }
+    }
 
     init {
         // The service's stream recovery has no player event for its outcome: follow its state.
@@ -965,6 +985,7 @@ class PlayerState(private val scope: CoroutineScope) {
         bufferedMs = player.bufferedPosition.coerceAtLeast(0L)
         durationMs = player.duration.takeIf { it > 0 } ?: ((current?.durationSec ?: 0L) * 1000L)
         speed = player.playbackParameters.speed
+        isMuted = (player.volume == 0f)
     }
 
     internal val listener = object : Player.Listener {

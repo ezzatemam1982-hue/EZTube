@@ -226,4 +226,8 @@
     <string name="ui_feed_empty_body">Nessun video restituito per questo feed. Trascina verso il basso per riprovare.</string>
     <string name="video_bot_check_waiting">Il servizio sta verificando la connessione. Nuovo tentativo…</string>
     <string name="video_open_in_youtube">Apri in un\'altra app</string>
+    <string name="action_mute">Disattiva audio</string>
+    <string name="action_unmute">Riattiva audio</string>
+    <string name="backup_summary">Esporta impostazioni, cronologia e playlist in un file</string>
+    <string name="restore_summary">Importa impostazioni, cronologia e playlist da un backup</string>
 </resources>

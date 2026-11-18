@@ -30,11 +30,13 @@
         <Preference
             app:icon="@drawable/baseline_save_alt_24"
             app:key="backup"
+            android:summary="@string/backup_summary"
             app:title="@string/backup"/>
 
         <Preference
             app:icon="@drawable/baseline_restore_page_24"
             app:key="restore"
+            android:summary="@string/restore_summary"
             app:title="@string/restore"/>
 
         <SwitchPreferenceCompat

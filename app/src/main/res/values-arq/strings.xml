@@ -604,4 +604,8 @@
     <string name="internal_plugin_ffmpeg_preset_summary">الإعداد المسبق اللي تخدم بيه FFmpeg للإضافات الداخلية كيما حرق الترجمة وكذا. التعديل على هذا الخيار راه يأثر على حجم الملف النهائي!</string>
     <string name="developer_title">المطور</string>
     <string name="developer_name">م/ عزت إمام</string>
+    <string name="action_mute">كتم الصوت</string>
+    <string name="action_unmute">إلغاء كتم الصوت</string>
+    <string name="backup_summary">تصدير الإعدادات والسجل وقوائم التشغيل إلى ملف</string>
+    <string name="restore_summary">استيراد الإعدادات والسجل وقوائم التشغيل من ملف نسخ احتياطي</string>
 </resources>

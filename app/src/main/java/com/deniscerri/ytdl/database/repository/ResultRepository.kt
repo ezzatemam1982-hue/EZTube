@@ -313,56 +313,45 @@ class ResultRepository(private val resultDao: ResultDao, commandTemplateDao: Com
     }
 
     suspend fun getFormats(url: String, source : String? = null, ignoreInfoJson: Boolean = false) : List<Format> {
-        val formatSource = source ?: "yt-dlp"
-        val res = if (url.isYoutubeURL()) {
-            when(formatSource) {
-                "newpipe" -> {
-                    val tmpRes = NewPipeUtil(context).getFormats(url)
-                    if (tmpRes.isFailure && source != null) {
-                        Result.success(listOf())
-                    }else{
-                        tmpRes
-                    }
-                }
-                else -> Result.failure(Throwable())
-            }
-        }else{
-            Result.failure(Throwable())
+        val isYoutube = url.isYoutubeURL()
+        val formatSource = source ?: if (isYoutube) "newpipe" else "yt-dlp"
+
+        if (!isYoutube || formatSource != "newpipe") {
+            return ytdlpUtil.getFormats(url, ignoreInfoJson)
         }
 
-        return if (res.isSuccess){
-            res.getOrNull()!!
-        }else{
-            ytdlpUtil.getFormats(url, ignoreInfoJson)
+        // YouTube URL: default immediately to Fast (NewPipe)
+        val tmpRes = NewPipeUtil(context).getFormats(url)
+        val formats = tmpRes.getOrNull()
+        if (tmpRes.isSuccess && !formats.isNullOrEmpty()) {
+            return formats
         }
+
+        // Fallback to Advanced (yt-dlp) if Fast returned empty/error (when source not explicitly locked)
+        if (source == null) {
+            return ytdlpUtil.getFormats(url, ignoreInfoJson)
+        }
+        return emptyList()
     }
 
     suspend fun getFormatsMultiple(urls: List<String>, source: String? = null, progress: (progress: ResultViewModel.MultipleFormatProgress) -> Unit) : MutableList<MutableList<Format>> {
-        val formatSource = source ?: "yt-dlp"
         val allYoutubeLinks = urls.all { it.isYoutubeURL() }
+        val formatSource = source ?: if (allYoutubeLinks) "newpipe" else "yt-dlp"
 
-        val res = when(formatSource) {
-            "newpipe" -> {
-                if (!allYoutubeLinks) {
-                    Result.failure(Throwable())
-                }else{
-                    val res = NewPipeUtil(context).getFormatsForAll(urls) {
-                        progress(it)
-                    }
-                    res
+        if (allYoutubeLinks && formatSource == "newpipe") {
+            val res = NewPipeUtil(context).getFormatsForAll(urls) {
+                progress(it)
+            }
+            if (res.isSuccess) {
+                val list = res.getOrElse { mutableListOf() }
+                if (list.isNotEmpty() && list.all { it.isNotEmpty() }) {
+                    return list
                 }
-
             }
-            else -> {
-                Result.failure(Throwable())
-            }
+            if (source != null) return mutableListOf()
         }
 
-        if (res.isSuccess) {
-            return res.getOrElse { mutableListOf() }
-        }
-
-        //last fallback
+        // fallback to yt-dlp or direct yt-dlp for other platforms
         val ytdlpRes = ytdlpUtil.getFormatsForAll(urls) {
             progress(it)
         }

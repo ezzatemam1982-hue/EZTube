@@ -226,4 +226,8 @@
     <string name="ui_feed_empty_body">El servidor no devolvió videos. Desliza hacia abajo para reintentar.</string>
     <string name="video_bot_check_waiting">El servicio está verificando la conexión. Reintentando…</string>
     <string name="video_open_in_youtube">Abrir en app externa</string>
+    <string name="action_mute">Silenciar</string>
+    <string name="action_unmute">Reactivar sonido</string>
+    <string name="backup_summary">Exportar ajustes, historial y listas de reproducción a un archivo</string>
+    <string name="restore_summary">Importar ajustes, historial y listas de reproducción desde una copia</string>
 </resources>

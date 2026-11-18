@@ -77,10 +77,16 @@ private fun isYouTubeRedirectUrl(url: String?): Boolean {
     val scheme = parsed.scheme?.lowercase() ?: return false
     if (scheme != "http" && scheme != "https") return false
     val host = parsed.host?.lowercase()?.trimEnd('.') ?: return false
-    return host.contains("youtube.com") &&
+    val isYoutubeHost = (host == "youtube.com" || host.endsWith(".youtube.com")) &&
         host != "accounts.google.com" &&
         host != "accounts.youtube.com" &&
         host != "consent.youtube.com"
+    if (!isYoutubeHost) return false
+    // Do NOT intercept mid-authentication during Google's multi-step redirect chain (CheckCookie, ServiceLogin)
+    if (url.contains("CheckCookie", ignoreCase = true) || url.contains("ServiceLogin", ignoreCase = true)) {
+        return false
+    }
+    return true
 }
 
 private fun mergeCookiesFromUrls(
@@ -140,6 +146,7 @@ fun SignInScreen(onDone: () -> Unit, onCancel: () -> Unit) {
         if (finishing) return
         error = null
         finishing = true
+        runCatching { CookieManager.getInstance().flush() }
         val parsedCount = AuthSessionManager.parseCookieHeader(header).size
         authLog(
             Log.INFO,
@@ -185,6 +192,7 @@ fun SignInScreen(onDone: () -> Unit, onCancel: () -> Unit) {
         val activeUrl = candidateUrl?.takeIf { it.isNotBlank() } ?: webViewRef?.url ?: currentWebUrl
         if (!isYouTubeRedirectUrl(activeUrl)) return false
         val cookieManager = CookieManager.getInstance()
+        runCatching { cookieManager.flush() }
         val (header, map) = mergeCookiesFromUrls(
             cookieManager,
             listOf(
@@ -213,16 +221,6 @@ fun SignInScreen(onDone: () -> Unit, onCancel: () -> Unit) {
         }
         val (header, _) = mergeCookiesFromUrls(cookieManager, urls)
         saveSessionAndClose(header = header, sourceUrl = activeUrl, unconditional = true)
-    }
-
-    // Fallback cookie-polling observer while the Sign-In WebView is visible
-    LaunchedEffect(Unit) {
-        while (!finishing && error == null) {
-            delay(500L)
-            if (!finishing && error == null) {
-                tryAutoCompleteSignIn(webViewRef?.url ?: currentWebUrl)
-            }
-        }
     }
 
     DisposableEffect(Unit) {
@@ -289,8 +287,6 @@ fun SignInScreen(onDone: () -> Unit, onCancel: () -> Unit) {
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
                     val cookies = CookieManager.getInstance()
-                    cookies.removeAllCookies(null)
-                    cookies.flush()
                     cookies.setAcceptCookie(true)
                     WebView(ctx).apply {
                         webViewRef = this
@@ -298,10 +294,15 @@ fun SignInScreen(onDone: () -> Unit, onCancel: () -> Unit) {
                         cookies.setAcceptThirdPartyCookies(this, true)
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
+                        settings.databaseEnabled = true
                         settings.mediaPlaybackRequiresUserGesture = true
-                        // Google refuses sign-in from user agents that announce an embedded
-                        // WebView ("; wv"); this is the same Chrome engine without the marker.
-                        settings.userAgentString = WebSettings.getDefaultUserAgent(ctx).replace("; wv", "")
+                        // Clean, modern mobile Chrome user-agent so Google accepts credentials cleanly on first attempt
+                        val defaultUa = WebSettings.getDefaultUserAgent(ctx)
+                        settings.userAgentString = if (defaultUa.contains("Chrome/")) {
+                            defaultUa.replace("; wv", "")
+                        } else {
+                            "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.200 Mobile Safari/537.36"
+                        }
                         webViewClient = object : WebViewClient() {
                             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                                 if (request.isForMainFrame) {
@@ -325,16 +326,23 @@ fun SignInScreen(onDone: () -> Unit, onCancel: () -> Unit) {
                             override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
                                 val activeUrl = url?.takeIf { it.isNotBlank() } ?: view.url
                                 if (!activeUrl.isNullOrBlank()) currentWebUrl = activeUrl
-                                tryAutoCompleteSignIn(activeUrl)
+                                // Do not intercept during redirect chain: wait until onPageFinished reaches final youtube.com
                             }
 
                             override fun onPageFinished(view: WebView, url: String) {
                                 val activeUrl = url.takeIf { it.isNotBlank() } ?: view.url
                                 if (!activeUrl.isNullOrBlank()) currentWebUrl = activeUrl
-                                tryAutoCompleteSignIn(activeUrl)
+                                if (isYouTubeRedirectUrl(activeUrl)) {
+                                    runCatching { CookieManager.getInstance().flush() }
+                                    tryAutoCompleteSignIn(activeUrl)
+                                }
                             }
                         }
-                        loadUrl(signInUrl())
+                        // Clear stale session cookies cleanly before fresh login to avoid race conditions
+                        cookies.removeSessionCookies {
+                            cookies.flush()
+                            loadUrl(signInUrl())
+                        }
                     }
                 },
             )

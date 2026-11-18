@@ -719,4 +719,8 @@
     <string name="all_artists_in_album_artist_summary">Use todos os artistas na tag “Artista do Álbum”, em vez de apenas o primeiro</string>
     <string name="press_cancel">Toque aqui para cancelar</string>
     <string name="fetching_data">Buscando dados...</string>
+    <string name="action_mute">Silenciar</string>
+    <string name="action_unmute">Ativar som</string>
+    <string name="backup_summary">Exportar configurações, histórico e listas de reprodução para um arquivo</string>
+    <string name="restore_summary">Importar configurações, histórico e listas de reprodução de um backup</string>
 </resources>

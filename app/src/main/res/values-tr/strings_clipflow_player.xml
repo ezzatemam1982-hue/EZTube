@@ -259,4 +259,8 @@
     <string name="ui_feed_empty_body">Bu akış için video bulunamadı. Yenilemek için aşağı çekin.</string>
     <string name="video_bot_check_waiting">Servis bağlantıyı doğruluyor. Yeniden deneniyor…</string>
     <string name="video_open_in_youtube">Harici uygulamada aç</string>
+    <string name="action_mute">Sesi kapat</string>
+    <string name="action_unmute">Sesi aç</string>
+    <string name="backup_summary">Ayarları, geçmişi ve oynatma listelerini bir dosyaya aktar</string>
+    <string name="restore_summary">Ayarları, geçmişi ve oynatma listelerini yedekten içe aktar</string>
 </resources>

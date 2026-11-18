@@ -222,4 +222,8 @@
     <string name="ui_feed_empty_body">Server tidak menampilkan video untuk feed ini. Tarik ke bawah untuk memuat ulang.</string>
     <string name="video_bot_check_waiting">Layanan sedang memeriksa koneksi. Mencoba lagi…</string>
     <string name="video_open_in_youtube">Buka di aplikasi luar</string>
+    <string name="action_mute">Bisukan</string>
+    <string name="action_unmute">Bunyikan</string>
+    <string name="backup_summary">Ekspor pengaturan, riwayat, dan daftar putar ke file</string>
+    <string name="restore_summary">Impor pengaturan, riwayat, dan daftar putar dari file cadangan</string>
 </resources>

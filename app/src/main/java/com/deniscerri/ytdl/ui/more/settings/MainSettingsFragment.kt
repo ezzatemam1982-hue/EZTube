@@ -286,6 +286,8 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
 
                 val dialog = builder.create()
                 dialog.show()
+                dialog.listView?.clipToPadding = false
+                dialog.listView?.setPadding(0, 0, 0, (16 * resources.displayMetrics.density).toInt())
                 true
             }
         restore!!.onPreferenceClickListener =

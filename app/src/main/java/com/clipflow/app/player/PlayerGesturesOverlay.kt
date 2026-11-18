@@ -1,6 +1,10 @@
 package com.clipflow.app.player
 
 import android.content.Context
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,35 +17,30 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.BrightnessMedium
 import androidx.compose.material.icons.rounded.FastForward
-import androidx.compose.material.icons.rounded.Fullscreen
+import androidx.compose.material.icons.rounded.FastRewind
 import androidx.compose.material.icons.rounded.TouchApp
-import androidx.compose.material.icons.rounded.VolumeUp
-import androidx.compose.material.icons.rounded.ZoomOutMap
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.preference.PreferenceManager
-import com.deniscerri.ytdl.R
+import kotlinx.coroutines.delay
 
 object PlayerGesturesGuideState {
     const val PREF_GUIDE_SEEN = "has_seen_player_gestures_guide"
@@ -57,82 +56,53 @@ object PlayerGesturesGuideState {
     }
 }
 
+/**
+ * Non-blocking visual indicator shown briefly on first playback.
+ * Displays lightweight tap badges (-10s / +10s) and automatically fades out
+ * without interrupting playback or blocking user gestures.
+ */
 @Composable
 fun PlayerGesturesOverlay(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val c = MaterialTheme.colorScheme
+    var visible by remember { mutableStateOf(true) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.88f))
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
+    LaunchedEffect(Unit) {
+        delay(2500)
+        visible = false
+        delay(400)
+        PlayerGesturesGuideState.markSeen(context)
+        onDismiss()
+    }
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(tween(300)),
+        exit = fadeOut(tween(400)),
+        modifier = Modifier.fillMaxSize()
     ) {
-        Column(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color(0xFF141414))
-                .padding(20.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
+            contentAlignment = Alignment.Center
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(c.primary.copy(alpha = 0.18f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.TouchApp,
-                        contentDescription = null,
-                        tint = c.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    text = stringResource(R.string.gesture_guide_title),
-                    color = Color.White,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold
+                // Left double tap hint (-10s)
+                GestureBadge(
+                    seconds = "-10s",
+                    isRewind = true
                 )
-            }
 
-            Spacer(Modifier.height(16.dp))
-
-            GestureRow(Icons.Rounded.FastForward, R.string.gesture_seek_title, R.string.gesture_seek_desc)
-            GestureRow(Icons.Rounded.Fullscreen, R.string.gesture_fullscreen_title, R.string.gesture_fullscreen_desc)
-            GestureRow(Icons.Rounded.BrightnessMedium, R.string.gesture_brightness_title, R.string.gesture_brightness_desc)
-            GestureRow(Icons.Rounded.VolumeUp, R.string.gesture_volume_title, R.string.gesture_volume_desc)
-            GestureRow(Icons.Rounded.ZoomOutMap, R.string.gesture_zoom_title, R.string.gesture_zoom_desc)
-
-            Spacer(Modifier.height(18.dp))
-
-            Button(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = c.primary),
-                onClick = {
-                    PlayerGesturesGuideState.markSeen(context)
-                    onDismiss()
-                }
-            ) {
-                Text(
-                    text = stringResource(R.string.gesture_got_it),
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
+                // Right double tap hint (+10s)
+                GestureBadge(
+                    seconds = "+10s",
+                    isRewind = false
                 )
             }
         }
@@ -140,41 +110,59 @@ fun PlayerGesturesOverlay(
 }
 
 @Composable
-private fun GestureRow(icon: ImageVector, titleRes: Int, descRes: Int) {
-    val c = MaterialTheme.colorScheme
-    Row(
+private fun GestureBadge(
+    seconds: String,
+    isRewind: Boolean
+) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color(0xD0141414))
+            .padding(horizontal = 14.dp, vertical = 10.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(Color(0xFF262626)),
-            contentAlignment = Alignment.Center
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = c.primary,
-                modifier = Modifier.size(20.dp)
-            )
+            if (isRewind) {
+                Icon(
+                    imageVector = Icons.Rounded.FastRewind,
+                    contentDescription = null,
+                    tint = primaryColor,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.Rounded.TouchApp,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Rounded.TouchApp,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.Rounded.FastForward,
+                    contentDescription = null,
+                    tint = primaryColor,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
-        Spacer(Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(titleRes),
-                color = Color.White,
-                fontSize = 13.5.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = stringResource(descRes),
-                color = Color(0xFFAAAAAA),
-                fontSize = 12.sp
-            )
-        }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = seconds,
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 12.sp
+        )
     }
 }

@@ -224,4 +224,8 @@
     <string name="ui_feed_empty_body">इस फ़ीड के लिए कोई वीडियो नहीं मिला। पुन: प्रयास करने के लिए नीचे खींचें।</string>
     <string name="video_bot_check_waiting">सेवा कनेक्शन की जांच कर रही है। पुनः प्रयास कर रहे हैं…</string>
     <string name="video_open_in_youtube">बाहरी ऐप में खोलें</string>
+    <string name="action_mute">म्यूट करें</string>
+    <string name="action_unmute">अनम्यूट करें</string>
+    <string name="backup_summary">सेटिंग्स, इतिहास और प्लेलिस्ट को फ़ाइल में निर्यात करें</string>
+    <string name="restore_summary">बैकअप फ़ाइल से सेटिंग्स, इतिहास और प्लेलिस्ट आयात करें</string>
 </resources>

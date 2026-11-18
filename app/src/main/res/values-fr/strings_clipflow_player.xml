@@ -226,4 +226,8 @@
     <string name="ui_feed_empty_body">Le serveur n\'a renvoyé aucune vidéo. Tirez vers le bas pour réessayer.</string>
     <string name="video_bot_check_waiting">Le service vérifie cette connexion. Nouvel essai…</string>
     <string name="video_open_in_youtube">Ouvrir dans une application externe</string>
+    <string name="action_mute">Couper le son</string>
+    <string name="action_unmute">Rétablir le son</string>
+    <string name="backup_summary">Exporter les paramètres, l\'historique et les playlists vers un fichier</string>
+    <string name="restore_summary">Importer les paramètres, l\'historique et les playlists depuis une sauvegarde</string>
 </resources>

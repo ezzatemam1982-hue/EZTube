@@ -83,6 +83,23 @@
                 android:paddingTop="10dp"
                 android:paddingHorizontal="10dp"
                 android:text="@string/audio_quality" />
+
+            <TextView
+                android:id="@+id/live_summary_pill"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="4dp"
+                android:background="@drawable/rounded_corner"
+                android:backgroundTint="?attr/colorPrimaryInverse"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="3dp"
+                android:visibility="gone" />
+
             <include layout="@layout/format_item" />
 
 

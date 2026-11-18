@@ -522,7 +522,7 @@ private fun FoldingPage(
                 )
             }
             content()
-            Spacer(Modifier.height(36.dp))
+            Spacer(Modifier.navigationBarsPadding().height(80.dp))
         }
         // Under the folded bar the page fades out instead of cutting off (the tabs' top vignette).
         val vignette = remember(surface) { vignetteBrush(surface, opaqueAtTop = true) }
@@ -566,21 +566,6 @@ private fun FoldingPage(
                 overflow = TextOverflow.Ellipsis,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    Modifier
-                        .size(44.dp)
-                        .pressable {
-                            AppTourState.startTour()
-                        },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.baseline_help_24),
-                        contentDescription = stringResource(R.string.tour_replay_button),
-                        tint = c.onSurface,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
                 if (onSearch != null) {
                     val context = LocalContext.current
                     val activity = context.findActivity() as? androidx.fragment.app.FragmentActivity
@@ -1383,9 +1368,9 @@ private fun SwitchSetting(
                 Spacer(Modifier.width(14.dp))
             }
             Column(Modifier.weight(1f)) {
-                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 2, softWrap = true)
                 Spacer(Modifier.height(3.dp))
-                Text(line, color = c.onSurfaceVariant, fontSize = 13.sp, lineHeight = 18.sp)
+                Text(line, color = c.onSurfaceVariant, fontSize = 13.sp, lineHeight = 18.sp, softWrap = true)
             }
             if (!rtl) {
                 Spacer(Modifier.width(12.dp))
@@ -1542,9 +1527,9 @@ private fun LinkSetting(key: String, shape: Shape, icon: ImageVector, title: Str
             IconSquare(icon)
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 2, softWrap = true)
                 Spacer(Modifier.height(3.dp))
-                Text(line, color = c.onSurfaceVariant, fontSize = 13.sp, lineHeight = 18.sp)
+                Text(line, color = c.onSurfaceVariant, fontSize = 13.sp, lineHeight = 18.sp, softWrap = true)
             }
             Icon(Icons.Rounded.ChevronRight, null, tint = c.onSurfaceVariant, modifier = Modifier.size(20.dp))
         }
@@ -2112,7 +2097,17 @@ private fun LanguagePage() {
         SettingBox(if (i == 0) "lang" else null, shape, Modifier.pressable(pressedScale = 0.98f) { context.findActivity()?.let { AppLanguage.pick(it, tag) } }) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // Each language named in itself, so one picked by mistake is easy to undo.
-                Text(label, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold, fontSize = 15.sp, modifier = Modifier.weight(1f))
+                Text(
+                    text = label,
+                    fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Start,
+                    style = androidx.compose.material3.LocalTextStyle.current.copy(
+                        textDirection = androidx.compose.ui.text.style.TextDirection.Ltr,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Start
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
                 Icon(
                     if (on) Icons.Rounded.RadioButtonChecked else Icons.Rounded.RadioButtonUnchecked,
                     if (on) stringResource(R.string.ui_selected) else null,

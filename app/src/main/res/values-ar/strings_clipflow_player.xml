@@ -668,4 +668,8 @@
     <string name="ytdlp_liked">الفيديوهات المعجب بها (تتطلب كوكيز)</string>
     <string name="ytdlp_watch_history">سجل المشاهدة (تتطلب كوكيز)</string>
     <string name="player_client_summary">عملاء المشغل ورمز التحقق PO Token</string>
+    <string name="action_mute">كتم الصوت</string>
+    <string name="action_unmute">إلغاء كتم الصوت</string>
+    <string name="backup_summary">تصدير الإعدادات والسجل وقوائم التشغيل إلى ملف</string>
+    <string name="restore_summary">استيراد الإعدادات والسجل وقوائم التشغيل من ملف نسخ احتياطي</string>
 </resources>

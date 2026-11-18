@@ -251,17 +251,17 @@ fun PlayerScreen(
         @Composable
         fun DetailsList(modifier: Modifier) = LazyColumn(
             modifier = modifier.nestedScroll(morph.nestedScroll).then(listLook),
-            contentPadding = PaddingValues(bottom = bottomClearance + 16.dp),
+            contentPadding = PaddingValues(top = 10.dp, bottom = bottomClearance + 16.dp),
         ) {
             item(key = "info") {
                     Column(Modifier.padding(horizontal = 20.dp)) {
-                        Spacer(Modifier.height(18.dp))
+                        Spacer(Modifier.height(14.dp))
                         Text(
                             item.title,
                             fontFamily = RoundedHeavy,
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 22.sp,
-                            lineHeight = 26.sp,
+                            lineHeight = 28.sp,
                             letterSpacing = (-0.6).sp,
                         )
                         Spacer(Modifier.height(6.dp))
